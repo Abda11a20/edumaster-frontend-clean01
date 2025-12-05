@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import LoadingSpinner from './LoadingSpinner'
 
 const AdminRoute = ({ children }) => {
-  const { isAuthenticated, isAdmin, loading, user } = useAuth()
+  const { isAuthenticated, isAdmin, isSuperAdmin, loading, user } = useAuth()
   const location = useLocation()
 
   if (loading) {
@@ -14,8 +14,7 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // التحقق من أن المستخدم أدمن
-  if (!isAdmin()) {
+  if (!isAdmin() && !isSuperAdmin()) {
     return <Navigate to="/dashboard" replace />
   }
 

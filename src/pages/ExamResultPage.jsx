@@ -15,13 +15,86 @@ const ExamResultPage = () => {
   const [result, setResult] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
+  const storageKey = `exam_result_${id}`
 
   useEffect(() => {
     const fetchResult = async () => {
       try {
         setIsLoading(true)
-        const resultData = await examsAPI.getExamResult(id)
-        setResult(resultData)
+
+        // 1) Prefer local snapshot set on submit to avoid 401 redirects
+        const local = localStorage.getItem(storageKey)
+        if (local) {
+          try {
+            const snap = JSON.parse(local)
+            const score = snap?.score ?? 0
+            const totalScore = snap?.totalScore ?? 100
+            const percentage = snap?.percentage ?? (totalScore > 0 ? Math.round((score / totalScore) * 100) : 0)
+            const completedAt = snap?.completedAt || new Date().toISOString()
+
+            setResult({
+              score,
+              totalScore,
+              percentage,
+              timeSpentMinutes: 0,
+              completedAt,
+              questions: []
+            })
+            return
+          } catch (_) {
+            // ignore parse error and continue to server fetch
+          }
+        }
+
+        // 2) Fallback to server result
+        // Try student endpoint first; if it fails (e.g., admin-only route needed), fallback
+        let raw
+        try {
+          const studentRes = await examsAPI.getStudentScore(id)
+          const studentData = studentRes?.data || studentRes || {}
+          raw = { score: studentData?.score }
+        } catch (e) {
+          const resultData = await examsAPI.getExamResult(id)
+          raw = resultData?.data || resultData
+        }
+
+        const score = raw?.score ?? raw?.result?.score ?? 0
+        // Choose the best available total score field
+        let totalScore = raw?.totalScore ?? raw?.totalPoints ?? raw?.result?.totalScore ?? raw?.exam?.totalScore
+        if (!totalScore && Array.isArray(raw?.questions) && raw.questions.length > 0) {
+          totalScore = raw.questions.reduce((sum, q) => sum + (q.points || 1), 0)
+        }
+        if (!totalScore) totalScore = 100
+
+        // Compute percentage safely
+        const percentage = totalScore > 0 ? Math.round((score / totalScore) * 100) : 0
+
+        // Time spent in minutes if available, or compute from timestamps
+        let timeSpentMinutes = raw?.timeSpent
+        if (typeof timeSpentMinutes !== 'number') {
+          const start = raw?.startTime ? new Date(raw.startTime) : null
+          const end = raw?.completedAt ? new Date(raw.completedAt) : (raw?.endTime ? new Date(raw.endTime) : null)
+          if (start && end && !isNaN(start) && !isNaN(end)) {
+            timeSpentMinutes = Math.max(0, Math.round((end - start) / 60000))
+          } else {
+            timeSpentMinutes = 0
+          }
+        }
+
+        // Completed at
+        const completedAt = raw?.completedAt || raw?.submittedAt || raw?.updatedAt || raw?.endTime || new Date().toISOString()
+
+        // Questions list if present
+        const questions = Array.isArray(raw?.questions) ? raw.questions : []
+
+        setResult({
+          score,
+          totalScore,
+          percentage,
+          timeSpentMinutes,
+          completedAt,
+          questions,
+        })
       } catch (error) {
         console.error('Error fetching exam result:', error)
         toast({
@@ -37,7 +110,42 @@ const ExamResultPage = () => {
     if (id) {
       fetchResult()
     }
-  }, [id, toast])
+  }, [id])
+
+  const handleRefresh = async () => {
+    try {
+      setIsLoading(true)
+
+      // Try to get minimal score from server (requires valid session)
+      const res = await examsAPI.getStudentScore(id)
+      const data = res?.data || res || {}
+      const score = data?.score ?? (data?.result?.score ?? 0)
+      const totalScore = result?.totalScore ?? 100
+      const percentage = totalScore > 0 ? Math.round((score / totalScore) * 100) : 0
+
+      setResult(prev => ({
+        ...(prev || {}),
+        score,
+        totalScore,
+        percentage
+      }))
+
+      toast({
+        title: 'تم تحديث النتيجة',
+        description: 'تم جلب آخر تحديث لنتيجتك',
+        variant: 'default'
+      })
+    } catch (error) {
+      console.error('Error refreshing score:', error)
+      toast({
+        title: 'تعذر تحديث النتيجة',
+        description: 'قد تكون الجلسة منتهية، يرجى تسجيل الدخول مرة أخرى',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -70,8 +178,8 @@ const ExamResultPage = () => {
     )
   }
 
-  const percentage = Math.round((result.score / result.totalScore) * 100)
-  const isPassed = percentage >= 60
+  const percentage = result.percentage
+  const isPassed = (percentage ?? 0) >= 60
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -122,7 +230,7 @@ const ExamResultPage = () => {
             <CardContent className="p-6 text-center">
               <Clock className="h-8 w-8 text-green-400 mx-auto mb-2" />
               <p className="text-sm text-gray-500">الوقت المستغرق</p>
-              <p className="text-2xl font-bold">{result.timeSpent} دقيقة</p>
+              <p className="text-2xl font-bold">{result.timeSpentMinutes} دقيقة</p>
             </CardContent>
           </Card>
 
@@ -158,7 +266,7 @@ const ExamResultPage = () => {
         </Card>
 
         {/* Question Review */}
-        {result.questions && result.questions.length > 0 && (
+        {Array.isArray(result.questions) && result.questions.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>مراجعة الأسئلة</CardTitle>
@@ -211,7 +319,7 @@ const ExamResultPage = () => {
               عرض الشهادة
             </Button>
           )}
-          <Button onClick={() => window.location.reload()}>
+          <Button onClick={handleRefresh}>
             تحديث النتيجة
           </Button>
         </div>

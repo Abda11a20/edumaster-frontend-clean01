@@ -1,10 +1,21 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { User, Mail, Calendar, BookOpen, BarChart3, Award, Edit, Save, X, Phone, GraduationCap } from 'lucide-react'
+import { User, Mail, Calendar, BookOpen, BarChart3, Award, Edit, Save, X, Phone, GraduationCap, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction
+} from '@/components/ui/alert-dialog'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '../contexts/AuthContext'
 import { authAPI, examsAPI, lessonsAPI } from '../services/api'
@@ -16,6 +27,7 @@ const ProfilePage = () => {
   const [userStats, setUserStats] = useState({})
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [editForm, setEditForm] = useState({
     fullName: '',
     email: '',
@@ -118,6 +130,27 @@ const ProfilePage = () => {
       ...editForm,
       [e.target.name]: e.target.value
     })
+  }
+
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true)
+      await authAPI.deleteAccount()
+      toast({
+        title: 'تم حذف الحساب',
+        description: 'تم حذف حسابك بنجاح. سيتم تحويلك إلى الصفحة الرئيسية.'
+      })
+      logout()
+      window.location.href = '/'
+    } catch (error) {
+      toast({
+        title: 'فشل حذف الحساب',
+        description: error.message || 'حدث خطأ أثناء حذف الحساب',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (isLoading) {
@@ -276,6 +309,34 @@ const ProfilePage = () => {
                       <Button variant="outline" onClick={logout}>
                         تسجيل الخروج
                       </Button>
+                    </div>
+                    <div className="pt-2">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" disabled={isDeleting}>
+                            <Trash2 className="h-4 w-4 ml-2" />
+                            {isDeleting ? 'جارٍ الحذف...' : 'حذف الحساب'}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>حذف الحساب</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              هل أنت متأكد أنك تريد حذف حسابك نهائيًا؟ هذه العملية غير قابلة للاسترجاع وسيتم حذف جميع بياناتك.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDeleteAccount}
+                              className="bg-destructive text-white hover:bg-destructive/90"
+                              disabled={isDeleting}
+                            >
+                              تأكيد الحذف
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </>
                 )}

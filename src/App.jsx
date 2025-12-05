@@ -6,6 +6,10 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { Toaster } from '@/components/ui/toaster'
 
+import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
+import SuperAdminRoute from './components/SuperAdminRoute'
+
 // Pages
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
@@ -22,18 +26,15 @@ import ExamDetailPage from './pages/ExamDetailPage'
 import TakeExamPage from './pages/TakeExamPage'
 import ExamResultPage from './pages/ExamResultPage'
 import ProfilePage from './pages/ProfilePage'
+import StudentResultsPage from './pages/StudentResultsPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminLessons from './pages/admin/AdminLessons'
 import AdminExams from './pages/admin/AdminExams'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminAdmins from './pages/admin/AdminAdmins'
 import AdminQuestions from './pages/admin/AdminQuestions'
-import SuperAdminDashboard from './pages/super-admin/SuperAdminDashboard'
-// Components
-import ProtectedRoute from './components/ProtectedRoute'
-import AdminRoute from './components/AdminRoute'
-import SuperAdminRoute from './components/SuperAdminRoute'
-
+import AdminExamResults from './pages/admin/AdminExamResults'
+import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
 
 import './App.css'
 
@@ -141,6 +142,11 @@ function App() {
                   <ExamResultPage />
                 </ProtectedRoute>
               } />
+              <Route path="/results" element={
+                <ProtectedRoute>
+                  <StudentResultsPage />
+                </ProtectedRoute>
+              } />
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <ProfilePage />
@@ -150,8 +156,18 @@ function App() {
               {/* Admin Routes */}
               <Route path="/super-admin" element={
                 <SuperAdminRoute>
-                   <SuperAdminDashboard />
-              </SuperAdminRoute>
+                  <SuperAdminDashboard />
+                </SuperAdminRoute>
+              } />
+              <Route path="/super-admin/admins" element={
+                <SuperAdminRoute>
+                  <AdminAdmins />
+                </SuperAdminRoute>
+              } />
+              <Route path="/super-admin/users" element={
+                <SuperAdminRoute>
+                  <AdminUsers />
+                </SuperAdminRoute>
               } />
               <Route path="/admin" element={
                 <AdminRoute>
@@ -168,6 +184,11 @@ function App() {
                   <AdminExams />
                 </AdminRoute>
               } />
+              <Route path="/admin/exam-results" element={
+                <AdminRoute>
+                  <AdminExamResults />
+                </AdminRoute>
+              } />
                <Route path="/admin/questions" element={
                 <AdminRoute>
                   <AdminQuestions />
@@ -179,9 +200,9 @@ function App() {
                 </AdminRoute>
               } />
               <Route path="/admin/admins" element={
-                <AdminRoute>
+                <SuperAdminRoute>
                   <AdminAdmins />
-                </AdminRoute>
+                </SuperAdminRoute>
               } />
 
               {/* Catch all route */}

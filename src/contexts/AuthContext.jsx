@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import { authAPI } from '../services/api'
 
 const AuthContext = createContext()
@@ -46,9 +46,9 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials)
-      
+
       let authToken, userData;
-      
+
       if (response.data && response.token) {
         authToken = response.token;
         userData = response.data;
@@ -59,15 +59,15 @@ export const AuthProvider = ({ children }) => {
         authToken = response.token;
         userData = response;
       }
-      
+
       localStorage.setItem('token', authToken)
       setToken(authToken)
       setUser(userData)
-      
+
       return { success: true, data: response }
     } catch (error) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: error.message || 'فشل في تسجيل الدخول. تحقق من البيانات وحاول مرة أخرى.'
       }
     }
@@ -136,7 +136,8 @@ export const AuthProvider = ({ children }) => {
   }
 
   const isSuperAdmin = () => {
-    return user?.role === 'SUPER_ADMIN'
+    const role = typeof user?.role === 'string' ? user.role.toLowerCase() : user?.role
+    return role === 'super_admin' || role === 'super-admin' || role === 'superadmin' || user?.isSuperAdmin === true
   }
 
   const value = {

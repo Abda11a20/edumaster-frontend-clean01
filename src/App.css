@@ -118,3 +118,420 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ========================================================================== */
+/* تنسيقات مشغل الفيديو المتطور */
+/* ========================================================================== */
+
+.react19-video-container {
+  position: relative;
+  width: 100%;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.player-wrapper {
+  position: relative;
+  padding-top: 56.25%; /* نسبة 16:9 */
+}
+
+.player-wrapper > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 8px;
+}
+
+/* زر التشغيل المركزي */
+.center-play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.center-play-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.play-icon {
+  font-size: 30px;
+  color: white;
+}
+
+/* عناصر التحكم */
+.custom-controls-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 15px;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.custom-controls-panel.hidden {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.custom-controls-panel.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* شريط التقدم */
+.progress-control {
+  margin-bottom: 15px;
+}
+
+.time-display {
+  color: white;
+  font-size: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.progress-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: all 0.2s ease;
+}
+
+.progress-slider::-webkit-slider-thumb:hover {
+  background: #2563eb;
+  transform: scale(1.1);
+}
+
+.progress-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+
+/* أزرار التحكم */
+.main-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.left-controls,
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* التحكم في الصوت */
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.volume-icon {
+  font-size: 14px;
+}
+
+.volume-slider {
+  width: 60px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+}
+
+.volume-percent {
+  color: white;
+  font-size: 12px;
+  min-width: 30px;
+}
+
+/* اختيار السرعة */
+.speed-select {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.speed-select option {
+  background: #333;
+  color: white;
+}
+
+/* زر ملء الشاشة */
+.fullscreen-btn {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.fullscreen-btn:hover {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .main-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .left-controls,
+  .right-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .control-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .volume-control {
+    padding: 2px 6px;
+  }
+  
+  .volume-slider {
+    width: 40px;
+  }
+  
+  .center-play-button {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .play-icon {
+    font-size: 24px;
+  }
+}
+
+/* ========================================================================== */
+/* حماية الفيديو وعناصر التحكم */
+/* ========================================================================== */
+
+.react19-video-container {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.react19-video-container * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* منع سحب العناصر */
+.react19-video-container iframe,
+.react19-video-container img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+/* إخفاء عناصر اليوتيوب غير المرغوب فيها */
+.ytp-chrome-top,
+.ytp-title-link,
+.ytp-youtube-button,
+.ytp-watermark,
+.ytp-pause-overlay,
+.ytp-share-button,
+.ytp-copylink-button,
+.ytp-watch-later-button,
+.ytp-menuitem-label {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* منع ظهور قوائم السياق (النقر بزر الماوس الأيمن) */
+.react19-video-container iframe {
+  pointer-events: auto;
+}
+
+/* طبقة حماية شفافة فوق الفيديو */
+.video-protection-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* إخفاء عناصر التحكم غير المرغوب فيها في مشغل اليوتيوب */
+.ytp-panel-menu,
+.ytp-settings-button,
+.ytp-miniplayer-button,
+.ytp-size-button,
+.ytp-remote-button,
+.ytp-chrome-controls .ytp-button[aria-label*="YouTube"],
+.ytp-button[aria-label*="YouTube"] {
+  display: none !important;
+}
+
+/* منع التكبير والنقر المزدوج */
+.react19-video-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000;
+}
+
+/* إخفاء أي روابط أو عناصر قد تؤدي لليوتيوب */
+a[href*="youtube"],
+a[href*="youtu.be"],
+.ytp-title-channel-logo,
+.ytp-title-text {
+  display: none !important;
+}
+
+/* تأمين إضافي للعناصر التفاعلية */
+.video-protected * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* منع نسخ النص من حول الفيديو */
+.lesson-content,
+.video-description,
+.lesson-title {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* تحسين مظهر المشغل المخصص */
+.custom-video-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: #000;
+}
+
+.custom-video-container iframe {
+  border: none;
+  outline: none;
+}
+
+/* تأمين إضافي للجوال */
+@media (max-width: 768px) {
+  .react19-video-container {
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .custom-video-container {
+    border-radius: 0.25rem;
+  }
+}
+
+/* تحسينات للأجهزة التي تعمل باللمس */
+.react19-video-container {
+  touch-action: pan-x pan-y;
+}
+
+/* تخصيص شريط التقدم */
+.video-js .vjs-play-progress:before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+/* تخصيص زر التشغيل الكبير */
+.video-js .vjs-big-play-button {
+  background: rgba(59, 130, 246, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+  margin-left: -40px;
+  margin-top: -40px;
+}
+
+.video-js .vjs-big-play-button:hover {
+  background: rgba(59, 130, 246, 1);
+  transform: scale(1.1);
+}

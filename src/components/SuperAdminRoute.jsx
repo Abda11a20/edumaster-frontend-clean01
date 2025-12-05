@@ -1,4 +1,3 @@
-// SuperAdminRoute.jsx
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingSpinner from './LoadingSpinner'
@@ -15,7 +14,6 @@ const SuperAdminRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // التحقق من أن المستخدم سوبر أدمن
   if (!isSuperAdmin()) {
     return <Navigate to="/dashboard" replace />
   }

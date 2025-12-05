@@ -54,31 +54,14 @@ const ExamDetailPage = () => {
   const handleStartExam = async () => {
     try {
       setIsStarting(true)
-      // بدء الامتحان والحصول على التفاصيل
-      const response = await examsAPI.startExam(id)
-      
-      toast({
-        title: 'تم بدء الامتحان',
-        description: 'حظًا موفقًا في الامتحان!'
-      })
-      
-      // الانتقال إلى صفحة أداء الامتحان
+      // اذهب مباشرة إلى صفحة الامتحان — صفحة الامتحان ستُسند منطق البدء/الاستئناف
       navigate(`/exams/${id}/take`)
     } catch (error) {
       console.error('Error starting exam:', error)
       
-      let errorMessage = 'لا يمكن بدء الامتحان الآن'
-      if (error.message.includes('already submitted')) {
-        errorMessage = 'لقد قدمت هذا الامتحان مسبقاً'
-      } else if (error.message.includes('Time for submitting the exam has expired')) {
-        errorMessage = 'انتهى وقت هذا الامتحان'
-      } else if (error.message.includes('not started')) {
-        errorMessage = 'لم يبدأ وقت هذا الامتحان بعد'
-      }
-      
       toast({
-        title: 'خطأ في بدء الامتحان',
-        description: error.message || errorMessage,
+        title: 'خطأ في فتح صفحة الامتحان',
+        description: 'حاول مرة أخرى',
         variant: 'destructive'
       })
     } finally {

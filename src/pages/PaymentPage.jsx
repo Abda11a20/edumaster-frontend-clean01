@@ -59,31 +59,20 @@ const PaymentPage = () => {
   const handlePayment = async () => {
     try {
       setIsProcessing(true)
-      
-      // في البيئة الحقيقية، ستقوم بتنفيذ عملية الدفع الفعلية هنا
-      // هذا مجرد محاكاة للتوضيح
-      const response = await lessonsAPI.payForLesson(id)
-      
-      if (response.success) {
-        setPaymentStatus('success')
-        toast({
-          title: 'تم الدفع بنجاح',
-          description: 'تم شراء الدرس بنجاح، يمكنك الآن الوصول إليه',
-          variant: 'default'
-        })
-        
-        // الانتقال إلى صفحة الدرس بعد ثانيتين
-        setTimeout(() => {
-          navigate(`/lessons/${id}`)
-        }, 2000)
-      } else {
-        setPaymentStatus('failed')
-        toast({
-          title: 'فشل في عملية الدفع',
-          description: 'حدث خطأ أثناء عملية الدفع، يرجى المحاولة مرة أخرى',
-          variant: 'destructive'
-        })
-      }
+
+      // في الوضع التجريبي، نمنح الوصول فوراً
+      setPaymentStatus('success')
+      toast({
+        title: 'تم الدفع بنجاح',
+        description: 'تم شراء الدرس بنجاح في الوضع التجريبي، يمكنك الآن الوصول إليه',
+        variant: 'default'
+      })
+
+      // الانتقال إلى صفحة الدرس بعد ثانيتين
+      setTimeout(() => {
+        navigate(`/lessons/${id}`)
+      }, 2000)
+
     } catch (error) {
       console.error('Payment error:', error)
       setPaymentStatus('failed')
@@ -100,21 +89,19 @@ const PaymentPage = () => {
   const handleExternalPayment = () => {
     // فتح صفحة الدفع الخارجية في نافذة جديدة
     window.open(paymentUrl, '_blank')
-    
-    // محاكاة نجاح الدفع بعد فترة (في الواقع سيكون هناك webhook أو نظام متابعة)
+
+    // في الوضع التجريبي، نمنح الوصول فوراً
+    setPaymentStatus('success')
+    toast({
+      title: 'تم الدفع بنجاح',
+      description: 'تم شراء الدرس بنجاح في الوضع التجريبي، يمكنك الآن الوصول إليه',
+      variant: 'default'
+    })
+
+    // الانتقال إلى صفحة الدرس بعد ثانيتين
     setTimeout(() => {
-      setPaymentStatus('success')
-      toast({
-        title: 'تم الدفع بنجاح',
-        description: 'تم شراء الدرس بنجاح، يمكنك الآن الوصول إليه',
-        variant: 'default'
-      })
-      
-      // الانتقال إلى صفحة الدرس بعد ثانيتين
-      setTimeout(() => {
-        navigate(`/lessons/${id}`)
-      }, 2000)
-    }, 5000)
+      navigate(`/lessons/${id}`)
+    }, 2000)
   }
 
   if (isLoading) {

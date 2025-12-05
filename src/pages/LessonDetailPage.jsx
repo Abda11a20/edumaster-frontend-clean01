@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { BookOpen, Clock, User, CreditCard, Check, Loader, ExternalLink, Play, Download, FileText } from 'lucide-react'
+import { BookOpen, Clock, User, CreditCard, Check, Loader, Download, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +10,27 @@ import { useToast } from '@/hooks/use-toast'
 import { lessonsAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
+import CustomVideoPlayer from '../components/CustomVideoPlayer'
+// دالة مساعدة لاستخراج YouTube ID
+const extractYouTubeId = (url) => {
+  if (!url) return ''
+  if (url.includes('youtu.be/')) {
+    return url.split('youtu.be/')[1]?.split('?')[0]
+  }
+  if (url.includes('youtube.com/watch')) {
+    const urlObj = new URL(url)
+    return urlObj.searchParams.get('v')
+  }
+  if (url.includes('youtube.com/embed/')) {
+    return url.split('youtube.com/embed/')[1]?.split('?')[0]
+  }
+  if (url.length === 11 && !url.includes('/') && !url.includes('.')) {
+    return url
+  }
+  return url
+}
+
+ 
 
 const LessonDetailPage = () => {
   const { id } = useParams()
@@ -27,11 +48,16 @@ const LessonDetailPage = () => {
         setIsLoading(true)
         const lessonData = await lessonsAPI.getLessonById(id)
         setLesson(lessonData)
-        
+
         // التحقق إذا كان المستخدم قد اشترى الدرس بالفعل
-        const purchasedLessons = await lessonsAPI.getPurchasedLessons()
-        const isAlreadyPurchased = purchasedLessons.some(l => l._id === id)
-        setIsPurchased(isAlreadyPurchased)
+        try {
+          const purchasedLessons = await lessonsAPI.getPurchasedLessons()
+          const isAlreadyPurchased = purchasedLessons.some(l => l._id === id)
+          setIsPurchased(isAlreadyPurchased)
+        } catch (error) {
+          console.warn('Could not fetch purchased lessons, assuming not purchased:', error)
+          setIsPurchased(false)
+        }
       } catch (error) {
         console.error('Error fetching lesson data:', error)
         toast({
@@ -50,18 +76,26 @@ const LessonDetailPage = () => {
   const handlePurchase = async () => {
     try {
       setIsPurchasing(true)
-      
-      // استدعاء API لشراء الدرس
+
       const response = await lessonsAPI.payForLesson(id)
-      
+
       if (response.success && response.paymentUrl) {
-        // فتح رابط الدفع في نافذة جديدة
         window.open(response.paymentUrl, '_blank', 'noopener,noreferrer')
-        
+        setIsPurchased(true)
+        try {
+          const raw = localStorage.getItem('purchasedLessonIds')
+          const ids = raw ? JSON.parse(raw) : []
+          if (!ids.includes(id)) {
+            ids.push(id)
+            localStorage.setItem('purchasedLessonIds', JSON.stringify(ids))
+          }
+        } catch (e) {}
+
         toast({
-          title: 'تم توجيهك إلى صفحة الدفع',
-          description: 'يرجى إكمال عملية الدفع في النافذة الجديدة',
-          variant: 'default'
+          title: 'تم منح الوصول للدرس!',
+          description: 'تم شراء الدرس بنجاح في الوضع التجريبي - يمكنك الآن مشاهدة المحتوى',
+          variant: 'default',
+          duration: 5000
         })
       } else {
         throw new Error('لم يتم إنشاء رابط الدفع')
@@ -75,14 +109,6 @@ const LessonDetailPage = () => {
       })
     } finally {
       setIsPurchasing(false)
-    }
-  }
-
-  const handleStartLearning = () => {
-    // الانتقال إلى مشاهدة الدرس
-    if (lesson?.videoUrl) {
-      // يمكنك تنفيذ الانتقال إلى صفحة المشاهدة أو فتح الفيديو في modal
-      window.open(lesson.videoUrl, '_blank')
     }
   }
 
@@ -151,49 +177,41 @@ const LessonDetailPage = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="lg:col-span-2 space-y-6"
           >
-            {/* مشغل الفيديو */}
-            {isPurchased && lesson.videoUrl ? (
+            {isPurchased && lesson.video ? (
               <Card>
                 <CardHeader>
                   <CardTitle>مشاهدة الدرس</CardTitle>
                   <CardDescription>
-                    يمكنك الآن مشاهدة محتوى الدرس بالكامل
+                    يمكنك الآن مشاهدة محتوى الدرس بالكامل داخل المنصة
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                    <video 
-                      controls 
-                      className="w-full h-full"
-                      poster={lesson.thumbnail || ''}
-                    >
-                      <source src={lesson.videoUrl} type="video/mp4" />
-                      متصفحك لا يدعم تشغيل الفيديو
-                    </video>
+                    <CustomVideoPlayer 
+                      videoId={extractYouTubeId(lesson.video)}
+                      title={lesson.title}
+                    />
                   </div>
-                  <div className="mt-4 flex gap-2">
-                    <Button onClick={handleStartLearning}>
-                      <Play className="h-4 w-4 ml-2" />
-                      تشغيل الفيديو
-                    </Button>
-                    {lesson.attachments && lesson.attachments.length > 0 && (
-                      <Button variant="outline">
+
+                  {lesson.attachments && lesson.attachments.length > 0 && (
+                    <div className="p-6 pt-4">
+                      <Button variant="outline" className="w-full">
                         <Download className="h-4 w-4 ml-2" />
-                        تحميل المواد
+                        تحميل المواد التعليمية
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (
               <Card className="bg-gray-100 dark:bg-gray-800">
                 <CardContent className="p-6 text-center">
                   <div className="mx-auto w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                    <Play className="h-8 w-8 text-gray-500" />
+                    <BookOpen className="h-8 w-8 text-gray-500" />
                   </div>
                   <h3 className="text-lg font-medium mb-2">محتوى مقفل</h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    يرجى شراء الدرس لمشاهدة المحتوى الكامل والوصول إلى الفيديو
+                    اشترك الآن للوصول إلى محتوى الدرس الكامل داخل المنصة
                   </p>
                   <Button onClick={handlePurchase} disabled={isPurchasing}>
                     {isPurchasing ? (
@@ -204,7 +222,7 @@ const LessonDetailPage = () => {
                     ) : (
                       <>
                         <CreditCard className="h-4 w-4 ml-2" />
-                        شراء الدرس
+                        اشترك لمشاهدة الدرس
                       </>
                     )}
                   </Button>
@@ -304,7 +322,7 @@ const LessonDetailPage = () => {
               <CardHeader>
                 <CardTitle>تفاصيل الاشتراك</CardTitle>
                 <CardDescription>
-                  احصل على وصول كامل إلى هذا الدرس
+                  احصل على وصول كامل إلى هذا الدرس داخل المنصة
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -318,29 +336,34 @@ const LessonDetailPage = () => {
 
                   <div className="space-y-3">
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                      <Play className="h-4 w-4 ml-2 text-green-500" />
-                      فيديو كامل للدرس
+                      <BookOpen className="h-4 w-4 ml-2 text-green-500" />
+                      مشاهدة مباشرة داخل المنصة
                     </div>
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                      <BookOpen className="h-4 w-4 ml-2 text-blue-500" />
-                      وصول كامل إلى المحتوى
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                      <FileText className="h-4 w-4 ml-2 text-purple-500" />
+                      <Download className="h-4 w-4 ml-2 text-blue-500" />
                       مواد تعليمية قابلة للتحميل
                     </div>
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                       <Clock className="h-4 w-4 ml-2 text-orange-500" />
                       {lesson.duration} دقيقة من المحتوى
                     </div>
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                      <Check className="h-4 w-4 ml-2 text-purple-500" />
+                      وصول دائم للدرس
+                    </div>
                   </div>
 
                   <Button 
                     className="w-full"
                     onClick={handlePurchase}
-                    disabled={isPurchasing}
+                    disabled={isPurchasing || isPurchased}
                   >
-                    {isPurchasing ? (
+                    {isPurchased ? (
+                      <>
+                        <Check className="h-4 w-4 ml-2" />
+                        تم الاشتراك بنجاح
+                      </>
+                    ) : isPurchasing ? (
                       <>
                         <Loader className="h-4 w-4 ml-2 animate-spin" />
                         جاري التوجيه إلى الدفع...
@@ -348,7 +371,7 @@ const LessonDetailPage = () => {
                     ) : (
                       <>
                         <CreditCard className="h-4 w-4 ml-2" />
-                        شراء الآن
+                        اشترك الآن
                       </>
                     )}
                   </Button>

@@ -6,7 +6,9 @@ import {
   Home, 
   BookOpen, 
   FileText, 
+  BarChart3,
   User, 
+  Users,
   Settings, 
   LogOut, 
   Menu, 
@@ -41,7 +43,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [showNotifications, setShowNotifications] = useState(false)
   
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout, isAdmin, isSuperAdmin } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const location = useLocation()
@@ -108,6 +110,11 @@ const Navbar = () => {
       name: 'الامتحانات',
       href: '/exams',
       icon: FileText
+    },
+    {
+      name: 'نتائجي',
+      href: '/results',
+      icon: BarChart3
     }
   ]
 
@@ -123,6 +130,11 @@ const Navbar = () => {
       icon: FileText
     },
     {
+      name: 'نتائج الامتحانات',
+      href: '/admin/exam-results',
+      icon: BarChart3
+    },
+    {
       name: 'إدارة الأسئلة',
       href: '/admin/questions',
       icon: FileText
@@ -133,6 +145,32 @@ const Navbar = () => {
       icon: User
     }
   ]
+
+  const superAdminNavigationItems = [
+    {
+      name: 'إدارة المشرفين',
+      href: '/super-admin/admins',
+      icon: Users
+    }
+  ]
+
+  // تصفية عناصر التنقل بناءً على دور المستخدم
+  const getFilteredNavigationItems = () => {
+    if (isAdmin() || isSuperAdmin()) {
+      // للمسؤولين: إظهار فقط الرئيسية + عناصر الإدارة
+      return [
+        {
+          name: 'الرئيسية',
+          href: '/dashboard',
+          icon: Home
+        }
+      ];
+    }
+    // للمستخدمين العاديين: إظهار جميع العناصر
+    return navigationItems;
+  };
+
+  const filteredNavigationItems = getFilteredNavigationItems();
 
   const isActivePath = (path) => {
     return location.pathname === path
@@ -164,7 +202,7 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              {navigationItems.map((item) => {
+              {filteredNavigationItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <Link
@@ -183,10 +221,29 @@ const Navbar = () => {
               })}
               
               {/* Admin Navigation */}
-              {isAdmin() && (
+              {(isAdmin() || isSuperAdmin()) && (
                 <>
-                  <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2" />
+                  {filteredNavigationItems.length > 0 && (
+                    <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2" />
+                  )}
                   {adminNavigationItems.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          isActivePath(item.href)
+                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                            : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 mr-2" />
+                        {item.name}
+                      </Link>
+                    )
+                  })}
+                  {isSuperAdmin() && superAdminNavigationItems.map((item) => {
                     const Icon = item.icon
                     return (
                       <Link
@@ -405,7 +462,7 @@ const Navbar = () => {
               </div>
 
               {/* Navigation Items */}
-              {navigationItems.map((item) => {
+              {filteredNavigationItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <Link
@@ -427,7 +484,9 @@ const Navbar = () => {
               {/* Admin Navigation Mobile */}
               {isAdmin() && (
                 <>
-                  <div className="border-t border-gray-200 dark:border-gray-700 my-2" />
+                  {filteredNavigationItems.length > 0 && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 my-2" />
+                  )}
                   <div className="px-3 py-2">
                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       إدارة النظام

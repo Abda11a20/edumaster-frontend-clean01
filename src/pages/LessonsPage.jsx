@@ -16,17 +16,40 @@ import {
   Loader,
   ExternalLink,
   Check,
-  X
+  X,
+  ShoppingBag,
+  Eye
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { lessonsAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
+import YouTubeSecurePlayer from '../components/YouTubeSecurePlayer'
+
+// دالة مساعدة لاستخراج YouTube ID
+const extractYouTubeId = (url) => {
+  if (!url) return '';
+  if (url.includes('youtu.be/')) {
+    return url.split('youtu.be/')[1]?.split('?')[0];
+  }
+  if (url.includes('youtube.com/watch')) {
+    const urlObj = new URL(url);
+    return urlObj.searchParams.get('v');
+  }
+  if (url.includes('youtube.com/embed/')) {
+    return url.split('youtube.com/embed/')[1]?.split('?')[0];
+  }
+  if (url.length === 11 && !url.includes('/') && !url.includes('.')) {
+    return url;
+  }
+  return url;
+}
 
 const LessonsPage = () => {
   const [lessons, setLessons] = useState([])
@@ -39,6 +62,7 @@ const LessonsPage = () => {
   const [viewMode, setViewMode] = useState('grid')
   const [processingLessonId, setProcessingLessonId] = useState(null)
   const [purchasedLessons, setPurchasedLessons] = useState(new Set())
+  const [activeTab, setActiveTab] = useState('all') // 'all' أو 'purchased'
 
   // pagination states
   const [page, setPage] = useState(1)
@@ -136,12 +160,34 @@ const LessonsPage = () => {
     }
   }
 
+  // دالة تحميل الدروس المشتراة
+  const fetchPurchasedLessons = async () => {
+    try {
+      const purchased = await lessonsAPI.getPurchasedLessons()
+      const purchasedIds = new Set(purchased.map(lesson => lesson._id))
+      setPurchasedLessons(purchasedIds)
+    } catch (error) {
+      console.error('Error fetching purchased lessons:', error)
+      toast({
+        title: 'خطأ في تحميل الدروس المشتراة',
+        description: 'تعذر تحميل قائمة الدروس المشتراة',
+        variant: 'destructive'
+      })
+    }
+  }
+
   useEffect(() => {
     fetchLessonsPage(1, false)
+    fetchPurchasedLessons()
   }, [])
 
   useEffect(() => {
     let filtered = Array.isArray(lessons) ? lessons.slice() : []
+
+    // تطبيق الفلتر حسب التبويب النشط
+    if (activeTab === 'purchased') {
+      filtered = filtered.filter(lesson => purchasedLessons.has(lesson._id))
+    }
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
@@ -184,31 +230,48 @@ const LessonsPage = () => {
     })
 
     setFilteredLessons(sorted)
-  }, [lessons, searchQuery, selectedClassLevel, sortBy, sortOrder])
+  }, [lessons, searchQuery, selectedClassLevel, sortBy, sortOrder, activeTab, purchasedLessons])
 
   const handlePurchaseLesson = async (lessonId, lessonTitle) => {
     try {
       setProcessingLessonId(lessonId)
-      
+
       toast({
         title: 'جاري توجيهك إلى صفحة الدفع',
         description: 'سيتم فتح صفحة الدفع في نافذة جديدة',
       })
 
       const response = await lessonsAPI.payForLesson(lessonId)
-      
+
       if (response.success && response.paymentUrl) {
         // فتح صفحة الدفع في نافذة جديدة
         const paymentWindow = window.open(response.paymentUrl, '_blank', 'width=800,height=600')
-        
-        // مراقبة إغلاق نافذة الدفع
+
+        // منح الوصول فوراً للدرس (وضع تجريبي)
+        setPurchasedLessons(prev => new Set([...prev, lessonId]))
+        try {
+          const raw = localStorage.getItem('purchasedLessonIds')
+          const ids = raw ? JSON.parse(raw) : []
+          if (!ids.includes(lessonId)) {
+            ids.push(lessonId)
+            localStorage.setItem('purchasedLessonIds', JSON.stringify(ids))
+          }
+        } catch (e) {}
+
+        toast({
+          title: 'تم منح الوصول للدرس!',
+          description: `تم شراء الدرس "${lessonTitle}" بنجاح في الوضع التجريبي`,
+          variant: 'default',
+          duration: 5000
+        })
+
+        // مراقبة إغلاق نافذة الدفع (اختياري)
         const checkPaymentWindow = setInterval(() => {
-          if (paymentWindow.closed) {
+          if (paymentWindow && paymentWindow.closed) {
             clearInterval(checkPaymentWindow)
-            checkPaymentStatus(lessonId, lessonTitle)
           }
         }, 1000)
-        
+
       } else {
         throw new Error('فشل في الحصول على رابط الدفع')
       }
@@ -221,36 +284,6 @@ const LessonsPage = () => {
       })
     } finally {
       setProcessingLessonId(null)
-    }
-  }
-
-  const checkPaymentStatus = async (lessonId, lessonTitle) => {
-    try {
-      toast({
-        title: 'جاري التحقق من حالة الدفع',
-        description: 'يتم التحقق من حالة عملية الدفع...',
-      })
-
-      // محاكاة الانتظار للتحقق من الدفع (في الواقع ستقوم بالاتصال بـ API للتحقق)
-      setTimeout(() => {
-        // إضافة الدرس إلى القائمة المشتراة
-        setPurchasedLessons(prev => new Set([...prev, lessonId]))
-        
-        toast({
-          title: 'تم الشراء بنجاح!',
-          description: `تم شراء الدرس "${lessonTitle}" بنجاح`,
-          variant: 'default',
-          duration: 5000
-        })
-      }, 3000)
-      
-    } catch (error) {
-      console.error('Error checking payment status:', error)
-      toast({
-        title: 'خطأ في التحقق من الدفع',
-        description: 'حدث خطأ أثناء التحقق من حالة الدفع',
-        variant: 'destructive'
-      })
     }
   }
 
@@ -272,7 +305,7 @@ const LessonsPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: index * 0.1 }}
       >
-        <Card className="h-full hover:shadow-lg transition-all duration-300 group">
+        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -283,25 +316,47 @@ const LessonsPage = () => {
                   {lesson.description}
                 </CardDescription>
               </div>
-              <Badge variant="secondary" className="ml-2">
-                {lesson.classLevel}
-              </Badge>
+              <div className="flex flex-col items-end gap-2">
+                <Badge variant="secondary">
+                  {lesson.classLevel}
+                </Badge>
+                {isPurchased && (
+                  <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                    <Check className="h-3 w-3 ml-1" />
+                    مشترى
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           
           <CardContent>
             <div className="space-y-4">
               {lesson.video && (
-                <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-video">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Play className="h-8 w-8 text-white ml-1" />
-                    </div>
-                  </div>
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                    <Clock className="h-3 w-3 inline mr-1" />
-                    45 دقيقة
-                  </div>
+                <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-video border-2 border-gray-200 dark:border-gray-700">
+                  {isPurchased ? (
+                    <YouTubeSecurePlayer 
+                      videoId={extractYouTubeId(lesson.video)}
+                      title={lesson.title}
+                    />
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Play className="h-8 w-8 text-white ml-1" />
+                        </div>
+                      </div>
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <div className="bg-black/70 text-white px-3 py-2 rounded-lg text-sm">
+                          اضغط لشراء الدرس للمشاهدة
+                        </div>
+                      </div>
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                        <Clock className="h-3 w-3 inline mr-1" />
+                        45 دقيقة
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -327,6 +382,7 @@ const LessonsPage = () => {
               <div className="flex space-x-2">
                 <Link to={`/lessons/${lesson._id}`} className="flex-1">
                   <Button variant="outline" className="w-full">
+                    <Eye className="h-4 w-4 ml-2" />
                     عرض التفاصيل
                   </Button>
                 </Link>
@@ -348,7 +404,10 @@ const LessonsPage = () => {
                         جاري التوجيه...
                       </>
                     ) : (
-                      'شراء الدرس'
+                      <>
+                        <ShoppingBag className="h-4 w-4 ml-2" />
+                        شراء الدرس
+                      </>
                     )}
                   </Button>
                 )}
@@ -377,16 +436,31 @@ const LessonsPage = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: index * 0.05 }}
       >
-        <Card className="mb-4 hover:shadow-md transition-shadow">
+        <Card className="mb-4 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 flex-1">
                 <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                  <Play className="h-8 w-8 text-blue-600" />
+                  {isPurchased ? (
+                    <YouTubeSecurePlayer 
+                      videoId={extractYouTubeId(lesson.video)}
+                      title={lesson.title}
+                    />
+                  ) : (
+                    <Play className="h-8 w-8 text-blue-600" />
+                  )}
                 </div>
                 
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-1">{lesson.title}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-lg font-semibold">{lesson.title}</h3>
+                    {isPurchased && (
+                      <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs">
+                        <Check className="h-3 w-3 ml-1" />
+                        مشترى
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-gray-600 dark:text-gray-300 text-sm mb-2 line-clamp-1">
                     {lesson.description}
                   </p>
@@ -416,13 +490,15 @@ const LessonsPage = () => {
                 <div className="flex space-x-2">
                   <Link to={`/lessons/${lesson._id}`}>
                     <Button variant="outline" size="sm">
-                      عرض التفاصيل
+                      <Eye className="h-4 w-4 ml-2" />
+                      التفاصيل
                     </Button>
                   </Link>
                   
                   {isPurchased ? (
                     <Button size="sm" variant="outline" disabled>
                       <Check className="h-4 w-4" />
+                      تم الشراء
                     </Button>
                   ) : (
                     <Button 
@@ -433,7 +509,10 @@ const LessonsPage = () => {
                       {isProcessing ? (
                         <Loader className="h-4 w-4 animate-spin" />
                       ) : (
-                        'شراء'
+                        <>
+                          <ShoppingBag className="h-4 w-4 ml-2" />
+                          شراء
+                        </>
                       )}
                     </Button>
                   )}
@@ -481,6 +560,32 @@ const LessonsPage = () => {
           <p className="text-gray-600 dark:text-gray-300">
             اكتشف مجموعة واسعة من الدروس التفاعلية المصممة لمساعدتك في تحقيق أهدافك الأكاديمية
           </p>
+        </motion.div>
+
+        {/* تبويبات التصفية */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-6"
+        >
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="all" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                جميع الدروس
+              </TabsTrigger>
+              <TabsTrigger value="purchased" className="flex items-center gap-2">
+                <Check className="h-4 w-4" />
+                الدروس المشتراة
+                {purchasedLessons.size > 0 && (
+                  <Badge variant="secondary" className="h-5 px-1 text-xs">
+                    {purchasedLessons.size}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </motion.div>
 
         <motion.div
@@ -570,9 +675,22 @@ const LessonsPage = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-6"
         >
-          <p className="text-gray-600 dark:text-gray-300">
-            عرض {filteredLessons.length} من {total || lessons.length} درس
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-600 dark:text-gray-300">
+              عرض {filteredLessons.length} من {total || lessons.length} درس
+              {activeTab === 'purchased' && ` (${purchasedLessons.size} مشترى)`}
+            </p>
+            
+            {activeTab === 'purchased' && purchasedLessons.size === 0 && (
+              <Button 
+                onClick={() => setActiveTab('all')}
+                variant="outline"
+                size="sm"
+              >
+                تصفح جميع الدروس
+              </Button>
+            )}
+          </div>
         </motion.div>
 
         {filteredLessons.length > 0 ? (
@@ -591,19 +709,21 @@ const LessonsPage = () => {
               </div>
             )}
 
-            <div className="mt-8 flex justify-center items-center space-x-3">
-              {isLoadingMore ? (
-                <Button variant="outline" disabled>
-                  <LoadingSpinner size="sm" /> جاري التحميل...
-                </Button>
-              ) : (
-                page < totalPages && (
-                  <Button onClick={loadMore}>
-                    تحميل المزيد
+            {activeTab === 'all' && (
+              <div className="mt-8 flex justify-center items-center space-x-3">
+                {isLoadingMore ? (
+                  <Button variant="outline" disabled>
+                    <LoadingSpinner size="sm" /> جاري التحميل...
                   </Button>
-                )
-              )}
-            </div>
+                ) : (
+                  page < totalPages && (
+                    <Button onClick={loadMore}>
+                      تحميل المزيد
+                    </Button>
+                  )
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <motion.div
@@ -614,17 +734,27 @@ const LessonsPage = () => {
           >
             <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              لا توجد دروس متاحة
+              {activeTab === 'purchased' ? 'لا توجد دروس مشتراة' : 'لا توجد دروس متاحة'}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              جرب تغيير معايير البحث أو الفلترة
+              {activeTab === 'purchased' 
+                ? 'لم تشتري أي دروس بعد. ابدأ بتصفح الدروس المتاحة وشراء ما تحتاجه.'
+                : 'جرب تغيير معايير البحث أو الفلترة'
+              }
             </p>
-            <Button onClick={() => {
-              setSearchQuery('')
-              setSelectedClassLevel('all')
-            }}>
-              إعادة تعيين الفلاتر
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => {
+                setSearchQuery('')
+                setSelectedClassLevel('all')
+              }}>
+                إعادة تعيين الفلاتر
+              </Button>
+              {activeTab === 'purchased' && (
+                <Button variant="outline" onClick={() => setActiveTab('all')}>
+                  تصفح جميع الدروس
+                </Button>
+              )}
+            </div>
           </motion.div>
         )}
       </div>
