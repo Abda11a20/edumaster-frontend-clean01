@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { 
@@ -18,7 +18,9 @@ import {
   Check,
   X,
   ShoppingBag,
-  Eye
+  Eye,
+  ChevronDown,
+  RefreshCw
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,7 +64,10 @@ const LessonsPage = () => {
   const [viewMode, setViewMode] = useState('grid')
   const [processingLessonId, setProcessingLessonId] = useState(null)
   const [purchasedLessons, setPurchasedLessons] = useState(new Set())
-  const [activeTab, setActiveTab] = useState('all') // 'all' أو 'purchased'
+  const [activeTab, setActiveTab] = useState('all')
+  
+  // حالة إدارة تشغيل الفيديو
+  const [activeVideoId, setActiveVideoId] = useState(null)
 
   // pagination states
   const [page, setPage] = useState(1)
@@ -79,6 +84,16 @@ const LessonsPage = () => {
     { value: 'Grade 2 Secondary', label: 'الصف الثاني الثانوي' },
     { value: 'Grade 3 Secondary', label: 'الصف الثالث الثانوي' }
   ]
+
+  // دالة إدارة تشغيل الفيديو
+  const handleVideoPlay = useCallback((lessonId) => {
+    setActiveVideoId(prevId => {
+      if (prevId === lessonId) {
+        return null; // إيقاف الفيديو الحالي إذا كان نفسه
+      }
+      return lessonId; // تشغيل الفيديو الجديد
+    });
+  }, []);
 
   // دالة تحميل صفحة من الدروس
   const fetchLessonsPage = async (p = 1, append = false) => {
@@ -174,6 +189,14 @@ const LessonsPage = () => {
         variant: 'destructive'
       })
     }
+  }
+
+  // دالة إعادة تعيين الفلاتر
+  const resetFilters = () => {
+    setSearchQuery('')
+    setSelectedClassLevel('all')
+    setSortBy('title')
+    setSortOrder('asc')
   }
 
   useEffect(() => {
@@ -298,31 +321,33 @@ const LessonsPage = () => {
   const LessonCard = ({ lesson, index }) => {
     const isPurchased = purchasedLessons.has(lesson._id)
     const isProcessing = processingLessonId === lesson._id
+    const isVideoPlaying = activeVideoId === lesson._id
     
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: index * 0.1 }}
+        className="h-full"
       >
-        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800">
+        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800 flex flex-col">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-lg mb-2 group-hover:text-blue-600 transition-colors">
+                <CardTitle className="text-base sm:text-lg mb-1 sm:mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">
                   {lesson.title}
                 </CardTitle>
-                <CardDescription className="text-sm line-clamp-2">
+                <CardDescription className="text-xs sm:text-sm line-clamp-2">
                   {lesson.description}
                 </CardDescription>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <Badge variant="secondary">
+              <div className="flex flex-col items-end gap-1 sm:gap-2">
+                <Badge variant="secondary" className="text-xs px-2 py-0 h-5">
                   {lesson.classLevel}
                 </Badge>
                 {isPurchased && (
-                  <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                    <Check className="h-3 w-3 ml-1" />
+                  <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs px-2 py-0 h-5">
+                    <Check className="h-2.5 w-2.5 ml-0.5" />
                     مشترى
                   </Badge>
                 )}
@@ -330,29 +355,32 @@ const LessonsPage = () => {
             </div>
           </CardHeader>
           
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="flex-1 flex flex-col">
+            <div className="space-y-3 sm:space-y-4 flex-1">
               {lesson.video && (
                 <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-video border-2 border-gray-200 dark:border-gray-700">
                   {isPurchased ? (
                     <YouTubeSecurePlayer 
                       videoId={extractYouTubeId(lesson.video)}
                       title={lesson.title}
+                      isPlaying={isVideoPlaying}
+                      onPlay={() => handleVideoPlay(lesson._id)}
+                      className="rounded-lg"
                     />
                   ) : (
                     <>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Play className="h-8 w-8 text-white ml-1" />
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Play className="h-6 w-6 sm:h-8 sm:w-8 text-white ml-0.5 sm:ml-1" />
                         </div>
                       </div>
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                        <div className="bg-black/70 text-white px-3 py-2 rounded-lg text-sm">
+                        <div className="bg-black/70 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm text-center">
                           اضغط لشراء الدرس للمشاهدة
                         </div>
                       </div>
-                      <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                        <Clock className="h-3 w-3 inline mr-1" />
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs">
+                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 inline mr-0.5 sm:mr-1" />
                         45 دقيقة
                       </div>
                     </>
@@ -361,52 +389,55 @@ const LessonsPage = () => {
               )}
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 sm:space-x-4">
                   <div className="flex items-center">
-                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                    <span className="text-sm text-gray-600 dark:text-gray-300 mr-1">4.8</span>
+                    <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-current" />
+                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">4.8</span>
                   </div>
                   <div className="flex items-center">
-                    <BookOpen className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600 dark:text-gray-300 mr-1">120 طالب</span>
+                    <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">120 طالب</span>
                   </div>
                 </div>
                 
                 <div className="flex items-center">
-                  <DollarSign className="h-4 w-4 text-green-600" />
-                  <span className="text-lg font-bold text-green-600">{lesson.price}</span>
-                  <span className="text-sm text-gray-500 mr-1">ج.م</span>
+                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                  <span className="text-base sm:text-lg font-bold text-green-600">{lesson.price}</span>
+                  <span className="text-xs sm:text-sm text-gray-500 mr-0.5 sm:mr-1">ج.م</span>
                 </div>
               </div>
 
-              <div className="flex space-x-2">
+              <div className="flex space-x-1 sm:space-x-2 mt-auto">
                 <Link to={`/lessons/${lesson._id}`} className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    <Eye className="h-4 w-4 ml-2" />
-                    عرض التفاصيل
+                  <Button variant="outline" className="w-full text-xs sm:text-sm h-8 sm:h-10">
+                    <Eye className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+                    <span className="hidden xs:inline">عرض التفاصيل</span>
+                    <span className="xs:hidden">التفاصيل</span>
                   </Button>
                 </Link>
                 
                 {isPurchased ? (
-                  <Button className="flex-1" variant="outline" disabled>
-                    <Check className="h-4 w-4 ml-2" />
-                    تم الشراء
+                  <Button className="flex-1 text-xs sm:text-sm h-8 sm:h-10" variant="outline" disabled>
+                    <Check className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+                    <span className="hidden xs:inline">تم الشراء</span>
+                    <span className="xs:hidden">مشترى</span>
                   </Button>
                 ) : (
                   <Button 
                     onClick={() => handlePurchaseLesson(lesson._id, lesson.title)}
-                    className="flex-1"
+                    className="flex-1 text-xs sm:text-sm h-8 sm:h-10"
                     disabled={isProcessing}
                   >
                     {isProcessing ? (
                       <>
-                        <Loader className="h-4 w-4 ml-2 animate-spin" />
-                        جاري التوجيه...
+                        <Loader className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 animate-spin" />
+                        <span>جاري...</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingBag className="h-4 w-4 ml-2" />
-                        شراء الدرس
+                        <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+                        <span className="hidden xs:inline">شراء الدرس</span>
+                        <span className="xs:hidden">شراء</span>
                       </>
                     )}
                   </Button>
@@ -414,8 +445,8 @@ const LessonsPage = () => {
               </div>
               
               {isProcessing && (
-                <div className="text-center text-sm text-blue-600 dark:text-blue-400">
-                  <ExternalLink className="h-4 w-4 inline ml-1" />
+                <div className="text-center text-xs sm:text-sm text-blue-600 dark:text-blue-400">
+                  <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 inline ml-0.5 sm:ml-1" />
                   سيتم فتح صفحة الدفع في نافذة جديدة
                 </div>
               )}
@@ -429,6 +460,7 @@ const LessonsPage = () => {
   const LessonListItem = ({ lesson, index }) => {
     const isPurchased = purchasedLessons.has(lesson._id)
     const isProcessing = processingLessonId === lesson._id
+    const isVideoPlaying = activeVideoId === lesson._id
     
     return (
       <motion.div
@@ -436,82 +468,90 @@ const LessonsPage = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: index * 0.05 }}
       >
-        <Card className="mb-4 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 flex-1">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+        <Card className="mb-3 sm:mb-4 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
                   {isPurchased ? (
-                    <YouTubeSecurePlayer 
-                      videoId={extractYouTubeId(lesson.video)}
-                      title={lesson.title}
-                    />
+                    <div className="w-full h-full">
+                      <YouTubeSecurePlayer 
+                        videoId={extractYouTubeId(lesson.video)}
+                        title={lesson.title}
+                        isPlaying={isVideoPlaying}
+                        onPlay={() => handleVideoPlay(lesson._id)}
+                        className="rounded-lg"
+                      />
+                    </div>
                   ) : (
-                    <Play className="h-8 w-8 text-blue-600" />
+                    <Play className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
                   )}
                 </div>
                 
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg font-semibold">{lesson.title}</h3>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold truncate">{lesson.title}</h3>
                     {isPurchased && (
-                      <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs">
-                        <Check className="h-3 w-3 ml-1" />
+                      <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs px-2 py-0 h-5">
+                        <Check className="h-2.5 w-2.5 ml-0.5" />
                         مشترى
                       </Badge>
                     )}
                   </div>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-2 line-clamp-1">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 sm:mb-2 line-clamp-1">
                     {lesson.description}
                   </p>
-                  <div className="flex items-center space-x-4">
-                    <Badge variant="secondary">{lesson.classLevel}</Badge>
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                    <Badge variant="secondary" className="text-xs px-2 py-0 h-5">{lesson.classLevel}</Badge>
                     <div className="flex items-center">
-                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                      <span className="text-sm text-gray-600 dark:text-gray-300 mr-1">4.8</span>
+                      <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-current" />
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">4.8</span>
                     </div>
                     <div className="flex items-center">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600 dark:text-gray-300 mr-1">45 دقيقة</span>
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">45 دقيقة</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                 <div className="text-right">
-                  <div className="flex items-center">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    <span className="text-xl font-bold text-green-600">{lesson.price}</span>
-                    <span className="text-sm text-gray-500 mr-1">ج.م</span>
+                  <div className="flex items-center justify-end">
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                    <span className="text-lg sm:text-xl font-bold text-green-600">{lesson.price}</span>
+                    <span className="text-xs sm:text-sm text-gray-500 mr-0.5 sm:mr-1">ج.م</span>
                   </div>
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="flex space-x-1 sm:space-x-2">
                   <Link to={`/lessons/${lesson._id}`}>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 ml-2" />
-                      التفاصيل
+                    <Button variant="outline" size="sm" className="h-8 text-xs sm:text-sm">
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" />
+                      <span className="hidden sm:inline">التفاصيل</span>
+                      <span className="sm:hidden">عرض</span>
                     </Button>
                   </Link>
                   
                   {isPurchased ? (
-                    <Button size="sm" variant="outline" disabled>
-                      <Check className="h-4 w-4" />
-                      تم الشراء
+                    <Button size="sm" variant="outline" disabled className="h-8 text-xs sm:text-sm">
+                      <Check className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">تم الشراء</span>
                     </Button>
                   ) : (
                     <Button 
                       size="sm"
                       onClick={() => handlePurchaseLesson(lesson._id, lesson.title)}
                       disabled={isProcessing}
+                      className="h-8 text-xs sm:text-sm"
                     >
                       {isProcessing ? (
-                        <Loader className="h-4 w-4 animate-spin" />
+                        <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                       ) : (
                         <>
-                          <ShoppingBag className="h-4 w-4 ml-2" />
-                          شراء
+                          <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" />
+                          <span className="hidden sm:inline">شراء</span>
+                          <span className="sm:hidden">شراء</span>
                         </>
                       )}
                     </Button>
@@ -521,8 +561,8 @@ const LessonsPage = () => {
             </div>
             
             {isProcessing && (
-              <div className="mt-3 text-center text-sm text-blue-600 dark:text-blue-400">
-                <ExternalLink className="h-4 w-4 inline ml-1" />
+              <div className="mt-2 text-center text-xs sm:text-sm text-blue-600 dark:text-blue-400">
+                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 inline ml-0.5 sm:ml-1" />
                 سيتم فتح صفحة الدفع في نافذة جديدة
               </div>
             )}
@@ -547,17 +587,17 @@ const LessonsPage = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-8"
+          className="mb-4 sm:mb-6"
         >
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
             الدروس التعليمية
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-300">
             اكتشف مجموعة واسعة من الدروس التفاعلية المصممة لمساعدتك في تحقيق أهدافك الأكاديمية
           </p>
         </motion.div>
@@ -567,19 +607,19 @@ const LessonsPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="all" className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
+            <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-4">
+              <TabsTrigger value="all" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
                 جميع الدروس
               </TabsTrigger>
-              <TabsTrigger value="purchased" className="flex items-center gap-2">
-                <Check className="h-4 w-4" />
+              <TabsTrigger value="purchased" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                 الدروس المشتراة
                 {purchasedLessons.size > 0 && (
-                  <Badge variant="secondary" className="h-5 px-1 text-xs">
+                  <Badge variant="secondary" className="h-4 sm:h-5 px-1 text-xs mr-1 sm:mr-2">
                     {purchasedLessons.size}
                   </Badge>
                 )}
@@ -588,95 +628,131 @@ const LessonsPage = () => {
           </Tabs>
         </motion.div>
 
+        {/* شريط البحث والفلترة */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-8"
+          className="mb-4 sm:mb-6"
         >
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
+          <Card className="overflow-hidden">
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
+                {/* البحث */}
+                <div className="w-full">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                     <Input
                       placeholder="البحث في الدروس..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
+                      className="pr-8 sm:pr-10 pl-3 text-xs sm:text-sm"
                     />
                   </div>
                 </div>
 
-                <Select value={selectedClassLevel} onValueChange={setSelectedClassLevel}>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="المرحلة الدراسية" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classLevels.map((level) => (
-                      <SelectItem key={level.value} value={level.value}>
-                        {level.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* صف الفلاتر */}
+                <div className="grid grid-cols-2 md:flex md:flex-row gap-2 sm:gap-3">
+                  {/* المرحلة الدراسية */}
+                  <div className="col-span-2 md:w-40 lg:w-48">
+                    <Select value={selectedClassLevel} onValueChange={setSelectedClassLevel}>
+                      <SelectTrigger className="w-full text-xs sm:text-sm">
+                        <SelectValue placeholder="المرحلة الدراسية" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {classLevels.map((level) => (
+                          <SelectItem key={level.value} value={level.value} className="text-xs sm:text-sm">
+                            {level.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-full md:w-32">
-                    <SelectValue placeholder="ترتيب حسب" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="title">العنوان</SelectItem>
-                    <SelectItem value="price">السعر</SelectItem>
-                    <SelectItem value="classLevel">المرحلة</SelectItem>
-                  </SelectContent>
-                </Select>
+                  {/* الترتيب */}
+                  <div className="col-span-1 md:w-32">
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="w-full text-xs sm:text-sm">
+                        <SelectValue placeholder="ترتيب حسب" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="title" className="text-xs sm:text-sm">العنوان</SelectItem>
+                        <SelectItem value="price" className="text-xs sm:text-sm">السعر</SelectItem>
+                        <SelectItem value="classLevel" className="text-xs sm:text-sm">المرحلة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="w-full md:w-auto"
-                >
-                  {sortOrder === 'asc' ? (
-                    <SortAsc className="h-4 w-4" />
-                  ) : (
-                    <SortDesc className="h-4 w-4" />
-                  )}
-                </Button>
+                  {/* زر الترتيب */}
+                  <div className="col-span-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                      className="w-full md:w-auto text-xs sm:text-sm h-9 sm:h-10"
+                    >
+                      {sortOrder === 'asc' ? (
+                        <SortAsc className="h-3 w-3 sm:h-4 sm:w-4" />
+                      ) : (
+                        <SortDesc className="h-3 w-3 sm:h-4 sm:w-4" />
+                      )}
+                      <span className="mr-1 sm:mr-2">
+                        {sortOrder === 'asc' ? 'تصاعدي' : 'تنازلي'}
+                      </span>
+                    </Button>
+                  </div>
 
-                <div className="flex border rounded-md">
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="rounded-r-none"
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className="rounded-l-none"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
+                  {/* أزرار عرض */}
+                  <div className="col-span-2 md:col-span-1">
+                    <div className="flex border rounded-md h-9 sm:h-10">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('grid')}
+                        className="rounded-l-none rounded-r-none flex-1 sm:flex-none text-xs sm:text-sm"
+                      >
+                        <Grid className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="mr-1 sm:mr-2 hidden sm:inline">شبكة</span>
+                      </Button>
+                      <Button
+                        variant={viewMode === 'list' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('list')}
+                        className="rounded-r-none rounded-l-none flex-1 sm:flex-none text-xs sm:text-sm"
+                      >
+                        <List className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="mr-1 sm:mr-2 hidden sm:inline">قائمة</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* زر إعادة التعيين */}
+                  <div className="col-span-2 md:col-span-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={resetFilters}
+                      className="w-full md:w-auto text-xs sm:text-sm h-9 sm:h-10"
+                    >
+                      <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+                      إعادة تعيين
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
+        {/* معلومات العدد */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-6"
+          className="mb-3 sm:mb-4"
         >
-          <div className="flex items-center justify-between">
-            <p className="text-gray-600 dark:text-gray-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
               عرض {filteredLessons.length} من {total || lessons.length} درس
               {activeTab === 'purchased' && ` (${purchasedLessons.size} مشترى)`}
             </p>
@@ -686,6 +762,7 @@ const LessonsPage = () => {
                 onClick={() => setActiveTab('all')}
                 variant="outline"
                 size="sm"
+                className="text-xs sm:text-sm h-8"
               >
                 تصفح جميع الدروس
               </Button>
@@ -693,10 +770,11 @@ const LessonsPage = () => {
           </div>
         </motion.div>
 
+        {/* عرض الدروس */}
         {filteredLessons.length > 0 ? (
           <div>
             {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {filteredLessons.map((lesson, index) => (
                   <LessonCard key={lesson._id} lesson={lesson} index={index} />
                 ))}
@@ -709,15 +787,20 @@ const LessonsPage = () => {
               </div>
             )}
 
+            {/* تحميل المزيد */}
             {activeTab === 'all' && (
-              <div className="mt-8 flex justify-center items-center space-x-3">
+              <div className="mt-6 sm:mt-8 flex justify-center items-center">
                 {isLoadingMore ? (
-                  <Button variant="outline" disabled>
+                  <Button variant="outline" disabled className="text-xs sm:text-sm">
                     <LoadingSpinner size="sm" /> جاري التحميل...
                   </Button>
                 ) : (
                   page < totalPages && (
-                    <Button onClick={loadMore}>
+                    <Button 
+                      onClick={loadMore}
+                      className="text-xs sm:text-sm"
+                    >
+                      <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
                       تحميل المزيد
                     </Button>
                   )
@@ -730,27 +813,33 @@ const LessonsPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="text-center py-12"
+            className="text-center py-8 sm:py-12"
           >
-            <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2">
               {activeTab === 'purchased' ? 'لا توجد دروس مشتراة' : 'لا توجد دروس متاحة'}
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 max-w-md mx-auto">
               {activeTab === 'purchased' 
                 ? 'لم تشتري أي دروس بعد. ابدأ بتصفح الدروس المتاحة وشراء ما تحتاجه.'
                 : 'جرب تغيير معايير البحث أو الفلترة'
               }
             </p>
-            <div className="flex gap-2 justify-center">
-              <Button onClick={() => {
-                setSearchQuery('')
-                setSelectedClassLevel('all')
-              }}>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button 
+                onClick={resetFilters}
+                size="sm"
+                className="text-xs sm:text-sm"
+              >
                 إعادة تعيين الفلاتر
               </Button>
               {activeTab === 'purchased' && (
-                <Button variant="outline" onClick={() => setActiveTab('all')}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActiveTab('all')}
+                  size="sm"
+                  className="text-xs sm:text-sm"
+                >
                   تصفح جميع الدروس
                 </Button>
               )}

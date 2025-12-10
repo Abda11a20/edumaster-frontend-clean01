@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, BarChart3, BookOpen, Search, Filter, CheckCircle, XCircle } from 'lucide-react'
+import { Calendar, Clock, BarChart3, BookOpen, Search, Filter, CheckCircle, XCircle, Users, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useToast } from '@/hooks/use-toast'
 import { examsAPI } from '../services/api'
 import { timeService } from '../services/timeService'
@@ -20,80 +21,117 @@ const ExamsPage = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [showActiveOnly, setShowActiveOnly] = useState(true)
+  const [error, setError] = useState(null)
   const { toast } = useToast()
 
-  useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        setIsLoading(true)
-        const response = await examsAPI.getAllExams()
-        
-        // معالجة البيانات القادمة من الخادم
-        let examsData = [];
-        
-        if (Array.isArray(response)) {
-          examsData = response;
-        } else if (response && typeof response === 'object') {
-          // تحليل الهيكل المختلف للبيانات
-          if (response.exams && Array.isArray(response.exams)) {
-            examsData = response.exams;
-          } else if (response.data && Array.isArray(response.data)) {
-            examsData = response.data;
-          } else {
-            // إذا كان كائنًا واحدًا، حوّله إلى مصفوفة
-            examsData = [response];
-          }
-        }
-        
-        // معالجة التواريخ لضمان صحتها
-        const processedExams = examsData.map(exam => ({
-          _id: exam._id,
-          title: exam.title || 'بدون عنوان',
-          description: exam.description || 'لا يوجد وصف',
-          subject: exam.subject || exam.classLevel || 'غير محدد',
-          duration: exam.duration || 0,
-          questionsCount: exam.questionsCount || exam.numberOfQuestions || 0,
-          totalScore: exam.totalScore || 100,
-          deadline: exam.endDate || exam.deadline,
-          startDate: exam.startDate,
-          endDate: exam.endDate,
-          isPublished: exam.isPublished || false
-        }))
-        
-        setExams(processedExams)
-        setFilteredExams(processedExams)
-      } catch (error) {
-        console.error('Error fetching exams:', error)
+  const fetchExams = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      // التحقق من وجود التوكن
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('يجب تسجيل الدخول للوصول إلى الامتحانات')
         toast({
-          title: 'خطأ في تحميل الامتحانات',
-          description: 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى',
+          title: 'يجب تسجيل الدخول',
+          description: 'يرجى تسجيل الدخول للوصول إلى الامتحانات',
           variant: 'destructive'
         })
+        return
+      }
+
+      console.log('📡 جلب الامتحانات...')
+      
+      // جلب الامتحانات
+      const examsData = await examsAPI.getAllExams({ page: 1, limit: 100 })
+      
+      console.log('📦 بيانات الامتحانات المستلمة:', examsData)
+      
+      if (!examsData || examsData.length === 0) {
+        setError('لا توجد امتحانات متاحة في الوقت الحالي')
         setExams([])
         setFilteredExams([])
-      } finally {
-        setIsLoading(false)
+        return
       }
+      
+      // معالجة البيانات
+      const processedExams = examsData.map(exam => {
+        // استخراج بيانات الامتحان من الهياكل المختلفة
+        const examData = exam.exam || exam.data || exam
+        
+        return {
+          _id: examData._id || exam._id,
+          title: examData.title || examData.name || 'بدون عنوان',
+          description: examData.description || 'لا يوجد وصف',
+          subject: examData.subject || examData.classLevel || 'غير محدد',
+          duration: examData.duration || 60,
+          questionsCount: examData.questionsCount || examData.numberOfQuestions || 
+                        (examData.questions ? examData.questions.length : 0),
+          totalScore: examData.totalScore || 100,
+          deadline: examData.endDate || examData.deadline,
+          startDate: examData.startDate,
+          endDate: examData.endDate || examData.deadline,
+          isPublished: examData.isPublished !== false,
+          classLevel: examData.classLevel,
+          passingScore: examData.passingScore || 60,
+          createdAt: examData.createdAt
+        }
+      })
+      
+      console.log('✅ الامتحانات بعد المعالجة:', processedExams)
+      
+      setExams(processedExams)
+      setFilteredExams(processedExams)
+      
+    } catch (error) {
+      console.error('❌ خطأ في جلب الامتحانات:', error)
+      
+      let errorMessage = 'خطأ في تحميل الامتحانات'
+      
+      if (error.message?.includes('Session expired') || error.status === 401) {
+        errorMessage = 'انتهت جلسة العمل. يرجى تسجيل الدخول مرة أخرى'
+        localStorage.removeItem('token')
+        window.location.href = '/login'
+      } else if (error.message?.includes('Network')) {
+        errorMessage = 'خطأ في الاتصال بالإنترنت'
+      } else {
+        errorMessage = error.message || 'حدث خطأ غير معروف'
+      }
+      
+      setError(errorMessage)
+      toast({
+        title: 'خطأ',
+        description: errorMessage,
+        variant: 'destructive'
+      })
+      
+      setExams([])
+      setFilteredExams([])
+    } finally {
+      setIsLoading(false)
     }
-
-    fetchExams()
-  }, [toast])
+  }
 
   useEffect(() => {
-    let filtered = Array.isArray(exams) ? exams.slice() : []
+    fetchExams()
+  }, [])
+
+  useEffect(() => {
+    let filtered = [...exams]
     
     // فلترة حسب حالة النشاط (لم تنته بعد)
     if (showActiveOnly) {
       const now = new Date()
       filtered = filtered.filter(exam => {
-        if (!exam.endDate) return true // إذا لم يكن هناك تاريخ انتهاء، نعتبره نشطًا
+        if (!exam.endDate) return true
         
         try {
           const endDate = new Date(exam.endDate)
           return endDate > now
         } catch (error) {
           console.error('Error parsing date:', error)
-          return true // في حالة خطأ في التاريخ، نعرض الامتحان
+          return true
         }
       })
     }
@@ -122,14 +160,40 @@ const ExamsPage = () => {
       }
     }
     
+    const getTimeRemaining = () => {
+      if (!exam.endDate) return 'غير محدد'
+      
+      try {
+        const endDate = new Date(exam.endDate)
+        const now = new Date()
+        const diffMs = endDate - now
+        
+        if (diffMs <= 0) return 'منتهي'
+        
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+        const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        
+        if (diffDays > 0) {
+          return `${diffDays} يوم ${diffHours} ساعة`
+        } else if (diffHours > 0) {
+          return `${diffHours} ساعة`
+        } else {
+          const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+          return `${diffMinutes} دقيقة`
+        }
+      } catch (error) {
+        return 'غير محدد'
+      }
+    }
+    
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: index * 0.1 }}
       >
-        <Card className="h-full hover:shadow-lg transition-all duration-300">
-          <CardHeader>
+        <Card className="h-full hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
+          <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -159,15 +223,41 @@ const ExamsPage = () => {
           <CardContent>
             <div className="space-y-4">
               {/* معلومات الامتحان */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 text-blue-500 ml-2" />
+                  <div>
+                    <p className="text-gray-500">المدة</p>
+                    <p className="font-semibold">{exam.duration} دقيقة</p>
+                  </div>
+                </div>
                 
+                <div className="flex items-center">
+                  <BookOpen className="h-4 w-4 text-green-500 ml-2" />
+                  <div>
+                    <p className="text-gray-500">الأسئلة</p>
+                    <p className="font-semibold">{exam.questionsCount}</p>
+                  </div>
+                </div>
                 
+                <div className="flex items-center">
+                  <BarChart3 className="h-4 w-4 text-yellow-500 ml-2" />
+                  <div>
+                    <p className="text-gray-500">الدرجة</p>
+                    <p className="font-semibold">{exam.totalScore}</p>
+                  </div>
+                </div>
                 
-                  
-                
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 text-purple-500 ml-2" />
+                  <div>
+                    <p className="text-gray-500">الوقت المتبقي</p>
+                    <p className="font-semibold">{getTimeRemaining()}</p>
+                  </div>
+                </div>
               </div>
               
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 rtl:space-x-reverse">
                 <Link to={`/exams/${exam._id}`} className="flex-1">
                   <Button variant="outline" className="w-full">
                     عرض التفاصيل
@@ -217,6 +307,20 @@ const ExamsPage = () => {
           </p>
         </motion.div>
 
+        {/* Error Alert */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
         {/* Search and Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -236,7 +340,7 @@ const ExamsPage = () => {
                 />
               </div>
               
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center space-x-2">
                   <Filter className="h-4 w-4 text-gray-500" />
                   <Label htmlFor="active-only" className="text-sm text-gray-600 dark:text-gray-300">
@@ -249,9 +353,20 @@ const ExamsPage = () => {
                   />
                 </div>
                 
-                <Badge variant={showActiveOnly ? "default" : "outline"} className="ml-2">
-                  {showActiveOnly ? "النشطة فقط" : "جميع الامتحانات"}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={fetchExams}
+                    className="flex items-center"
+                  >
+                    <span>تحديث</span>
+                  </Button>
+                  
+                  <Badge variant={showActiveOnly ? "default" : "outline"}>
+                    {showActiveOnly ? "النشطة فقط" : "جميع الامتحانات"}
+                  </Badge>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -278,7 +393,7 @@ const ExamsPage = () => {
 
         {/* Exams Grid */}
         {filteredExams.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-col-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredExams.map((exam, index) => (
               <ExamCard key={exam._id} exam={exam} index={index} />
             ))}
@@ -292,11 +407,17 @@ const ExamsPage = () => {
           >
             <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {showActiveOnly ? 'لا توجد امتحانات نشطة' : 'لا توجد امتحانات متاحة'}
+              {exams.length === 0 ? 'لا توجد امتحانات متاحة' : 'لم يتم العثور على امتحانات'}
             </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              {showActiveOnly ? 'جرب إلغاء فلتر "النشطة فقط" لعرض جميع الامتحانات' : 'جرب تغيير معايير البحث'}
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              {exams.length === 0 
+                ? 'لا توجد امتحانات في النظام حالياً' 
+                : 'جرب إلغاء الفلتر أو تغيير معايير البحث'
+              }
             </p>
+            <Button onClick={fetchExams}>
+              تحديث القائمة
+            </Button>
           </motion.div>
         )}
       </div>

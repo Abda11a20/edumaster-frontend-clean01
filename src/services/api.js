@@ -1,4 +1,3 @@
-
 /**
  * API Base URL configuration
  * @constant {string}
@@ -83,8 +82,9 @@ const getAuthHeaders = () => {
  * @throws {Error} When response is not OK or security check fails
  */
 const handleResponse = async (response) => {
-  // Handle 404 responses
+  // Handle 404 responses - لا نرمي خطأ، نرجع null
   if (response.status === 404) {
+    console.log('API: 404 response for', response.url);
     return null;
   }
 
@@ -92,21 +92,32 @@ const handleResponse = async (response) => {
   if (response.status === 401) {
     secureStorage.remove('token');
     secureStorage.remove('csrfToken');
-    throw new Error('Session expired. Please log in again.');
+    const error = new Error('Session expired. Please log in again.');
+    error.status = 401;
+    throw error;
   }
 
   // Handle rate limiting (429 Too Many Requests)
   if (response.status === 429) {
     const retryAfter = response.headers.get('Retry-After') || 5;
-    throw new Error(`Too many requests. Please try again after ${retryAfter} seconds.`);
+    const error = new Error(`Too many requests. Please try again after ${retryAfter} seconds.`);
+    error.status = 429;
+    throw error;
   }
 
   // Handle other error responses
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = {};
+    }
+    
     const errorMessage = errorData.message || errorData.error || `Connection error: ${response.status}`;
     const error = new Error(errorMessage);
     error.status = response.status;
+    error.data = errorData;
     throw error;
   }
 
@@ -120,7 +131,7 @@ const handleResponse = async (response) => {
   }
 
   // Return the appropriate data structure
-  return data.data || data.lessons || data.exams || data.questions || data.users || data.admins || data;
+  return data;
 };
 
 /**
@@ -180,26 +191,13 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
     // Retry on network errors or 5xx responses
     if (retryCount < SECURITY_CONFIG.MAX_RETRIES &&
         (!error.status || (error.status >= 500 && error.status < 600))) {
+      console.log(`Retrying request to ${endpoint}, attempt ${retryCount + 1}`);
       return apiRequest(endpoint, options, retryCount + 1);
     }
 
+    console.error('API request failed:', error);
     throw error;
   }
-};
-
-// Security middleware for requests
-const withSecurity = (fn) => {
-  return async (...args) => {
-    try {
-      return await fn(...args);
-    } catch (error) {
-      // Log security-related errors
-      if (error.status === 401 || error.status === 403) {
-        console.warn('Security alert:', error.message);
-      }
-      throw error;
-    }
-  };
 };
 
 export const authAPI = {
@@ -207,270 +205,425 @@ export const authAPI = {
     return apiRequest('/auth/login', {
       method: 'POST',
       body: credentials
-    })
+    });
   },
 
   register: async (userData) => {
     return apiRequest('/auth/signup', {
       method: 'POST',
       body: userData
-    })
+    });
   },
 
   forgotPassword: async (email) => {
     return apiRequest('/user/forgot-password', {
       method: 'POST',
       body: { email }
-    })
+    });
   },
 
   resetPassword: async (resetData) => {
     return apiRequest('/user/reset-password', {
       method: 'POST',
       body: resetData
-    })
+    });
   },
 
   getProfile: async () => {
-    const response = await apiRequest('/user/')
-    return response.data || response
+    const response = await apiRequest('/user/');
+    return response.data || response;
   },
 
   updateProfile: async (userId, profileData) => {
     return apiRequest(`/user/${userId}`, {
       method: 'PUT',
       body: profileData
-    })
+    });
   },
 
   updatePassword: async (passwordData) => {
     return apiRequest('/user/update-password', {
       method: 'PATCH',
       body: passwordData
-    })
+    });
   },
 
   deleteAccount: async () => {
     return apiRequest('/user/', {
       method: 'DELETE'
-    })
+    });
   }
-}
+};
 
 export const lessonsAPI = {
   getAllLessons: async ({ page = 1, limit = 10 } = {}) => {
-    return apiRequest(`/lesson?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`)
+    return apiRequest(`/lesson?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
   },
 
   getLessonById: async (id) => {
-    return apiRequest(`/lesson/${id}`)
+    return apiRequest(`/lesson/${id}`);
   },
 
   getPurchasedLessons: async () => {
-    const resp = await apiRequest('/lesson/')
-    let list = Array.isArray(resp) ? resp : (resp?.lessons || resp?.data || [])
+    const resp = await apiRequest('/lesson/');
+    let list = Array.isArray(resp) ? resp : (resp?.lessons || resp?.data || []);
     try {
-      const localRaw = localStorage.getItem('purchasedLessonIds')
-      const localIds = localRaw ? JSON.parse(localRaw) : []
+      const localRaw = localStorage.getItem('purchasedLessonIds');
+      const localIds = localRaw ? JSON.parse(localRaw) : [];
       if (Array.isArray(localIds) && localIds.length > 0) {
-        const existing = new Set((Array.isArray(list) ? list : []).map(l => l?._id))
+        const existing = new Set((Array.isArray(list) ? list : []).map(l => l?._id));
         const extras = localIds
           .filter(id => id && !existing.has(id))
-          .map(id => ({ _id: id, watched: false }))
-        list = Array.isArray(list) ? [...list, ...extras] : extras
+          .map(id => ({ _id: id, watched: false }));
+        list = Array.isArray(list) ? [...list, ...extras] : extras;
       }
     } catch (_) {}
-    return list
+    return list;
   },
 
   getUserProgress: async () => {
-    return apiRequest('/lesson/progress')
+    return apiRequest('/lesson/progress');
   },
 
   payForLesson: async (lessonId) => {
     return apiRequest(`/lesson/pay/${lessonId}`, {
       method: 'POST'
-    })
+    });
   },
 
   createLesson: async (lessonData) => {
     return apiRequest('/lesson', {
       method: 'POST',
       body: lessonData
-    })
+    });
   },
 
   updateLesson: async (id, lessonData) => {
     return apiRequest(`/lesson/${id}`, {
       method: 'PUT',
       body: lessonData
-    })
+    });
   },
 
   deleteLesson: async (id) => {
     return apiRequest(`/lesson/${id}`, {
       method: 'DELETE'
-    })
+    });
   }
-}
+};
 
 export const examsAPI = {
   getAllExams: async ({ page = 1, limit = 10 } = {}) => {
-    return apiRequest(`/exam?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`)
+    try {
+      const response = await apiRequest(`/exam?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
+      
+      // معالجة الاستجابة بمرونة
+      if (response === null) {
+        return []; // إذا كان 404
+      }
+      
+      // استخراج البيانات من الهياكل المختلفة
+      if (Array.isArray(response)) {
+        return response;
+      } else if (response && Array.isArray(response.data)) {
+        return response.data;
+      } else if (response && Array.isArray(response.exams)) {
+        return response.exams;
+      } else if (response && response.data && response.data.exams) {
+        return response.data.exams;
+      }
+      
+      // إذا كان كائن واحد
+      if (response && typeof response === 'object') {
+        // حاول استخراج أي مصفوفة
+        const keys = Object.keys(response);
+        for (const key of keys) {
+          if (Array.isArray(response[key])) {
+            return response[key];
+          }
+        }
+        // إذا لم توجد مصفوفة، ارجع مصفوفة تحتوي على الكائن
+        return [response];
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error in getAllExams:', error);
+      return [];
+    }
   },
 
   getExamById: async (id) => {
-    return apiRequest(`/exam/get/${id}`)
+    try {
+      const response = await apiRequest(`/exam/get/${id}`);
+      
+      if (response === null) {
+        throw new Error('Exam not found');
+      }
+      
+      // استخراج بيانات الامتحان من الهياكل المختلفة
+      if (response.exam) {
+        return { ...response, ...response.exam };
+      } else if (response.data) {
+        return response.data.exam || response.data;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Error in getExamById:', error);
+      throw error;
+    }
   },
 
   getUserProgress: async () => {
-    return apiRequest('/studentExam/progress')
+    try {
+      const response = await apiRequest('/studentExam/progress');
+      return response || { completedExams: [], scores: [] };
+    } catch (error) {
+      console.error('Error in getUserProgress:', error);
+      return { completedExams: [], scores: [] };
+    }
   },
 
   startExam: async (examId) => {
     return apiRequest(`/studentExam/start/${examId}`, {
       method: 'POST'
-    })
+    });
   },
 
   submitExam: async (examId, answers) => {
     return apiRequest(`/studentExam/submit/${examId}`, {
       method: 'POST',
       body: answers
-    })
+    });
   },
 
   getRemainingTime: async (examId) => {
     try {
-      // Prefer the backend's defined route first
-      return await apiRequest(`/studentExam/exams/remaining-time/${examId}`)
+      return await apiRequest(`/studentExam/exams/remaining-time/${examId}`);
     } catch (e) {
       // Fallback to alternative path if available on server
-      return await apiRequest(`/studentExam/remaining-time/${examId}`)
+      return await apiRequest(`/studentExam/remaining-time/${examId}`);
     }
   },
 
   // Admin: get all scores for an exam
   getExamScore: async (examId) => {
-    return apiRequest(`/studentExam/exams/${examId}`)
+    return apiRequest(`/studentExam/exams/${examId}`);
   },
 
-  // Student-specific score endpoint - fixed to handle 404 properly
+  // Student-specific score endpoint - handles 404 properly
   getStudentScore: async (examId) => {
-    // استخدام المسار الصحيح مباشرة - الـ 404 سيعالج في handleResponse
-    return await apiRequest(`/studentExam/exams/score/${examId}`)
+    try {
+      const response = await apiRequest(`/studentExam/exams/score/${examId}`);
+      
+      if (response === null) {
+        // 404 يعني لم يقدم الامتحان بعد
+        return null;
+      }
+      
+      return response.data || response;
+    } catch (error) {
+      if (error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   // Deprecated: use getStudentScore instead if present server-side
   getExamResult: async (examId) => {
-    return apiRequest(`/studentExam/exams/${examId}`)
+    try {
+      return await apiRequest(`/studentExam/exams/${examId}`);
+    } catch (error) {
+      console.error('Error in getExamResult:', error);
+      throw error;
+    }
   },
 
   // Admin: get all students' scores for a given exam (optional studentName filter)
   getAdminExamScores: async (examId, studentName) => {
-    const query = studentName ? `?${new URLSearchParams({ studentName }).toString()}` : ''
-    return apiRequest(`/studentExam/exams/${examId}${query}`)
+    try {
+      const query = studentName ? `?${new URLSearchParams({ studentName }).toString()}` : '';
+      const response = await apiRequest(`/studentExam/exams/${examId}${query}`);
+      
+      if (response === null) {
+        return [];
+      }
+      
+      // استخراج البيانات
+      if (Array.isArray(response)) {
+        return response;
+      } else if (response && Array.isArray(response.data)) {
+        return response.data;
+      } else if (response && response.scores) {
+        return response.scores;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error in getAdminExamScores:', error);
+      return [];
+    }
+  },
+
+  // New: Check if user has attempted an exam
+  checkExamAttempt: async (examId) => {
+    try {
+      const response = await apiRequest(`/studentExam/exams/score/${examId}`);
+      return response !== null;
+    } catch (error) {
+      return false;
+    }
   },
 
   createExam: async (examData) => {
     return apiRequest('/exam', {
       method: 'POST',
       body: examData
-    })
+    });
   },
 
   updateExam: async (id, examData) => {
     return apiRequest(`/exam/${id}`, {
       method: 'PUT',
       body: examData
-    })
+    });
   },
 
   deleteExam: async (id) => {
     return apiRequest(`/exam/${id}`, {
       method: 'DELETE'
-    })
+    });
   }
-}
+};
 
 export const questionsAPI = {
   getAllQuestions: async ({ page = 1, limit = 10 } = {}) => {
-    return apiRequest(`/question?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`)
+    try {
+      const response = await apiRequest(`/question?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
+      if (response === null) {
+        return [];
+      }
+      if (Array.isArray(response)) return response;
+      if (Array.isArray(response?.data)) return response.data;
+      if (Array.isArray(response?.questions)) return response.questions;
+      if (Array.isArray(response?.items)) return response.items;
+      if (Array.isArray(response?.data?.questions)) return response.data.questions;
+      if (Array.isArray(response?.data?.items)) return response.data.items;
+      if (response && typeof response === 'object') {
+        const keys = Object.keys(response);
+        for (const key of keys) {
+          if (Array.isArray(response[key])) {
+            return response[key];
+          }
+        }
+      }
+      return [];
+    } catch (error) {
+      console.error('Error in getAllQuestions:', error);
+      return [];
+    }
   },
 
   getQuestionById: async (id) => {
-    return apiRequest(`/question/get/${id}`)
+    return apiRequest(`/question/get/${id}`);
   },
 
-  // Optional: batch fetch by IDs (backend may not implement; callers should fallback on error)
   getQuestionsByIds: async (ids = []) => {
     return apiRequest('/question/batch', {
       method: 'POST',
       body: { ids }
-    })
+    });
   },
 
   createQuestion: async (questionData) => {
     return apiRequest('/question', {
       method: 'POST',
       body: questionData
-    })
+    });
   },
 
   updateQuestion: async (id, questionData) => {
     return apiRequest(`/question/${id}`, {
       method: 'PUT',
       body: questionData
-    })
+    });
   },
 
   deleteQuestion: async (id) => {
     return apiRequest(`/question/${id}`, {
       method: 'DELETE'
-    })
+    });
   }
-}
+};
 
 export const adminAPI = {
   createAdmin: async (adminData) => {
     return apiRequest('/admin/create-admin', {
       method: 'POST',
       body: adminData
-    })
+    });
   },
 
   getAllAdmins: async () => {
-    return apiRequest('/admin/all-admin')
+    try {
+      const response = await apiRequest('/admin/all-admin');
+      
+      if (response === null) return [];
+      
+      if (Array.isArray(response)) return response;
+      if (Array.isArray(response.data)) return response.data;
+      if (Array.isArray(response.admins)) return response.admins;
+      
+      return [];
+    } catch (error) {
+      console.error('Error in getAllAdmins:', error);
+      return [];
+    }
   },
 
   getAllUsers: async () => {
-    return apiRequest('/admin/all-user')
+    try {
+      const response = await apiRequest('/admin/all-user');
+      
+      if (response === null) return [];
+      
+      if (Array.isArray(response)) return response;
+      if (Array.isArray(response.data)) return response.data;
+      if (Array.isArray(response.users)) return response.users;
+      
+      return [];
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      return [];
+    }
   },
 
   deleteUser: async (userId) => {
     return apiRequest(`/admin/delete-user/${userId}`, {
       method: 'DELETE'
-    })
+    });
   },
 
   promoteToAdmin: async (userId) => {
     return apiRequest(`/admin/promote-to-admin/${userId}`, {
       method: 'PUT'
-    })
+    });
   },
 
   demoteToUser: async (adminId) => {
     return apiRequest(`/admin/demote-to-user/${adminId}`, {
       method: 'PUT'
-    })
+    });
   },
 
   deleteAdmin: async (adminId) => {
     return apiRequest(`/admin/delete-admin/${adminId}`, {
       method: 'DELETE'
-    })
+    });
   }
-}
+};
 
 export default {
   authAPI,
@@ -478,4 +631,4 @@ export default {
   examsAPI,
   questionsAPI,
   adminAPI
-}
+};

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Search, Filter, Edit, Trash2, BookOpen, FileText, X, Save, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -63,7 +63,7 @@ const AdminQuestions = () => {
   }, [toast])
 
   useEffect(() => {
-    let result = questions
+    let result = Array.isArray(questions) ? questions : []
     
     // تطبيق فلتر البحث
     if (searchTerm) {
@@ -292,7 +292,7 @@ const handleSubmit = async (e) => {
 
   const getExamName = (examId) => {
     if (!examId || examId === 'no-exam') return 'غير معين'
-    const exam = exams.find(e => e._id === examId)
+    const exam = (Array.isArray(exams) ? exams : []).find(e => e._id === examId)
     return exam ? exam.title : 'غير معروف'
   }
 
@@ -378,7 +378,7 @@ const handleSubmit = async (e) => {
                 <div>
                   <p className="text-green-100 text-sm">أسئلة الاختيار المتعدد</p>
                   <p className="text-3xl font-bold">
-                    {questions.filter(q => q.type === 'multiple-choice').length}
+                    {(Array.isArray(questions) ? questions : []).filter(q => q.type === 'multiple-choice').length}
                   </p>
                 </div>
                 <BookOpen className="h-8 w-8 text-green-200" />
@@ -392,7 +392,7 @@ const handleSubmit = async (e) => {
                 <div>
                   <p className="text-purple-100 text-sm">الامتحانات المستهدفة</p>
                   <p className="text-3xl font-bold">
-                    {new Set(questions.filter(q => q.exam).map(q => q.exam)).size}
+                    {new Set((Array.isArray(questions) ? questions : []).filter(q => q.exam).map(q => q.exam)).size}
                   </p>
                 </div>
                 <FileText className="h-8 w-8 text-purple-200" />
@@ -429,7 +429,7 @@ const handleSubmit = async (e) => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">جميع الامتحانات</SelectItem>
-                      {exams.map(exam => (
+                      {(Array.isArray(exams) ? exams : []).map(exam => (
                         <SelectItem key={exam._id} value={exam._id}>
                           {exam.title}
                         </SelectItem>
@@ -630,8 +630,7 @@ const handleSubmit = async (e) => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="multiple-choice">اختيار متعدد</SelectItem>
-                      <SelectItem value="true-false">صحيح/خطأ</SelectItem>
-                      <SelectItem value="short-answer">إجابة قصيرة</SelectItem>
+                      
                     </SelectContent>
                   </Select>
                 </div>
@@ -660,7 +659,7 @@ const handleSubmit = async (e) => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="no-exam">لا يوجد</SelectItem>
-                    {exams.map(exam => (
+                    {(Array.isArray(exams) ? exams : []).map(exam => (
                       <SelectItem key={exam._id} value={exam._id}>
                         {exam.title}
                       </SelectItem>
@@ -779,3 +778,4 @@ const handleSubmit = async (e) => {
 }
 
 export default AdminQuestions
+

@@ -3,7 +3,7 @@ import { useToast } from '@/hooks/use-toast'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
-import { NotificationsProvider } from './contexts/NotificationsContext';
+import { NotificationsProvider } from './contexts/NotificationsContext'
 import { Toaster } from '@/components/ui/toaster'
 
 import ProtectedRoute from './components/ProtectedRoute'
@@ -35,6 +35,7 @@ import AdminAdmins from './pages/admin/AdminAdmins'
 import AdminQuestions from './pages/admin/AdminQuestions'
 import AdminExamResults from './pages/admin/AdminExamResults'
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
+import DebugPage from './pages/DebugPage'
 
 import './App.css'
 
@@ -150,6 +151,13 @@ function App() {
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Debug Page */}
+              <Route path="/debug" element={
+                <ProtectedRoute>
+                  <DebugPage />
                 </ProtectedRoute>
               } />
 
