@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, Mail, Lock, GraduationCap, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, GraduationCap, ArrowLeft, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +12,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    loginId: '', // تغيير من email إلى loginId
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -32,13 +32,38 @@ const LoginPage = () => {
     })
   }
 
+  const isEmail = (value) => {
+    // تحقق بسيط إذا كان الإدخال بريد إلكتروني
+    return value.includes('@') && value.includes('.')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    if (!formData.loginId.trim()) {
+      toast({
+        title: 'خطأ في الإدخال',
+        description: 'الرجاء إدخال البريد الإلكتروني أو رقم الهاتف',
+        variant: 'destructive'
+      })
+      return
+    }
     
     setIsLoading(true)
 
     try {
-      const result = await login(formData)
+      // إنشاء كائن البيانات المرسلة للـ API بناءً على نوع الإدخال
+      let loginData = {
+        password: formData.password
+      }
+      
+      if (isEmail(formData.loginId)) {
+        loginData.email = formData.loginId
+      } else {
+        loginData.phoneNumber = formData.loginId
+      }
+
+      const result = await login(loginData)
       
       if (result.success) {
         toast({
@@ -66,8 +91,8 @@ const LoginPage = () => {
         // رسائل مخصصة لأخطاء محددة من الخادم
         if (errorMessage.includes('password') || errorMessage.includes('كلمة المرور')) {
           errorMessage = 'كلمة المرور غير صحيحة'
-        } else if (errorMessage.includes('email') || errorMessage.includes('البريد')) {
-          errorMessage = 'البريد الإلكتروني غير صحيح أو غير مسجل'
+        } else if (errorMessage.includes('email') || errorMessage.includes('البريد') || errorMessage.includes('phone') || errorMessage.includes('هاتف')) {
+          errorMessage = 'البريد الإلكتروني أو رقم الهاتف غير صحيح'
         } else if (errorMessage.includes('انتهت الجلسة')) {
           errorMessage = 'انتهت جلسة العمل، يرجى تسجيل الدخول مرة أخرى'
         }
@@ -130,29 +155,38 @@ const LoginPage = () => {
                 تسجيل الدخول
               </CardTitle>
               <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-                أدخل بياناتك للوصول إلى حسابك
+                أدخل بريدك الإلكتروني أو رقم هاتفك للوصول إلى حسابك
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
-                    البريد الإلكتروني
+                  <Label htmlFor="loginId" className="text-gray-700 dark:text-gray-300">
+                    البريد الإلكتروني أو رقم الهاتف
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <div className="absolute left-3 top-3 flex items-center">
+                      {isEmail(formData.loginId) ? (
+                        <Mail className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Phone className="h-4 w-4 text-gray-400" />
+                      )}
+                    </div>
                     <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="أدخل بريدك الإلكتروني"
-                      value={formData.email}
+                      id="loginId"
+                      name="loginId"
+                      type="text"
+                      placeholder="أدخل بريدك الإلكتروني أو رقم هاتفك"
+                      value={formData.loginId}
                       onChange={handleChange}
                       className="pl-10"
                       required
                       disabled={isLoading}
                     />
                   </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    يمكنك استخدام البريد الإلكتروني أو رقم الهاتف المسجل
+                  </p>
                 </div>
 
                 <div className="space-y-2">
