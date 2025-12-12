@@ -12,10 +12,7 @@ import {
   ArrowRight,
   Menu,
   X,
-  Sun,
-  Moon,
   GraduationCap,
-  Target,
   Zap,
   Mail,
   Phone,
@@ -23,6 +20,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import ThemeToggleIcon from '../components/ThemeToggleIcon';
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -120,9 +118,26 @@ const LandingPage = () => {
                 variant="ghost"
                 size="sm"
                 onClick={toggleTheme}
-                className="p-2"
+                className="p-2 relative overflow-hidden group"
+                aria-label={theme === 'light' ? 'التبديل إلى الوضع الداكن' : 'التبديل إلى الوضع الفاتح'}
               >
-                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                <ThemeToggleIcon theme={theme} />
+                
+                {/* تأثير إضافي عند التمرير */}
+                <motion.div
+                  initial={false}
+                  animate={{
+                    scale: theme === 'light' ? 0 : 1,
+                    opacity: theme === 'light' ? 0 : 0.1,
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full"
+                />
+                
+                {/* تلميح توضيحي */}
+                <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                  {theme === 'light' ? 'التبديل إلى الوضع الداكن' : 'التبديل إلى الوضع الفاتح'}
+                </div>
               </Button>
               
               <div className="hidden md:flex items-center space-x-2">
