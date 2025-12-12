@@ -16,14 +16,12 @@ import {
   Sun,
   Moon,
   Bell,
-  Search,
   CheckCircle,
   AlertCircle,
   Info,
   XCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -37,10 +35,10 @@ import { Badge } from '@/components/ui/badge'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { useNotifications } from '../contexts/NotificationsContext'
+import SearchBar from './SearchBar'
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [showNotifications, setShowNotifications] = useState(false)
   
   const { user, logout, isAdmin, isSuperAdmin } = useAuth()
@@ -267,16 +265,7 @@ const Navbar = () => {
 
           {/* Search Bar */}
           <div className="hidden md:block flex-1 max-w-md mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="البحث في الدروس والامتحانات..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4"
-              />
-            </div>
+            <SearchBar />
           </div>
 
           {/* Right Side Actions */}
@@ -449,16 +438,7 @@ const Navbar = () => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               {/* Search Bar Mobile */}
               <div className="px-3 py-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="البحث..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4"
-                  />
-                </div>
+                <SearchBar />
               </div>
 
               {/* Navigation Items */}

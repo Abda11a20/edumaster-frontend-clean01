@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { lessonsAPI } from '../services/api'
+import SearchService from '../services/searchService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
 import YouTubeSecurePlayer from '../components/YouTubeSecurePlayer'
@@ -141,6 +142,11 @@ const LessonsPage = () => {
         })
       } else {
         setLessons(Array.isArray(lessonsData) ? lessonsData : [])
+      }
+
+      // تحديث بيانات الدروس في خدمة البحث
+      if (Array.isArray(lessonsData)) {
+        SearchService.updateLessonsData(lessonsData);
       }
 
       if (pagination) {

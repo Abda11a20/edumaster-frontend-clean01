@@ -7,7 +7,7 @@ const API_BASE_URL = 'https://edu-master-delta.vercel.app';
 // Security configuration
 const SECURITY_CONFIG = {
   MAX_RETRIES: 3,
-  RATE_LIMIT_DELAY: 1000, // 1 second
+  RATE_LIMIT_DELAY: 1000,
   CSRF_HEADER: 'X-CSRF-Token',
   CONTENT_SECURITY_POLICY: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
   STRICT_TRANSPORT_SECURITY: 'max-age=31536000; includeSubDomains',
@@ -16,13 +16,11 @@ const SECURITY_CONFIG = {
   X_XSS_PROTECTION: '1; mode=block',
 };
 
-// Secure token storage
 const secureStorage = {
   get: (key) => {
     try {
       return localStorage.getItem(key);
     } catch (error) {
-      console.error('Error accessing localStorage:', error);
       return null;
     }
   },
@@ -31,7 +29,6 @@ const secureStorage = {
       localStorage.setItem(key, value);
       return true;
     } catch (error) {
-      console.error('Error setting localStorage:', error);
       return false;
     }
   },
@@ -40,16 +37,11 @@ const secureStorage = {
       localStorage.removeItem(key);
       return true;
     } catch (error) {
-      console.error('Error removing from localStorage:', error);
       return false;
     }
   }
 };
 
-/**
- * Get authentication headers with security enhancements
- * @returns {Object} Headers object with auth and security headers
- */
 const getAuthHeaders = () => {
   const token = secureStorage.get('token');
   const headers = {
@@ -75,20 +67,11 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-/**
- * Handle API response with security checks
- * @param {Response} response - Fetch API response object
- * @returns {Promise<any>} Parsed response data
- * @throws {Error} When response is not OK or security check fails
- */
 const handleResponse = async (response) => {
-  // Handle 404 responses - لا نرمي خطأ، نرجع null
   if (response.status === 404) {
-    console.log('API: 404 response for', response.url);
     return null;
   }
 
-  // Handle unauthorized access
   if (response.status === 401) {
     secureStorage.remove('token');
     secureStorage.remove('csrfToken');
@@ -97,7 +80,6 @@ const handleResponse = async (response) => {
     throw error;
   }
 
-  // Handle rate limiting (429 Too Many Requests)
   if (response.status === 429) {
     const retryAfter = response.headers.get('Retry-After') || 5;
     const error = new Error(`Too many requests. Please try again after ${retryAfter} seconds.`);
@@ -105,7 +87,6 @@ const handleResponse = async (response) => {
     throw error;
   }
 
-  // Handle other error responses
   if (!response.ok) {
     let errorData;
     try {
@@ -121,37 +102,24 @@ const handleResponse = async (response) => {
     throw error;
   }
 
-  // Process successful response
   const data = await response.json();
   
-  // Check for CSRF token in response headers and store it
   const csrfToken = response.headers.get('x-csrf-token');
   if (csrfToken) {
     secureStorage.set('csrfToken', csrfToken);
   }
 
-  // Return the appropriate data structure
   return data;
 };
 
-/**
- * Secure API request with retry logic and security enhancements
- * @param {string} endpoint - API endpoint
- * @param {Object} options - Fetch options
- * @param {number} retryCount - Current retry count (internal use)
- * @returns {Promise<any>} API response data
- */
 const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
-  // Input validation
   if (!endpoint || typeof endpoint !== 'string') {
     throw new Error('Invalid endpoint');
   }
 
-  // Sanitize endpoint to prevent XSS
   const sanitizedEndpoint = endpoint.replace(/[^a-zA-Z0-9-_?=&\/]/g, '');
   const url = `${API_BASE_URL}${sanitizedEndpoint}`;
   
-  // Prepare request configuration
   const headers = getAuthHeaders();
   const config = {
     method: options.method || 'GET',
@@ -160,7 +128,6 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
     ...options
   };
 
-  // Handle request body
   if (options.body) {
     if (typeof options.body === 'object' && !(options.body instanceof FormData)) {
       config.body = JSON.stringify(options.body);
@@ -170,7 +137,6 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
   }
 
   try {
-    // Add request delay for rate limiting
     if (retryCount > 0) {
       await new Promise(resolve => setTimeout(resolve, SECURITY_CONFIG.RATE_LIMIT_DELAY * (retryCount + 1)));
     }
@@ -179,7 +145,6 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
     return await handleResponse(response);
     
   } catch (error) {
-    // Handle session expiration
     if (error.message.includes('Session expired') || error.status === 401) {
       secureStorage.remove('token');
       secureStorage.remove('csrfToken');
@@ -188,14 +153,11 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
       }
     }
 
-    // Retry on network errors or 5xx responses
     if (retryCount < SECURITY_CONFIG.MAX_RETRIES &&
         (!error.status || (error.status >= 500 && error.status < 600))) {
-      console.log(`Retrying request to ${endpoint}, attempt ${retryCount + 1}`);
       return apiRequest(endpoint, options, retryCount + 1);
     }
 
-    console.error('API request failed:', error);
     throw error;
   }
 };
@@ -317,12 +279,10 @@ export const examsAPI = {
     try {
       const response = await apiRequest(`/exam?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
       
-      // معالجة الاستجابة بمرونة
       if (response === null) {
-        return []; // إذا كان 404
+        return [];
       }
       
-      // استخراج البيانات من الهياكل المختلفة
       if (Array.isArray(response)) {
         return response;
       } else if (response && Array.isArray(response.data)) {
@@ -333,22 +293,18 @@ export const examsAPI = {
         return response.data.exams;
       }
       
-      // إذا كان كائن واحد
       if (response && typeof response === 'object') {
-        // حاول استخراج أي مصفوفة
         const keys = Object.keys(response);
         for (const key of keys) {
           if (Array.isArray(response[key])) {
             return response[key];
           }
         }
-        // إذا لم توجد مصفوفة، ارجع مصفوفة تحتوي على الكائن
         return [response];
       }
       
       return [];
     } catch (error) {
-      console.error('Error in getAllExams:', error);
       return [];
     }
   },
@@ -361,7 +317,6 @@ export const examsAPI = {
         throw new Error('Exam not found');
       }
       
-      // استخراج بيانات الامتحان من الهياكل المختلفة
       if (response.exam) {
         return { ...response, ...response.exam };
       } else if (response.data) {
@@ -370,7 +325,6 @@ export const examsAPI = {
       
       return response;
     } catch (error) {
-      console.error('Error in getExamById:', error);
       throw error;
     }
   },
@@ -380,7 +334,6 @@ export const examsAPI = {
       const response = await apiRequest('/studentExam/progress');
       return response || { completedExams: [], scores: [] };
     } catch (error) {
-      console.error('Error in getUserProgress:', error);
       return { completedExams: [], scores: [] };
     }
   },
@@ -402,23 +355,19 @@ export const examsAPI = {
     try {
       return await apiRequest(`/studentExam/exams/remaining-time/${examId}`);
     } catch (e) {
-      // Fallback to alternative path if available on server
       return await apiRequest(`/studentExam/remaining-time/${examId}`);
     }
   },
 
-  // Admin: get all scores for an exam
   getExamScore: async (examId) => {
     return apiRequest(`/studentExam/exams/${examId}`);
   },
 
-  // Student-specific score endpoint - handles 404 properly
   getStudentScore: async (examId) => {
     try {
       const response = await apiRequest(`/studentExam/exams/score/${examId}`);
       
       if (response === null) {
-        // 404 يعني لم يقدم الامتحان بعد
         return null;
       }
       
@@ -431,17 +380,14 @@ export const examsAPI = {
     }
   },
 
-  // Deprecated: use getStudentScore instead if present server-side
   getExamResult: async (examId) => {
     try {
       return await apiRequest(`/studentExam/exams/${examId}`);
     } catch (error) {
-      console.error('Error in getExamResult:', error);
       throw error;
     }
   },
 
-  // Admin: get all students' scores for a given exam (optional studentName filter)
   getAdminExamScores: async (examId, studentName) => {
     try {
       const query = studentName ? `?${new URLSearchParams({ studentName }).toString()}` : '';
@@ -451,7 +397,6 @@ export const examsAPI = {
         return [];
       }
       
-      // استخراج البيانات
       if (Array.isArray(response)) {
         return response;
       } else if (response && Array.isArray(response.data)) {
@@ -462,12 +407,10 @@ export const examsAPI = {
       
       return [];
     } catch (error) {
-      console.error('Error in getAdminExamScores:', error);
       return [];
     }
   },
 
-  // New: Check if user has attempted an exam
   checkExamAttempt: async (examId) => {
     try {
       const response = await apiRequest(`/studentExam/exams/score/${examId}`);
@@ -521,7 +464,6 @@ export const questionsAPI = {
       }
       return [];
     } catch (error) {
-      console.error('Error in getAllQuestions:', error);
       return [];
     }
   },
@@ -578,7 +520,6 @@ export const adminAPI = {
       
       return [];
     } catch (error) {
-      console.error('Error in getAllAdmins:', error);
       return [];
     }
   },
@@ -595,7 +536,6 @@ export const adminAPI = {
       
       return [];
     } catch (error) {
-      console.error('Error in getAllUsers:', error);
       return [];
     }
   },

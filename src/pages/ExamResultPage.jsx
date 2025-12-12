@@ -26,7 +26,6 @@ const ExamResultPage = () => {
   const navigate = useNavigate()
   const storageKey = `exam_result_${id}`
 
-  // نظام التقييم المتدرج
   const GRADE_SYSTEM = {
     FAILED: { min: 0, max: 49, label: 'راسب', color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-200', icon: XCircle },
     ACCEPTABLE: { min: 50, max: 60, label: 'مقبول', color: 'text-orange-600', bgColor: 'bg-orange-100', borderColor: 'border-orange-200', icon: CheckCircle },
@@ -100,21 +99,16 @@ const ExamResultPage = () => {
         score = resultData
       }
       
-      // حساب الدرجة الكلية بشكل صحيح
       const totalScore = calculateTotalScore(examRes)
       
-      // حساب النسبة المئوية بشكل صحيح
       const percentage = totalScore > 0 ? Math.round((score / totalScore) * 100) : 0
       
-      // حساب عدد الإجابات الصحيحة
       if (examRes?.questions?.length > 0) {
         totalQuestions = examRes.questions.length
         
-        // إذا كانت النسبة 100%، فكل الإجابات صحيحة
         if (percentage === 100) {
           correctAnswers = totalQuestions
         } else {
-          // حساب تقديري لعدد الإجابات الصحيحة بناءً على النسبة
           correctAnswers = Math.round((percentage / 100) * totalQuestions)
         }
       }
@@ -128,7 +122,6 @@ const ExamResultPage = () => {
       
       const completedAt = resultData?.completedAt || resultData?.submittedAt || resultData?.updatedAt || new Date().toISOString()
       
-      // التأكد من تطابق البيانات
       const finalResult = {
         score: score,
         totalScore: totalScore,
@@ -143,8 +136,6 @@ const ExamResultPage = () => {
       localStorage.setItem(storageKey, JSON.stringify(finalResult))
       
     } catch (error) {
-      console.error('❌ خطأ في جلب نتيجة الامتحان:', error)
-      
       let errorMessage = 'خطأ في تحميل النتيجة'
       
       if (error.message?.includes('Session expired') || error.status === 401) {
@@ -467,13 +458,11 @@ const ExamResultPage = () => {
     }
   }
 
-  // إصلاح حسابات الإحصائيات
   const correctCount = result?.correctAnswers || 0
-  const totalQuestions = result?.totalQuestions || 1 // منع القسمة على صفر
+  const totalQuestions = result?.totalQuestions || 1
   const incorrectCount = Math.max(0, totalQuestions - correctCount)
   const accuracyRate = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
   
-  // التأكد من تطابق النسبة المئوية مع الدرجة
   const percentage = result?.percentage || 0
   const isPassed = percentage >= 50
   const gradeInfo = getGradeInfo(percentage)
@@ -549,7 +538,6 @@ const ExamResultPage = () => {
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -587,7 +575,6 @@ const ExamResultPage = () => {
           </div>
         </motion.div>
 
-        {/* Result Cards - معدلة وموسطة */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-200">
             <CardContent className="p-6 text-center flex flex-col items-center justify-center h-full">
@@ -643,7 +630,6 @@ const ExamResultPage = () => {
           </Card>
         </div>
 
-        {/* Detailed Statistics - معدلة وموسطة */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -685,7 +671,6 @@ const ExamResultPage = () => {
               </div>
             </div>
 
-            {/* Performance Level */}
             <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">مستوى الأداء</h3>
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -712,7 +697,6 @@ const ExamResultPage = () => {
           </CardContent>
         </Card>
 
-        {/* Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -756,7 +740,6 @@ const ExamResultPage = () => {
         </motion.div>
       </div>
 
-      {/* Certificate Modal */}
       <AnimatePresence>
         {showCertificate && (
           <Dialog open={showCertificate} onOpenChange={setShowCertificate}>
@@ -768,22 +751,17 @@ const ExamResultPage = () => {
                 </DialogDescription>
               </DialogHeader>
               
-              {/* Certificate Design */}
               <div className="certificate-container border-8 border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-gray-900 dark:to-gray-800 p-8 rounded-2xl shadow-2xl relative overflow-hidden">
-                {/* Watermark */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-5 rotate-45">
                   <div className="text-8xl font-bold text-gray-400 whitespace-nowrap">EduMaster</div>
                 </div>
                 
-                {/* Gold Border Lines */}
                 <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400"></div>
                 <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400"></div>
                 <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-yellow-400 via-orange-400 to-yellow-400"></div>
                 <div className="absolute right-0 top-0 bottom-0 w-2 bg-gradient-to-b from-yellow-400 via-orange-400 to-yellow-400"></div>
                 
-                {/* Certificate Content */}
                 <div className="text-center space-y-8 relative z-10">
-                  {/* Header */}
                   <div className="mb-8">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-yellow-300 mb-4">
                       شهادة الإنجاز الأكاديمي
@@ -794,7 +772,6 @@ const ExamResultPage = () => {
                     </p>
                   </div>
                   
-                  {/* Achievement Text */}
                   <div className="mb-8">
                     <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-6">
                       تُمنح هذه الشهادة إلى الطالب المتميز
@@ -810,7 +787,6 @@ const ExamResultPage = () => {
                     </p>
                   </div>
                   
-                  {/* Achievement Details */}
                   <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 mb-8 border-2 border-yellow-200">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                       تقديراً لإنجازه البارز في اجتياز امتحان
@@ -852,7 +828,6 @@ const ExamResultPage = () => {
                     </div>
                   </div>
                   
-                  {/* Official Seal */}
                   <div className="my-6">
                     <div className="relative inline-block">
                       <div className="w-24 h-24 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-2xl">
@@ -865,10 +840,8 @@ const ExamResultPage = () => {
                     <p className="text-base font-bold text-yellow-600 dark:text-yellow-400 mt-4">ختم المنصة الرسمي</p>
                   </div>
                   
-                  {/* Signatures with Names */}
                   <div className="mt-8">
                     <div className="flex justify-between items-end flex-wrap gap-6">
-                      {/* Director Signature */}
                       <div className="text-center flex-1 min-w-[200px]">
                         <div className="border-t-2 border-gray-400 dark:border-gray-600 pt-4 w-full">
                           <p className="text-lg font-bold text-gray-900 dark:text-white mb-2">محمود أشرف</p>
@@ -878,7 +851,6 @@ const ExamResultPage = () => {
                         </div>
                       </div>
                       
-                      {/* Certificate Info */}
                       <div className="text-center flex-1 min-w-[200px]">
                         <div className="bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl">
                           <p className="text-base font-bold text-gray-900 dark:text-white">تاريخ الإصدار</p>
@@ -890,12 +862,11 @@ const ExamResultPage = () => {
                             })}
                           </p>
                           <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                            رقم الشهادة: <span className="font-mono font-bold">{id.slice(0, 8).toUpperCase()}-{Date.now().toString().slice(-6)}</span>
+                            رقم الشهادة: <span className="font-mono font-bold">{id.slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-6)}</span>
                           </p>
                         </div>
                       </div>
                       
-                      {/* Academic Supervisor Signature */}
                       <div className="text-center flex-1 min-w-[200px]">
                         <div className="border-t-2 border-gray-400 dark:border-gray-600 pt-4 w-full">
                           <p className="text-lg font-bold text-gray-900 dark:text-white mb-2">يوسف حسام</p>
@@ -906,10 +877,9 @@ const ExamResultPage = () => {
                       </div>
                     </div>
                     
-                    {/* Footer */}
                     <div className="mt-6 pt-4 border-t border-gray-300 dark:border-gray-700">
                       <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
-                        هذه الشهادة معتمدة رسمياً من منصة EduMaster التعليمية | جميع الحقوق محفوظة © {new Date().getFullYear()}
+                        هذه الشهادة معتمدة رسمياً من منصة EduMaster التعليمية | جميع الحقوق محفوظة © ${new Date().getFullYear()}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-500 text-center mt-1">
                         للتحقق من صحة الشهادة، يرجى زيارة موقع المنصة الرسمي
@@ -919,7 +889,6 @@ const ExamResultPage = () => {
                 </div>
               </div>
               
-              {/* Certificate Actions */}
               <div className="flex flex-wrap justify-center gap-3 p-4 border-t">
                 <Button 
                   onClick={handlePrintCertificate}

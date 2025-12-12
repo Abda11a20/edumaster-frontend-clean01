@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { useToast } from '@/hooks/use-toast'
 import { examsAPI } from '../services/api'
+import SearchService from '../services/searchService'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +23,6 @@ const StudentResultsPage = () => {
   const [itemsPerPage] = useState(10)
   const { toast } = useToast()
 
-  // نظام التقييم المتدرج
   const GRADE_SYSTEM = {
     FAILED: { min: 0, max: 49, label: 'راسب', color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-200', icon: XCircle },
     ACCEPTABLE: { min: 50, max: 60, label: 'مقبول', color: 'text-orange-600', bgColor: 'bg-orange-100', borderColor: 'border-orange-200', icon: CheckCircle },
@@ -31,17 +31,14 @@ const StudentResultsPage = () => {
     EXCELLENT: { min: 86, max: 100, label: 'ممتاز', color: 'text-green-600', bgColor: 'bg-green-100', borderColor: 'border-green-200', icon: Star }
   }
 
-  // دالة لحساب الدرجة الكلية للامتحان
   const calculateTotalScore = (exam) => {
-    // إذا كان totalScore موجوداً ونسبة أكبر من 0 نستخدمه
     if (exam.totalScore && exam.totalScore > 0) {
       return exam.totalScore;
     }
     
-    // حساب المجموع من نقاط الأسئلة
     if (Array.isArray(exam.questions) && exam.questions.length > 0) {
       const totalFromQuestions = exam.questions.reduce((sum, question) => {
-        return sum + (question.points || 1); // إذا لم تكن هناك points نستخدم 1 كافتراضي
+        return sum + (question.points || 1);
       }, 0);
       
       if (totalFromQuestions > 0) {
@@ -49,18 +46,14 @@ const StudentResultsPage = () => {
       }
     }
     
-    // إذا لم توجد أسئلة أو كانت النقاط صفر، نستخدم عدد الأسئلة كدرجة كلية
     if (exam.questions?.length > 0) {
       return exam.questions.length;
     }
     
-    // افتراضي 100 إذا لم يكن هناك بيانات كافية
     return 100;
   };
 
-  // دالة لتحديد التقييم بناءً على النسبة المئوية
   const getGradeInfo = (percentage) => {
-    // تحويل النسبة إلى رقم للتأكد من المقارنة الصحيحة
     const percent = Number(percentage);
     for (const [key, grade] of Object.entries(GRADE_SYSTEM)) {
       if (percent >= grade.min && percent <= grade.max) {
@@ -84,7 +77,6 @@ const StudentResultsPage = () => {
           return { examId: ex._id, score: typeof score === 'number' ? score : null }
         }
       } catch (e) {
-        console.error(`Error fetching score for exam ${ex._id}:`, e)
         return { examId: ex._id, score: null }
       }
     })
@@ -96,7 +88,7 @@ const StudentResultsPage = () => {
       })
       setScores(results)
     } catch (error) {
-      console.error('Error in fetchScores:', error)
+      // لا نعرض خطأ
     }
   }
 
@@ -109,11 +101,13 @@ const StudentResultsPage = () => {
         const examsArray = Array.isArray(list) ? list : []
         setExams(examsArray)
         
+        // تحديث بيانات الامتحانات في خدمة البحث
+        SearchService.updateExamsData(examsArray);
+        
         if (examsArray.length > 0) {
           await fetchScores(examsArray)
         }
       } catch (error) {
-        console.error('Error in init:', error)
         toast({
           title: 'خطأ في تحميل البيانات',
           description: 'تعذر تحميل الامتحانات',
@@ -126,7 +120,6 @@ const StudentResultsPage = () => {
     init()
   }, [])
 
-  // تقسيم الامتحانات إلى مجموعتين
   const { submittedExams, notSubmittedExams } = useMemo(() => {
     const submitted = []
     const notSubmitted = []
@@ -143,7 +136,6 @@ const StudentResultsPage = () => {
     return { submittedExams: submitted, notSubmittedExams: notSubmitted }
   }, [exams, scores])
 
-  // تطبيق البحث
   const filteredSubmitted = useMemo(() => {
     if (!search) return submittedExams
     const s = search.toLowerCase()
@@ -156,7 +148,6 @@ const StudentResultsPage = () => {
     return notSubmittedExams.filter(ex => (ex?.title || '').toLowerCase().includes(s))
   }, [notSubmittedExams, search])
 
-  // Pagination للبيانات الحالية
   const currentData = useMemo(() => {
     const data = activeTab === 'submitted' ? filteredSubmitted : filteredNotSubmitted
     const startIndex = (currentPage - 1) * itemsPerPage
@@ -169,7 +160,6 @@ const StudentResultsPage = () => {
     return Math.ceil(data.length / itemsPerPage)
   }, [activeTab, filteredSubmitted, filteredNotSubmitted, itemsPerPage])
 
-  // إعادة تعيين الصفحة عند تغيير التبويب أو البحث
   useEffect(() => {
     setCurrentPage(1)
   }, [activeTab, search])
@@ -213,7 +203,6 @@ const StudentResultsPage = () => {
           {data.map((ex) => {
             const score = scores[ex._id]
             const total = calculateTotalScore(ex)
-            // حساب النسبة المئوية بناءً على الدرجة الفعلية والدرجة الكلية المحسوبة
             const percentage = typeof score === 'number' && total > 0 ? Math.round((score / total) * 100) : 0
             const gradeInfo = isSubmitted ? getGradeInfo(percentage) : null
             const GradeIcon = gradeInfo?.icon || Award
@@ -354,7 +343,6 @@ const StudentResultsPage = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* نظام التقييم التوضيحي */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -463,7 +451,6 @@ const StudentResultsPage = () => {
           </CardContent>
         </Card>
 
-        {/* إحصائيات سريعة */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-4">

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useToast } from '@/hooks/use-toast'
 import { examsAPI } from '../services/api'
+import SearchService from '../services/searchService'
 import { timeService } from '../services/timeService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
@@ -41,12 +42,8 @@ const ExamsPage = () => {
         return
       }
 
-      console.log('📡 جلب الامتحانات...')
-      
       // جلب الامتحانات
       const examsData = await examsAPI.getAllExams({ page: 1, limit: 100 })
-      
-      console.log('📦 بيانات الامتحانات المستلمة:', examsData)
       
       if (!examsData || examsData.length === 0) {
         setError('لا توجد امتحانات متاحة في الوقت الحالي')
@@ -79,14 +76,13 @@ const ExamsPage = () => {
         }
       })
       
-      console.log('✅ الامتحانات بعد المعالجة:', processedExams)
-      
       setExams(processedExams)
       setFilteredExams(processedExams)
       
-    } catch (error) {
-      console.error('❌ خطأ في جلب الامتحانات:', error)
+      // تحديث بيانات الامتحانات في خدمة البحث
+      SearchService.updateExamsData(processedExams);
       
+    } catch (error) {
       let errorMessage = 'خطأ في تحميل الامتحانات'
       
       if (error.message?.includes('Session expired') || error.status === 401) {
@@ -130,7 +126,6 @@ const ExamsPage = () => {
           const endDate = new Date(exam.endDate)
           return endDate > now
         } catch (error) {
-          console.error('Error parsing date:', error)
           return true
         }
       })

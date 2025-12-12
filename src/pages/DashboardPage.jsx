@@ -424,7 +424,6 @@ const DashboardPage = () => {
           return { examId: ex._id, score: typeof score === 'number' ? score : null }
         }
       } catch (e) {
-        console.error(`Error fetching score for exam ${ex._id}:`, e)
         return { examId: ex._id, score: null }
       }
     })
@@ -436,7 +435,6 @@ const DashboardPage = () => {
       })
       return results
     } catch (error) {
-      console.error('Error in fetchScores:', error)
       return {}
     }
   }
@@ -617,7 +615,6 @@ const DashboardPage = () => {
       setLastUpdated(new Date())
       
     } catch (error) {
-      console.error('❌ خطأ في جلب بيانات لوحة التحكم:', error)
       
       let errorMessage = 'خطأ في تحميل البيانات'
       if (error.message?.includes('Session expired') || error.status === 401) {
