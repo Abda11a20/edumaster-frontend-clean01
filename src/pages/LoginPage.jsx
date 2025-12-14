@@ -71,19 +71,15 @@ const LoginPage = () => {
           description: 'مرحباً بك في منصة EduMaster'
         })
         
-        // تحديد دور المستخدم بناءً على البيانات المرتجعة من API مباشرة
-        const userData = result.data?.data || result.data?.user || result.data;
-        const isUserAdmin = userData?.role === 'admin' || userData?.isAdmin === true;
-        const isUserSuperAdmin = userData?.role === 'SUPER_ADMIN'; // التحقق من SUPER_ADMIN
-        
-        // إعادة التوجيه بناءً على صلاحية المستخدم
-        if (isUserSuperAdmin) {
-          navigate('/super-admin', { replace: true });
-        } else if (isUserAdmin) {
-          navigate('/admin', { replace: true });
-        } else {
-          navigate(from, { replace: true });
-        }
+ if (result.success) {
+  toast({
+    title: 'تم تسجيل الدخول بنجاح',
+    description: 'مرحباً بك في منصة EduMaster'
+  })
+
+  navigate(from, { replace: true })
+}
+
       } else {
         // استخدام رسالة الخطأ التي تأتي من الخادم مباشرة
         let errorMessage = result.error || 'تحقق من البيانات المدخلة'

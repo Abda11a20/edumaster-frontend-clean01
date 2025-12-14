@@ -44,34 +44,35 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = async (credentials) => {
-    try {
-      const response = await authAPI.login(credentials)
+  try {
+    const response = await authAPI.login(credentials)
 
-      let authToken, userData;
+    const authToken = response?.token
+    if (!authToken) {
+      throw new Error('Token not found')
+    }
 
-      if (response.data && response.token) {
-        authToken = response.token;
-        userData = response.data;
-      } else if (response.token && response.user) {
-        authToken = response.token;
-        userData = response.user;
-      } else {
-        authToken = response.token;
-        userData = response;
-      }
+    // خزّن التوكن فقط
+    localStorage.setItem('token', authToken)
+    setToken(authToken)
 
-      localStorage.setItem('token', authToken)
-      setToken(authToken)
-      setUser(userData)
+    // اجلب بيانات المستخدم الكاملة (المصدر الوحيد)
+    const fullUser = await authAPI.getProfile()
+    setUser(fullUser)
 
-      return { success: true, data: response }
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message || 'فشل في تسجيل الدخول. تحقق من البيانات وحاول مرة أخرى.'
-      }
+    return { success: true }
+  } catch (error) {
+    localStorage.removeItem('token')
+    setToken(null)
+    setUser(null)
+
+    return {
+      success: false,
+      error: error.message || 'فشل في تسجيل الدخول'
     }
   }
+}
+
 
   const register = async (userData) => {
     try {
