@@ -2,6 +2,8 @@
  * API Base URL configuration
  * @constant {string}
  */
+import { showNotification } from './notificationService';
+
 const API_BASE_URL = 'https://edu-master-delta.vercel.app';
 
 // Security configuration
@@ -75,7 +77,13 @@ const handleResponse = async (response) => {
   if (response.status === 401) {
     secureStorage.remove('token');
     secureStorage.remove('csrfToken');
-    const error = new Error('Session expired. Please log in again.');
+    const errorMessage = 'Session expired. Please log in again.';
+
+    // Show error notification
+    const lang = localStorage.getItem('language') || 'en';
+    showNotification(errorMessage, { lang, type: 'error', statusCode: 401 });
+
+    const error = new Error(errorMessage);
     error.status = 401;
     throw error;
   }
@@ -94,8 +102,14 @@ const handleResponse = async (response) => {
     } catch {
       errorData = {};
     }
-    
+
+
     const errorMessage = errorData.message || errorData.error || `Connection error: ${response.status}`;
+
+    // Show error notification
+    const lang = localStorage.getItem('language') || 'en';
+    showNotification(errorMessage, { lang, type: 'error', statusCode: response.status });
+
     const error = new Error(errorMessage);
     error.status = response.status;
     error.data = errorData;
@@ -103,10 +117,19 @@ const handleResponse = async (response) => {
   }
 
   const data = await response.json();
-  
+
   const csrfToken = response.headers.get('x-csrf-token');
   if (csrfToken) {
     secureStorage.set('csrfToken', csrfToken);
+  }
+
+  // Show success notification if message exists
+  if (data && (data.message || data.msg)) {
+    const successMessage = data.message || data.msg;
+    if (typeof successMessage === 'string' && successMessage.trim()) {
+      const lang = localStorage.getItem('language') || 'en';
+      showNotification(successMessage, { lang, type: 'success', statusCode: response.status });
+    }
   }
 
   return data;
@@ -119,7 +142,7 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
 
   const sanitizedEndpoint = endpoint.replace(/[^a-zA-Z0-9-_?=&\/]/g, '');
   const url = `${API_BASE_URL}${sanitizedEndpoint}`;
-  
+
   const headers = getAuthHeaders();
   const config = {
     method: options.method || 'GET',
@@ -143,7 +166,7 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
 
     const response = await fetch(url, config);
     return await handleResponse(response);
-    
+
   } catch (error) {
     if (error.message.includes('Session expired') || error.status === 401) {
       secureStorage.remove('token');
@@ -154,7 +177,7 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
     }
 
     if (retryCount < SECURITY_CONFIG.MAX_RETRIES &&
-        (!error.status || (error.status >= 500 && error.status < 600))) {
+      (!error.status || (error.status >= 500 && error.status < 600))) {
       return apiRequest(endpoint, options, retryCount + 1);
     }
 
@@ -239,7 +262,7 @@ export const lessonsAPI = {
           .map(id => ({ _id: id, watched: false }));
         list = Array.isArray(list) ? [...list, ...extras] : extras;
       }
-    } catch (_) {}
+    } catch (_) { }
     return list;
   },
 
@@ -278,11 +301,11 @@ export const examsAPI = {
   getAllExams: async ({ page = 1, limit = 10 } = {}) => {
     try {
       const response = await apiRequest(`/exam?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
-      
+
       if (response === null) {
         return [];
       }
-      
+
       if (Array.isArray(response)) {
         return response;
       } else if (response && Array.isArray(response.data)) {
@@ -292,7 +315,7 @@ export const examsAPI = {
       } else if (response && response.data && response.data.exams) {
         return response.data.exams;
       }
-      
+
       if (response && typeof response === 'object') {
         const keys = Object.keys(response);
         for (const key of keys) {
@@ -302,7 +325,7 @@ export const examsAPI = {
         }
         return [response];
       }
-      
+
       return [];
     } catch (error) {
       return [];
@@ -312,17 +335,17 @@ export const examsAPI = {
   getExamById: async (id) => {
     try {
       const response = await apiRequest(`/exam/get/${id}`);
-      
+
       if (response === null) {
         throw new Error('Exam not found');
       }
-      
+
       if (response.exam) {
         return { ...response, ...response.exam };
       } else if (response.data) {
         return response.data.exam || response.data;
       }
-      
+
       return response;
     } catch (error) {
       throw error;
@@ -366,11 +389,11 @@ export const examsAPI = {
   getStudentScore: async (examId) => {
     try {
       const response = await apiRequest(`/studentExam/exams/score/${examId}`);
-      
+
       if (response === null) {
         return null;
       }
-      
+
       return response.data || response;
     } catch (error) {
       if (error.status === 404) {
@@ -392,11 +415,11 @@ export const examsAPI = {
     try {
       const query = studentName ? `?${new URLSearchParams({ studentName }).toString()}` : '';
       const response = await apiRequest(`/studentExam/exams/${examId}${query}`);
-      
+
       if (response === null) {
         return [];
       }
-      
+
       if (Array.isArray(response)) {
         return response;
       } else if (response && Array.isArray(response.data)) {
@@ -404,7 +427,7 @@ export const examsAPI = {
       } else if (response && response.scores) {
         return response.scores;
       }
-      
+
       return [];
     } catch (error) {
       return [];
@@ -511,13 +534,13 @@ export const adminAPI = {
   getAllAdmins: async () => {
     try {
       const response = await apiRequest('/admin/all-admin');
-      
+
       if (response === null) return [];
-      
+
       if (Array.isArray(response)) return response;
       if (Array.isArray(response.data)) return response.data;
       if (Array.isArray(response.admins)) return response.admins;
-      
+
       return [];
     } catch (error) {
       return [];
@@ -527,13 +550,13 @@ export const adminAPI = {
   getAllUsers: async () => {
     try {
       const response = await apiRequest('/admin/all-user');
-      
+
       if (response === null) return [];
-      
+
       if (Array.isArray(response)) return response;
       if (Array.isArray(response.data)) return response.data;
       if (Array.isArray(response.users)) return response.users;
-      
+
       return [];
     } catch (error) {
       return [];

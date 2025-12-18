@@ -200,7 +200,7 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-10 flex items-baseline space-x-3">
               {filteredNavigationItems.map((item) => {
                 const Icon = item.icon
                 return (
@@ -261,13 +261,15 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="hidden md:block flex-1 max-w-sm mx-4">
-            <SearchBar />
-          </div>
+          {/* Search Bar - Hidden for Admins */}
+          {!isAdmin() && !isSuperAdmin() && (
+            <div className="hidden md:flex flex-1 max-w-sm mx-4">
+              <SearchBar />
+            </div>
+          )}
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
 
             {/* User Menu */}
             <DropdownMenu>

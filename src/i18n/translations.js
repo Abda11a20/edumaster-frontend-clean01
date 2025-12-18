@@ -106,7 +106,15 @@ export const translations = {
         error_phone: 'يرجى إدخال رقم الهاتف',
         error_class: 'يرجى اختيار المرحلة الدراسية',
         error_password_length: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل',
-        error_password_match: 'كلمة المرور وتأكيدها غير متطابقتين'
+        error_password_match: 'كلمات المرور غير متطابقة',
+        password_requirements: {
+          title: 'متطلبات كلمة المرور:',
+          min_length: '8 أحرف على الأقل',
+          uppercase: 'حرف كبير واحد على الأقل (A-Z)',
+          lowercase: 'حرف صغير واحد على الأقل (a-z)',
+          number: 'رقم واحد على الأقل (0-9)',
+          special_char: 'رمز خاص واحد على الأقل (#?!@$%^&*-)'
+        }
       },
       forgot_password: {
         title: 'نسيت كلمة المرور؟',
@@ -604,6 +612,107 @@ export const translations = {
           available_desc: 'يمكنك البدء في هذه الامتحانات عندما تكون مستعداً',
           no_submitted: 'لا توجد امتحانات مكتملة',
           no_available: 'لا توجد امتحانات متاحة'
+        }
+      },
+      examResult: {
+        title: 'نتيجة الامتحان',
+        congratulations: 'تهانينا! لقد أنهيت الامتحان بنجاح',
+        tryAgain: 'حاول مرة أخرى للوصول إلى النسبة المطلوبة',
+
+        grades: {
+          failed: 'راسب',
+          acceptable: 'مقبول',
+          good: 'جيد',
+          veryGood: 'جيد جداً',
+          excellent: 'ممتاز'
+        },
+
+        stats: {
+          finalScore: 'الدرجة النهائية',
+          percentage: 'النسبة المئوية',
+          timeSpent: 'الوقت المستغرق',
+          completionDate: 'تاريخ الإكمال',
+          ofTotal: 'من الدرجة الكلية',
+          minutes: 'دقيقة',
+          at: 'الساعة'
+        },
+
+        analysis: {
+          title: 'تحليل مفصل للأداء',
+          subtitle: 'ملخص أدائك في الامتحان',
+          correctAnswers: 'إجابات صحيحة',
+          incorrectAnswers: 'إجابات خاطئة',
+          totalQuestions: 'إجمالي الأسئلة',
+          successRate: 'معدل النجاح',
+          performanceLevel: 'مستوى الأداء',
+          classification: 'التصنيف',
+          feedback: {
+            excellent: 'أداء استثنائي! أنت من الطلاب المتميزين',
+            veryGood: 'أداء ممتاز! حافظ على هذا المستوى',
+            good: 'أداء جيد جداً! يمكنك التحسين أكثر',
+            acceptable: 'أداء مقبول! تحتاج إلى مزيد من الجهد',
+            failed: 'تحتاج إلى التركيز أكثر والاستعداد جيداً'
+          }
+        },
+
+        certificate: {
+          title: 'شهادة الإنجاز الأكاديمي',
+          viewCertificate: 'عرض الشهادة',
+          printCertificate: 'طباعة الشهادة',
+          downloadCertificate: 'تنزيل الشهادة',
+          shareCertificate: 'مشاركة الشهادة',
+          certifiedBy: 'شهادة معتمدة لإنجازك المتميز في الامتحان',
+          awardedTo: 'تُمنح هذه الشهادة إلى الطالب المتميز',
+          forExcellence: 'تقديراً للتميز الأكاديمي',
+          honoredFor: 'تمنح هذه الشهادة تقديراً للتميز الأكاديمي',
+          forAchievement: 'تقديراً لإنجازه البارز في اجتياز امتحان',
+          exceptionalPerformance: 'بمستوى أداء استثنائي يدل على التميز والتفوق',
+          officialSeal: 'ختم المنصة الرسمي',
+          platformManager: 'مدير منصة EduMaster',
+          academicSupervisor: 'المشرف الأكاديمي',
+          signature: 'التوقيع',
+          officialSignature: 'التوقيع الرسمي',
+          issueDate: 'تاريخ الإصدار',
+          certificateNumber: 'رقم الشهادة',
+          certifiedOfficial: 'هذه الشهادة معتمدة رسمياً من منصة EduMaster التعليمية',
+          allRightsReserved: 'جميع الحقوق محفوظة ©',
+          verifyOnline: 'للتحقق من صحة الشهادة، يرجى زيارة موقع المنصة الرسمي',
+          percentage: 'النسبة المئوية',
+          grade: 'التقدير',
+          academicGrade: 'التقدير الأكاديمي',
+          distinctiveAchievement: 'إنجاز متميز',
+          student: 'الطالب',
+          managerName: 'محمود أشرف',
+          supervisorName: 'يوسف حسام'
+        },
+
+        actions: {
+          backToExams: 'العودة إلى الامتحانات',
+          refreshResult: 'تحديث النتيجة',
+          retakeExam: 'إعادة الامتحان',
+          submitNow: 'تقديم الامتحان الآن',
+          close: 'إغلاق'
+        },
+
+        messages: {
+          notSubmitted: 'لم تقدم الامتحان',
+          notSubmittedDesc: 'لم تقدم هذا الامتحان بعد. يجب تقديم الامتحان أولاً لرؤية النتيجة.',
+          resultNotAvailable: 'النتيجة غير متاحة',
+          loadingError: 'خطأ في تحميل النتيجة',
+          refreshed: 'تم التحديث',
+          refreshedDesc: 'تم جلب أحدث بيانات النتيجة',
+          preparingPrint: 'جاري التحضير',
+          preparingPrintDesc: 'سيتم فتح نافذة جديدة لطباعة الشهادة',
+          linkCopied: 'تم النسخ',
+          linkCopiedDesc: 'تم نسخ رابط الشهادة'
+        },
+
+        errors: {
+          sessionExpired: 'انتهت جلسة العمل. يرجى تسجيل الدخول مرة أخرى',
+          networkError: 'خطأ في الاتصال بالإنترنت',
+          unknownError: 'حدث خطأ غير معروف',
+          notFound: 'لم تقدم الامتحان',
+          errorTitle: 'خطأ'
         }
       }
     },
@@ -1308,7 +1417,15 @@ export const translations = {
         error_phone: 'Please enter your phone number',
         error_class: 'Please select your class level',
         error_password_length: 'Password must be at least 8 characters',
-        error_password_match: 'Passwords do not match'
+        error_password_match: 'Passwords do not match',
+        password_requirements: {
+          title: 'Password Requirements:',
+          min_length: 'At least 8 characters',
+          uppercase: 'At least one uppercase letter (A-Z)',
+          lowercase: 'At least one lowercase letter (a-z)',
+          number: 'At least one number (0-9)',
+          special_char: 'At least one special character (#?!@$%^&*-)'
+        }
       },
       forgot_password: {
         title: 'Forgot Password?',
@@ -1806,6 +1923,107 @@ export const translations = {
           available_desc: 'You can start these exams when you are ready',
           no_submitted: 'No completed exams',
           no_available: 'No available exams'
+        }
+      },
+      examResult: {
+        title: 'Exam Result',
+        congratulations: 'Congratulations! You have successfully completed the exam',
+        tryAgain: 'Try again to reach the required percentage',
+
+        grades: {
+          failed: 'Failed',
+          acceptable: 'Acceptable',
+          good: 'Good',
+          veryGood: 'Very Good',
+          excellent: 'Excellent'
+        },
+
+        stats: {
+          finalScore: 'Final Score',
+          percentage: 'Percentage',
+          timeSpent: 'Time Spent',
+          completionDate: 'Completion Date',
+          ofTotal: 'of total score',
+          minutes: 'minutes',
+          at: 'at'
+        },
+
+        analysis: {
+          title: 'Detailed Performance Analysis',
+          subtitle: 'Summary of your exam performance',
+          correctAnswers: 'Correct Answers',
+          incorrectAnswers: 'Incorrect Answers',
+          totalQuestions: 'Total Questions',
+          successRate: 'Success Rate',
+          performanceLevel: 'Performance Level',
+          classification: 'Classification',
+          feedback: {
+            excellent: 'Exceptional performance! You are among the outstanding students',
+            veryGood: 'Excellent performance! Maintain this level',
+            good: 'Very good performance! You can improve further',
+            acceptable: 'Acceptable performance! You need more effort',
+            failed: 'You need to focus more and prepare well'
+          }
+        },
+
+        certificate: {
+          title: 'Academic Achievement Certificate',
+          viewCertificate: 'View Certificate',
+          printCertificate: 'Print Certificate',
+          downloadCertificate: 'Download Certificate',
+          shareCertificate: 'Share Certificate',
+          certifiedBy: 'Certificate awarded for your outstanding achievement in the exam',
+          awardedTo: 'This certificate is awarded to the distinguished student',
+          forExcellence: 'In recognition of academic excellence',
+          honoredFor: 'This certificate is awarded in recognition of academic excellence',
+          forAchievement: 'In recognition of outstanding achievement in passing the exam',
+          exceptionalPerformance: 'With an exceptional level of performance demonstrating excellence and superiority',
+          officialSeal: 'Official Platform Seal',
+          platformManager: 'EduMaster Platform Manager',
+          academicSupervisor: 'Academic Supervisor',
+          signature: 'Signature',
+          officialSignature: 'Official Signature',
+          issueDate: 'Issue Date',
+          certificateNumber: 'Certificate Number',
+          certifiedOfficial: 'This certificate is officially certified by EduMaster Educational Platform',
+          allRightsReserved: 'All Rights Reserved ©',
+          verifyOnline: 'To verify the authenticity of this certificate, please visit the official platform website',
+          percentage: 'Percentage',
+          grade: 'Grade',
+          academicGrade: 'Academic Grade',
+          distinctiveAchievement: 'Distinctive Achievement',
+          student: 'Student',
+          managerName: 'Mahmoud Ashraf',
+          supervisorName: 'Youssef Hossam'
+        },
+
+        actions: {
+          backToExams: 'Back to Exams',
+          refreshResult: 'Refresh Result',
+          retakeExam: 'Retake Exam',
+          submitNow: 'Submit Now',
+          close: 'Close'
+        },
+
+        messages: {
+          notSubmitted: 'Exam Not Submitted',
+          notSubmittedDesc: 'You have not taken this exam yet. You must take the exam first to see the result.',
+          resultNotAvailable: 'Result Not Available',
+          loadingError: 'Error loading result',
+          refreshed: 'Refreshed',
+          refreshedDesc: 'Latest result data has been fetched',
+          preparingPrint: 'Preparing',
+          preparingPrintDesc: 'A new window will open to print the certificate',
+          linkCopied: 'Copied',
+          linkCopiedDesc: 'Certificate link has been copied'
+        },
+
+        errors: {
+          sessionExpired: 'Session expired. Please log in again',
+          networkError: 'Network connection error',
+          unknownError: 'An unknown error occurred',
+          notFound: 'Exam not submitted',
+          errorTitle: 'Error'
         }
       }
     },

@@ -342,9 +342,9 @@ const StudentResultsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -356,7 +356,7 @@ const StudentResultsPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {Object.entries(GRADE_SYSTEM).map(([key, grade]) => {
                 const IconComponent = grade.icon
                 return (
@@ -374,7 +374,7 @@ const StudentResultsPage = () => {
         </Card>
 
         <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-6 w-6 text-blue-500" />
@@ -382,14 +382,14 @@ const StudentResultsPage = () => {
               </CardTitle>
               <CardDescription>{t('exams.results.subtitle')}</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Input
                 placeholder={t('exams.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-56"
+                className="w-full sm:w-56"
               />
-              <Button onClick={handleRefresh} disabled={isRefreshing}>
+              <Button onClick={handleRefresh} disabled={isRefreshing} className="w-full sm:w-auto">
                 <RefreshCw className={`h-4 w-4 ml-2 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isRefreshing ? t('common.processing') : t('exams.refresh')}
               </Button>

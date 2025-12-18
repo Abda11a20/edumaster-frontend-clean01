@@ -1,1 +1,42 @@
-/* Empty CSS file - placeholder */
+/* Custom Toast Notifications - Platform Design */
+
+/* Success Toast - Blue theme instead of green */
+[data-sonner-toast][data-type="success"] {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border: 1px solid #60a5fa !important;
+    color: white !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+    color: white !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-button] {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+/* Error Toast - Platform red/purple theme */
+[data-sonner-toast][data-type="error"] {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    border: 1px solid #f87171 !important;
+    color: white !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+    color: white !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-button] {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+/* Dark mode adjustments */
+.dark [data-sonner-toast][data-type="success"] {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+}
+
+.dark [data-sonner-toast][data-type="error"] {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+}

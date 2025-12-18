@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap, ArrowLeft, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,6 +25,13 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [passwordValidation, setPasswordValidation] = useState({
+    minLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasNumber: false,
+    hasSpecialChar: false
+  })
 
   const { register, isAuthenticated } = useAuth()
   const { toast } = useToast()
@@ -43,10 +50,22 @@ const RegisterPage = () => {
   ]
 
   const handleChange = (e) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     })
+
+    // Validate password on change
+    if (name === 'password') {
+      setPasswordValidation({
+        minLength: value.length >= 8,
+        hasUpperCase: /[A-Z]/.test(value),
+        hasLowerCase: /[a-z]/.test(value),
+        hasNumber: /[0-9]/.test(value),
+        hasSpecialChar: /[#?!@$%^&*-]/.test(value)
+      })
+    }
   }
 
   const handleSelectChange = (value) => {
@@ -75,10 +94,13 @@ const RegisterPage = () => {
       return false
     }
 
-    if (formData.password.length < 8) {
+    // Validate password strength
+    if (!passwordValidation.minLength || !passwordValidation.hasUpperCase ||
+      !passwordValidation.hasLowerCase || !passwordValidation.hasNumber ||
+      !passwordValidation.hasSpecialChar) {
       toast({
         title: t('auth.login.error_input'),
-        description: t('auth.register.error_password_length'),
+        description: 'كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل، حرف كبير، حرف صغير، رقم، ورمز خاص',
         variant: 'destructive'
       })
       return false
@@ -207,7 +229,7 @@ const RegisterPage = () => {
                     {t('auth.register.fullname')}
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="fullName"
                       name="fullName"
@@ -215,7 +237,7 @@ const RegisterPage = () => {
                       placeholder={t('auth.register.fullname_placeholder')}
                       value={formData.fullName}
                       onChange={handleChange}
-                      className="pl-10"
+                      className="w-full pl-12 h-12 text-base"
                       required
                       disabled={isLoading}
                     />
@@ -227,7 +249,7 @@ const RegisterPage = () => {
                     {t('auth.register.email')}
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="email"
                       name="email"
@@ -235,7 +257,7 @@ const RegisterPage = () => {
                       placeholder={t('auth.register.email_placeholder')}
                       value={formData.email}
                       onChange={handleChange}
-                      className="pl-10"
+                      className="w-full pl-12 h-12 text-base"
                       required
                       disabled={isLoading}
                     />
@@ -247,7 +269,7 @@ const RegisterPage = () => {
                     {t('auth.register.phone')}
                   </Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="phoneNumber"
                       name="phoneNumber"
@@ -255,7 +277,7 @@ const RegisterPage = () => {
                       placeholder={t('auth.register.phone_placeholder')}
                       value={formData.phoneNumber}
                       onChange={handleChange}
-                      className="pl-10"
+                      className="w-full pl-12 h-12 text-base"
                       required
                       disabled={isLoading}
                     />
@@ -285,7 +307,7 @@ const RegisterPage = () => {
                     {t('auth.register.password')}
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="password"
                       name="password"
@@ -293,7 +315,7 @@ const RegisterPage = () => {
                       placeholder={t('auth.register.password_placeholder')}
                       value={formData.password}
                       onChange={handleChange}
-                      className="pl-10 pr-10"
+                      className="w-full pl-12 pr-12 h-12 text-base"
                       required
                       disabled={isLoading}
                     />
@@ -306,12 +328,78 @@ const RegisterPage = () => {
                       disabled={isLoading}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
+                        <EyeOff className="h-5 w-5 text-gray-400" />
                       ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
+                        <Eye className="h-5 w-5 text-gray-400" />
                       )}
                     </Button>
                   </div>
+
+                  {/* Password Requirements */}
+                  {formData.password && (
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-2">
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        {t('auth.register.password_requirements.title')}
+                      </p>
+                      <div className="space-y-1">
+                        <div className={`flex items-center text-xs ${passwordValidation.minLength
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                          {passwordValidation.minLength ? (
+                            <Check className="h-3 w-3 mr-2" />
+                          ) : (
+                            <X className="h-3 w-3 mr-2" />
+                          )}
+                          <span>{t('auth.register.password_requirements.min_length')}</span>
+                        </div>
+                        <div className={`flex items-center text-xs ${passwordValidation.hasUpperCase
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                          {passwordValidation.hasUpperCase ? (
+                            <Check className="h-3 w-3 mr-2" />
+                          ) : (
+                            <X className="h-3 w-3 mr-2" />
+                          )}
+                          <span>{t('auth.register.password_requirements.uppercase')}</span>
+                        </div>
+                        <div className={`flex items-center text-xs ${passwordValidation.hasLowerCase
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                          {passwordValidation.hasLowerCase ? (
+                            <Check className="h-3 w-3 mr-2" />
+                          ) : (
+                            <X className="h-3 w-3 mr-2" />
+                          )}
+                          <span>{t('auth.register.password_requirements.lowercase')}</span>
+                        </div>
+                        <div className={`flex items-center text-xs ${passwordValidation.hasNumber
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                          {passwordValidation.hasNumber ? (
+                            <Check className="h-3 w-3 mr-2" />
+                          ) : (
+                            <X className="h-3 w-3 mr-2" />
+                          )}
+                          <span>{t('auth.register.password_requirements.number')}</span>
+                        </div>
+                        <div className={`flex items-center text-xs ${passwordValidation.hasSpecialChar
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                          {passwordValidation.hasSpecialChar ? (
+                            <Check className="h-3 w-3 mr-2" />
+                          ) : (
+                            <X className="h-3 w-3 mr-2" />
+                          )}
+                          <span>{t('auth.register.password_requirements.special_char')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -319,7 +407,7 @@ const RegisterPage = () => {
                     {t('auth.register.cpassword')}
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="cpassword"
                       name="cpassword"
@@ -327,7 +415,7 @@ const RegisterPage = () => {
                       placeholder={t('auth.register.cpassword_placeholder')}
                       value={formData.cpassword}
                       onChange={handleChange}
-                      className="pl-10 pr-10"
+                      className="w-full pl-12 pr-12 h-12 text-base"
                       required
                       disabled={isLoading}
                     />
@@ -340,9 +428,9 @@ const RegisterPage = () => {
                       disabled={isLoading}
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
+                        <EyeOff className="h-5 w-5 text-gray-400" />
                       ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
+                        <Eye className="h-5 w-5 text-gray-400" />
                       )}
                     </Button>
                   </div>

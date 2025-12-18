@@ -73,15 +73,27 @@ const LoginPage = () => {
           description: t('auth.login.success_desc')
         })
 
-        if (result.success) {
-          toast({
-            title: t('auth.login.success'),
-            description: t('auth.login.success_desc')
-          })
+        // انتظر قليلاً حتى يتم تحديث بيانات المستخدم في AuthContext
+        setTimeout(() => {
+          // احصل على بيانات المستخدم من النتيجة مباشرةً
+          const userData = result.user
 
-          navigate(from, { replace: true })
-        }
+          // تحديد الوجهة بناءً على نوع المستخدم
+          let destination = from !== '/dashboard' ? from : '/dashboard'
 
+          // التحقق من نوع المستخدم للتوجيه الصحيح
+          if (userData) {
+            const userRole = (userData.role || '').toLowerCase()
+
+            if (userRole === 'super_admin' || userRole === 'super-admin' || userRole === 'superadmin') {
+              destination = '/super-admin/dashboard'
+            } else if (userRole === 'admin' || userData.isAdmin) {
+              destination = '/admin'
+            }
+          }
+
+          navigate(destination, { replace: true })
+        }, 100)
       } else {
         // استخدام رسالة الخطأ التي تأتي من الخادم مباشرة
         let errorMessage = result.error || t('common.error')
@@ -163,11 +175,11 @@ const LoginPage = () => {
                     {t('auth.login.email_or_phone')}
                   </Label>
                   <div className="relative">
-                    <div className="absolute left-3 top-3 flex items-center">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
                       {isEmail(formData.loginId) ? (
-                        <Mail className="h-4 w-4 text-gray-400" />
+                        <Mail className="h-5 w-5 text-gray-400" />
                       ) : (
-                        <Phone className="h-4 w-4 text-gray-400" />
+                        <Phone className="h-5 w-5 text-gray-400" />
                       )}
                     </div>
                     <Input
@@ -177,7 +189,7 @@ const LoginPage = () => {
                       placeholder={t('auth.login.email_or_phone_placeholder')}
                       value={formData.loginId}
                       onChange={handleChange}
-                      className="pl-10"
+                      className="w-full pl-12 h-12 text-base"
                       required
                       disabled={isLoading}
                     />
@@ -192,7 +204,7 @@ const LoginPage = () => {
                     {t('auth.login.password')}
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="password"
                       name="password"
@@ -200,7 +212,7 @@ const LoginPage = () => {
                       placeholder={t('auth.login.password_placeholder')}
                       value={formData.password}
                       onChange={handleChange}
-                      className="pl-10 pr-10"
+                      className="w-full pl-12 pr-12 h-12 text-base"
                       required
                       disabled={isLoading}
                     />
@@ -208,14 +220,14 @@ const LoginPage = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
                       disabled={isLoading}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
+                        <EyeOff className="h-5 w-5 text-gray-400" />
                       ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
+                        <Eye className="h-5 w-5 text-gray-400" />
                       )}
                     </Button>
                   </div>

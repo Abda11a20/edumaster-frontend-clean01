@@ -17,56 +17,56 @@ const SearchBar = () => {
 
   // قائمة الصفحات الرئيسية للتطبيق
   const appPages = [
-    { 
+    {
       id: 'dashboard',
-      title: 'لوحة التحكم', 
+      title: 'لوحة التحكم',
       description: 'نظرة عامة على أدائك وإحصائياتك',
-      path: '/', 
+      path: '/',
       icon: Home,
       category: 'صفحات',
       keywords: ['لوحة التحكم', 'الرئيسية', 'dashboard', 'home', 'البيانات']
     },
-    { 
+    {
       id: 'lessons-page',
-      title: 'الدروس', 
+      title: 'الدروس',
       description: 'تصفح جميع الدروس التعليمية',
-      path: '/lessons', 
+      path: '/lessons',
       icon: BookOpen,
       category: 'صفحات',
       keywords: ['دروس', 'تعلم', 'تعليم', 'كورسات', 'محتوى']
     },
-    { 
+    {
       id: 'exams-page',
-      title: 'الامتحانات', 
+      title: 'الامتحانات',
       description: 'اختبر معلوماتك من خلال الامتحانات',
-      path: '/exams', 
+      path: '/exams',
       icon: FileText,
       category: 'صفحات',
       keywords: ['امتحانات', 'اختبارات', 'تقييم', 'أسئلة', 'فحص']
     },
-    { 
+    {
       id: 'results',
-      title: 'النتائج', 
+      title: 'النتائج',
       description: 'عرض نتائجك في الامتحانات',
-      path: '/results', 
+      path: '/results',
       icon: Award,
       category: 'صفحات',
       keywords: ['نتائج', 'درجات', 'تقييمات', 'أداء', 'معدل']
     },
-    { 
+    {
       id: 'progress',
-      title: 'التقدم الدراسي', 
+      title: 'التقدم الدراسي',
       description: 'تابع تقدمك في المنهج التعليمي',
-      path: '/progress', 
+      path: '/progress',
       icon: BarChart3,
       category: 'صفحات',
       keywords: ['تقدم', 'إحصائيات', 'نمو', 'تطور', 'مسيرة']
     },
-    { 
+    {
       id: 'profile',
-      title: 'الملف الشخصي', 
+      title: 'الملف الشخصي',
       description: 'إدارة حسابك الشخصي وإعداداتك',
-      path: '/profile', 
+      path: '/profile',
       icon: User,
       category: 'صفحات',
       keywords: ['ملف', 'حساب', 'إعدادات', 'معلومات', 'بيانات شخصية']
@@ -138,12 +138,12 @@ const SearchBar = () => {
   // حفظ عملية بحث جديدة
   const saveToRecentSearches = (searchTerm) => {
     if (!searchTerm.trim()) return;
-    
+
     const newRecent = [
       { term: searchTerm, timestamp: Date.now() },
       ...recentSearches.filter(item => item.term !== searchTerm)
     ].slice(0, 5); // حفظ آخر 5 عمليات بحث فقط
-    
+
     setRecentSearches(newRecent);
     localStorage.setItem('recentSearches', JSON.stringify(newRecent));
   };
@@ -156,9 +156,9 @@ const SearchBar = () => {
     }
 
     const query = searchQuery.toLowerCase();
-    
+
     // البحث في الصفحات الرئيسية
-    const pageResults = appPages.filter(page => 
+    const pageResults = appPages.filter(page =>
       page.title.toLowerCase().includes(query) ||
       page.description.toLowerCase().includes(query) ||
       page.keywords.some(keyword => keyword.toLowerCase().includes(query))
@@ -192,13 +192,13 @@ const SearchBar = () => {
       // أولوية: مطابقة العنوان > الوصف > الكلمات المفتاحية
       const aTitleMatch = a.title.toLowerCase().includes(query) ? 3 : 0;
       const bTitleMatch = b.title.toLowerCase().includes(query) ? 3 : 0;
-      
+
       const aDescMatch = a.description.toLowerCase().includes(query) ? 2 : 0;
       const bDescMatch = b.description.toLowerCase().includes(query) ? 2 : 0;
-      
+
       const aTotal = aTitleMatch + aDescMatch + a.relevance;
       const bTotal = bTitleMatch + bDescMatch + b.relevance;
-      
+
       return bTotal - aTotal;
     });
 
@@ -247,26 +247,28 @@ const SearchBar = () => {
 
   return (
     <div className="relative w-full max-w-2xl" ref={searchRef}>
-      <div className="relative">
-        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          type="search"
+      <div className="relative flex items-center">
+        <div className="absolute left-3 pointer-events-none">
+          <Search className="h-4 w-4 text-gray-400" />
+        </div>
+        <input
+          type="text"
           placeholder="ابحث عن دروس، امتحانات، صفحات..."
-          className="w-full pl-10 pr-10 rounded-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-primary"
+          className="w-full pl-10 pr-10 py-2.5 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
         />
         {query && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
+          <button
+            type="button"
+            className="absolute right-3 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             onClick={clearSearch}
+            aria-label="Clear search"
           >
-            <X className="h-4 w-4" />
-          </Button>
+            <X className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+          </button>
         )}
       </div>
 
@@ -284,7 +286,7 @@ const SearchBar = () => {
                   بحث داخلي
                 </Badge>
               </div>
-              
+
               <div className="space-y-2">
                 {results.map((result, index) => {
                   const Icon = result.icon;

@@ -44,34 +44,34 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = async (credentials) => {
-  try {
-    const response = await authAPI.login(credentials)
+    try {
+      const response = await authAPI.login(credentials)
 
-    const authToken = response?.token
-    if (!authToken) {
-      throw new Error('Token not found')
-    }
+      const authToken = response?.token
+      if (!authToken) {
+        throw new Error('Token not found')
+      }
 
-    // خزّن التوكن فقط
-    localStorage.setItem('token', authToken)
-    setToken(authToken)
+      // خزّن التوكن فقط
+      localStorage.setItem('token', authToken)
+      setToken(authToken)
 
-    // اجلب بيانات المستخدم الكاملة (المصدر الوحيد)
-    const fullUser = await authAPI.getProfile()
-    setUser(fullUser)
+      // اجلب بيانات المستخدم الكاملة (المصدر الوحيد)
+      const fullUser = await authAPI.getProfile()
+      setUser(fullUser)
 
-    return { success: true }
-  } catch (error) {
-    localStorage.removeItem('token')
-    setToken(null)
-    setUser(null)
+      return { success: true, user: fullUser }
+    } catch (error) {
+      localStorage.removeItem('token')
+      setToken(null)
+      setUser(null)
 
-    return {
-      success: false,
-      error: error.message || 'فشل في تسجيل الدخول'
+      return {
+        success: false,
+        error: error.message || 'فشل في تسجيل الدخول'
+      }
     }
   }
-}
 
 
   const register = async (userData) => {
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (profileData) => {
     try {
       const userId = user?._id
-      
+
       if (!userId) {
         throw new Error('User ID is not available')
       }
