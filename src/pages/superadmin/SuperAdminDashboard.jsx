@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   Shield,
   Users,
   UserCog,
@@ -36,7 +36,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -44,7 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -56,6 +56,7 @@ import { useToast } from '@/hooks/use-toast';
 import { adminAPI } from '../../services/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Navbar from '../../components/Navbar';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const SuperAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -64,16 +65,16 @@ const SuperAdminDashboard = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  
+
   // Data states
   const [admins, setAdmins] = useState([]);
   const [users, setUsers] = useState([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  
+
   // New admin form
   const [newAdmin, setNewAdmin] = useState({
     fullName: '',
@@ -85,10 +86,11 @@ const SuperAdminDashboard = () => {
   const [isCreating, setIsCreating] = useState(false);
 
   const { toast } = useToast();
+  const { t, lang } = useTranslation();
 
   // دالة تنسيق التاريخ
   const formatDate = useCallback((dateString) => {
-    if (!dateString) return 'غير محدد';
+    if (!dateString) return t('غير محدد');
     try {
       const date = new Date(dateString);
       const now = new Date();
@@ -97,21 +99,21 @@ const SuperAdminDashboard = () => {
       const diffHours = Math.floor(diffMs / 3600000);
       const diffDays = Math.floor(diffMs / 86400000);
 
-      if (diffMins < 1) return 'الآن';
-      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-      if (diffDays === 1) return 'أمس';
-      if (diffDays < 7) return `منذ ${diffDays} أيام`;
-      
-      return date.toLocaleDateString('ar-SA', {
+      if (diffMins < 1) return t('الآن');
+      if (diffMins < 60) return t('منذ {count} دقيقة', { count: diffMins });
+      if (diffHours < 24) return t('منذ {count} ساعة', { count: diffHours });
+      if (diffDays === 1) return t('أمس');
+      if (diffDays < 7) return t('منذ {count} أيام', { count: diffDays });
+
+      return date.toLocaleDateString(lang === 'en' ? 'en-US' : 'ar-SA', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
     } catch {
-      return 'غير محدد';
+      return t('غير محدد');
     }
-  }, []);
+  }, [t, lang]);
 
   // جلب جميع البيانات
   const fetchAllData = useCallback(async () => {
@@ -134,17 +136,17 @@ const SuperAdminDashboard = () => {
 
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError('حدث خطأ أثناء تحميل البيانات. يرجى المحاولة مرة أخرى.');
+      setError(t('حدث خطأ أثناء تحميل البيانات. يرجى المحاولة مرة أخرى.'));
       toast({
-        title: 'خطأ',
-        description: 'فشل في تحميل البيانات',
+        title: t('خطأ'),
+        description: t('فشل في تحميل البيانات'),
         variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     fetchAllData();
@@ -154,12 +156,12 @@ const SuperAdminDashboard = () => {
   const handleCreateAdmin = async () => {
     try {
       setIsCreating(true);
-      
+
       // التحقق من البيانات
       if (!newAdmin.fullName.trim()) {
         toast({
-          title: 'خطأ',
-          description: 'الاسم الكامل مطلوب',
+          title: t('خطأ'),
+          description: t('الاسم الكامل مطلوب'),
           variant: 'destructive'
         });
         setIsCreating(false);
@@ -168,8 +170,8 @@ const SuperAdminDashboard = () => {
 
       if (!newAdmin.email.trim()) {
         toast({
-          title: 'خطأ',
-          description: 'البريد الإلكتروني مطلوب',
+          title: t('خطأ'),
+          description: t('البريد الإلكتروني مطلوب'),
           variant: 'destructive'
         });
         setIsCreating(false);
@@ -178,8 +180,8 @@ const SuperAdminDashboard = () => {
 
       if (newAdmin.password !== newAdmin.cpassword) {
         toast({
-          title: 'خطأ',
-          description: 'كلمات المرور غير متطابقة',
+          title: t('خطأ'),
+          description: t('كلمات المرور غير متطابقة'),
           variant: 'destructive'
         });
         setIsCreating(false);
@@ -188,8 +190,8 @@ const SuperAdminDashboard = () => {
 
       if (newAdmin.password.length < 6) {
         toast({
-          title: 'خطأ',
-          description: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+          title: t('خطأ'),
+          description: t('كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
           variant: 'destructive'
         });
         setIsCreating(false);
@@ -203,15 +205,15 @@ const SuperAdminDashboard = () => {
         password: newAdmin.password,
         cpassword: newAdmin.cpassword
       });
-      
+
       console.log('Create Admin Response:', response);
-      
+
       if (response && response.success) {
         toast({
-          title: 'نجاح',
-          description: response.message || 'تم إنشاء المشرف بنجاح',
+          title: t('نجاح'),
+          description: response.message ? t(response.message) : t('تم إنشاء المشرف بنجاح'),
         });
-        
+
         // إعادة تعيين النموذج
         setNewAdmin({
           fullName: '',
@@ -220,21 +222,21 @@ const SuperAdminDashboard = () => {
           password: '',
           cpassword: ''
         });
-        
+
         setShowCreateDialog(false);
         fetchAllData(); // تحديث البيانات فقط بعد النجاح
       } else {
         toast({
-          title: 'خطأ',
-          description: response?.message || 'فشل في إنشاء المشرف',
+          title: t('خطأ'),
+          description: response?.message ? t(response.message) : t('فشل في إنشاء المشرف'),
           variant: 'destructive'
         });
       }
     } catch (err) {
       console.error('Error creating admin:', err);
       toast({
-        title: 'خطأ',
-        description: err.message || 'حدث خطأ غير متوقع أثناء إنشاء المشرف',
+        title: t('خطأ'),
+        description: err.message ? t(err.message) : t('حدث خطأ غير متوقع أثناء إنشاء المشرف'),
         variant: 'destructive'
       });
     } finally {
@@ -244,24 +246,24 @@ const SuperAdminDashboard = () => {
 
   // الحسابات الأخيرة (آخر 5 حسابات مضافة)
   // الحسابات الأخيرة (آخر 8 حسابات مضافة)
-const recentAccounts = [
-  ...admins.map(admin => ({ 
-    ...admin, 
-    type: 'admin', 
-    role: 'مشرف',
-    sortDate: admin.createdAt ? new Date(admin.createdAt) : new Date(0)
-  })),
-  ...users.map(user => ({ 
-    ...user, 
-    type: 'user', 
-    role: user.role === 'STUDENT' ? 'طالب' : 
-          user.role === 'TEACHER' ? 'معلم' : 'مستخدم',
-    sortDate: user.createdAt ? new Date(user.createdAt) : new Date(0)
-  }))
-]
-// ترتيب تنازلي من الأحدث إلى الأقدم
-.sort((a, b) => b.sortDate - a.sortDate)
-.slice(0, 8); // آخر 8 حسابات
+  const recentAccounts = [
+    ...admins.map(admin => ({
+      ...admin,
+      type: 'admin',
+      role: t('مشرف'),
+      sortDate: admin.createdAt ? new Date(admin.createdAt) : new Date(0)
+    })),
+    ...users.map(user => ({
+      ...user,
+      type: 'user',
+      role: user.role === 'STUDENT' ? t('طالب') :
+        user.role === 'TEACHER' ? t('معلم') : t('مستخدم'),
+      sortDate: user.createdAt ? new Date(user.createdAt) : new Date(0)
+    }))
+  ]
+    // ترتيب تنازلي من الأحدث إلى الأقدم
+    .sort((a, b) => b.sortDate - a.sortDate)
+    .slice(0, 8); // آخر 8 حسابات
   // Pagination للبيانات
   const filteredAdmins = admins.filter(admin =>
     admin.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -269,24 +271,24 @@ const recentAccounts = [
   );
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-    
+
     return matchesSearch && matchesRole;
   });
 
   // حساب Pagination
   const totalPagesAdmins = Math.ceil(filteredAdmins.length / itemsPerPage);
   const totalPagesUsers = Math.ceil(filteredUsers.length / itemsPerPage);
-  
+
   const paginatedAdmins = filteredAdmins.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  
+
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -358,8 +360,8 @@ const recentAccounts = [
             <Activity className="h-5 w-5 text-white" />
           </div>
           <div>
-            <div className="text-lg font-bold">آخر الحسابات المضافة</div>
-            <CardDescription className="mt-1">آخر 8 حسابات تم إنشاؤها في المنصة</CardDescription>
+            <div className="text-lg font-bold">{t('آخر الحسابات المضافة')}</div>
+            <CardDescription className="mt-1">{t('آخر 8 حسابات تم إنشاؤها في المنصة')}</CardDescription>
           </div>
         </CardTitle>
       </CardHeader>
@@ -382,15 +384,15 @@ const recentAccounts = [
                   </Avatar>
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
-                      {account.fullName || account.name || 'غير معروف'}
+                      {account.fullName || account.name || t('غير معروف')}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge 
-                        variant="outline" 
-                        className={`text-xs ${account.type === 'admin' 
-                          ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30' 
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${account.type === 'admin'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30'
                           : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30'
-                        }`}
+                          }`}
                       >
                         {account.role}
                       </Badge>
@@ -404,12 +406,12 @@ const recentAccounts = [
                   {account.type === 'admin' ? (
                     <div className="flex items-center gap-1 text-sm text-blue-600">
                       <Shield className="h-3 w-3" />
-                      <span>أدمن</span>
+                      <span>{t('أدمن')}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1 text-sm text-green-600">
                       <User className="h-3 w-3" />
-                      <span>مستخدم</span>
+                      <span>{t('مستخدم')}</span>
                     </div>
                   )}
                 </div>
@@ -420,7 +422,7 @@ const recentAccounts = [
               <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
                 <Users className="h-8 w-8 text-gray-400" />
               </div>
-              <p className="text-gray-500 dark:text-gray-400">لا توجد حسابات حديثة</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('لا توجد حسابات حديثة')}</p>
             </div>
           )}
         </div>
@@ -436,16 +438,16 @@ const recentAccounts = [
           <div>
             <CardTitle className="flex items-center gap-3">
               <UserCog className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold">إدارة المشرفين</span>
+              <span className="text-xl font-bold">{t('إدارة المشرفين')}</span>
             </CardTitle>
-            <CardDescription className="mt-2">عرض وإدارة جميع مشرفي النظام</CardDescription>
+            <CardDescription className="mt-2">{t('عرض وإدارة جميع مشرفي النظام')}</CardDescription>
           </div>
-          <Button 
+          <Button
             onClick={() => setShowCreateDialog(true)}
             className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg"
           >
             <UserPlus className="h-4 w-4 ml-2" />
-            إضافة مشرف جديد
+            {t('إضافة مشرف جديد')}
           </Button>
         </div>
       </CardHeader>
@@ -454,7 +456,7 @@ const recentAccounts = [
           <div className="relative">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="ابحث عن مشرف بالاسم أو البريد..."
+              placeholder={t('ابحث عن مشرف بالاسم أو البريد...')}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -465,15 +467,15 @@ const recentAccounts = [
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden overflow-x-auto">
           <Table>
             <TableHeader className="bg-gray-50 dark:bg-gray-800">
               <TableRow>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">المشرف</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">البريد الإلكتروني</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">رقم الهاتف</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">الحالة</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">تاريخ الإنشاء</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('المشرف')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('البريد الإلكتروني')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('رقم الهاتف')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('الحالة')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('تاريخ الإنشاء')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -489,10 +491,10 @@ const recentAccounts = [
                         </Avatar>
                         <div>
                           <div className="font-medium text-gray-900 dark:text-white">
-                            {admin.fullName || 'مشرف'}
+                            {admin.fullName || t('مشرف')}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {admin.role === 'SUPER_ADMIN' ? 'سوبر أدمن' : 'أدمن'}
+                            {admin.role === 'SUPER_ADMIN' ? t('سوبر أدمن') : t('أدمن')}
                           </div>
                         </div>
                       </div>
@@ -506,15 +508,15 @@ const recentAccounts = [
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        <span>{admin.phoneNumber || 'غير متوفر'}</span>
+                        <span>{admin.phoneNumber || t('غير متوفر')}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={admin.isVerified 
-                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                      <Badge className={admin.isVerified
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200'
                         : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-200'
                       }>
-                        {admin.isVerified ? 'مفعل ✓' : 'غير مفعل'}
+                        {admin.isVerified ? t('مفعل ✓') : t('غير مفعل')}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -529,8 +531,8 @@ const recentAccounts = [
                   <TableCell colSpan={5} className="text-center py-8">
                     <div className="flex flex-col items-center justify-center">
                       <UserCog className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">لا توجد مشرفين</p>
-                      <p className="text-sm text-gray-400 mt-2">اضغط على "إضافة مشرف جديد" لبدء الإضافة</p>
+                      <p className="text-gray-500 dark:text-gray-400">{t('لا توجد مشرفين')}</p>
+                      <p className="text-sm text-gray-400 mt-2">{t('اضغط على "إضافة مشرف جديد" لبدء الإضافة')}</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -543,9 +545,9 @@ const recentAccounts = [
         {totalPagesAdmins > 1 && (
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-800">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              عرض {Math.min((currentPage - 1) * itemsPerPage + 1, filteredAdmins.length)} إلى{' '}
-              {Math.min(currentPage * itemsPerPage, filteredAdmins.length)} من{' '}
-              {filteredAdmins.length} مشرف
+              {t('عرض')} {Math.min((currentPage - 1) * itemsPerPage + 1, filteredAdmins.length)} {t('إلى')}{' '}
+              {Math.min(currentPage * itemsPerPage, filteredAdmins.length)} {t('من')}{' '}
+              {filteredAdmins.length} {t('مشرف')}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -557,7 +559,7 @@ const recentAccounts = [
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              
+
               {Array.from({ length: Math.min(5, totalPagesAdmins) }, (_, i) => {
                 let pageNum;
                 if (totalPagesAdmins <= 5) {
@@ -569,7 +571,7 @@ const recentAccounts = [
                 } else {
                   pageNum = currentPage - 2 + i;
                 }
-                
+
                 return (
                   <Button
                     key={pageNum}
@@ -582,7 +584,7 @@ const recentAccounts = [
                   </Button>
                 );
               })}
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -607,22 +609,22 @@ const recentAccounts = [
           <div>
             <CardTitle className="flex items-center gap-3">
               <Users className="h-6 w-6 text-green-600" />
-              <span className="text-xl font-bold">إدارة المستخدمين</span>
+              <span className="text-xl font-bold">{t('إدارة المستخدمين')}</span>
             </CardTitle>
-            <CardDescription className="mt-2">عرض جميع المستخدمين المسجلين في المنصة</CardDescription>
+            <CardDescription className="mt-2">{t('عرض جميع المستخدمين المسجلين في المنصة')}</CardDescription>
           </div>
           <Select value={selectedRole} onValueChange={(value) => {
             setSelectedRole(value);
             setCurrentPage(1);
           }}>
             <SelectTrigger className="w-[180px] bg-white dark:bg-gray-900 border-2">
-              <SelectValue placeholder="جميع المستخدمين" />
+              <SelectValue placeholder={t('جميع المستخدمين')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">جميع المستخدمين</SelectItem>
-              <SelectItem value="USER">مستخدم عادي</SelectItem>
-              <SelectItem value="STUDENT">طالب</SelectItem>
-              <SelectItem value="TEACHER">معلم</SelectItem>
+              <SelectItem value="all">{t('جميع المستخدمين')}</SelectItem>
+              <SelectItem value="USER">{t('مستخدم عادي')}</SelectItem>
+              <SelectItem value="STUDENT">{t('طالب')}</SelectItem>
+              <SelectItem value="TEACHER">{t('معلم')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -632,7 +634,7 @@ const recentAccounts = [
           <div className="relative">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="ابحث عن مستخدم بالاسم أو البريد..."
+              placeholder={t('ابحث عن مستخدم بالاسم أو البريد...')}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -643,16 +645,16 @@ const recentAccounts = [
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden overflow-x-auto">
           <Table>
             <TableHeader className="bg-gray-50 dark:bg-gray-800">
               <TableRow>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">المستخدم</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">البريد الإلكتروني</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">رقم الهاتف</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">الدور</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">الحالة</TableHead>
-                <TableHead className="font-bold text-gray-700 dark:text-gray-300">تاريخ التسجيل</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('المستخدم')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('البريد الإلكتروني')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('رقم الهاتف')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('الدور')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('الحالة')}</TableHead>
+                <TableHead className="font-bold text-gray-700 dark:text-gray-300">{t('تاريخ التسجيل')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -668,10 +670,10 @@ const recentAccounts = [
                         </Avatar>
                         <div>
                           <div className="font-medium text-gray-900 dark:text-white">
-                            {user.fullName || 'مستخدم'}
+                            {user.fullName || t('مستخدم')}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {user.classLevel || 'غير محدد'}
+                            {user.classLevel || t('غير محدد')}
                           </div>
                         </div>
                       </div>
@@ -685,21 +687,21 @@ const recentAccounts = [
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        <span>{user.phoneNumber || 'غير متوفر'}</span>
+                        <span>{user.phoneNumber || t('غير متوفر')}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-50 border-blue-200">
-                        {user.role === 'STUDENT' ? 'طالب' : 
-                         user.role === 'TEACHER' ? 'معلم' : 'مستخدم'}
+                        {user.role === 'STUDENT' ? t('طالب') :
+                          user.role === 'TEACHER' ? t('معلم') : t('مستخدم')}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className={user.isVerified 
-                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                      <Badge className={user.isVerified
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200'
                         : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-200'
                       }>
-                        {user.isVerified ? 'مفعل ✓' : 'غير مفعل'}
+                        {user.isVerified ? t('مفعل ✓') : t('غير مفعل')}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -714,8 +716,8 @@ const recentAccounts = [
                   <TableCell colSpan={6} className="text-center py-8">
                     <div className="flex flex-col items-center justify-center">
                       <Users className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">لا توجد مستخدمين</p>
-                      <p className="text-sm text-gray-400 mt-2">قم بتعديل معايير البحث للحصول على نتائج</p>
+                      <p className="text-gray-500 dark:text-gray-400">{t('لا توجد مستخدمين')}</p>
+                      <p className="text-sm text-gray-400 mt-2">{t('قم بتعديل معايير البحث للحصول على نتائج')}</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -728,9 +730,9 @@ const recentAccounts = [
         {totalPagesUsers > 1 && (
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-800">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              عرض {Math.min((currentPage - 1) * itemsPerPage + 1, filteredUsers.length)} إلى{' '}
-              {Math.min(currentPage * itemsPerPage, filteredUsers.length)} من{' '}
-              {filteredUsers.length} مستخدم
+              {t('عرض')} {Math.min((currentPage - 1) * itemsPerPage + 1, filteredUsers.length)} {t('إلى')}{' '}
+              {Math.min(currentPage * itemsPerPage, filteredUsers.length)} {t('من')}{' '}
+              {filteredUsers.length} {t('مستخدم')}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -742,7 +744,7 @@ const recentAccounts = [
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              
+
               {Array.from({ length: Math.min(5, totalPagesUsers) }, (_, i) => {
                 let pageNum;
                 if (totalPagesUsers <= 5) {
@@ -754,7 +756,7 @@ const recentAccounts = [
                 } else {
                   pageNum = currentPage - 2 + i;
                 }
-                
+
                 return (
                   <Button
                     key={pageNum}
@@ -767,7 +769,7 @@ const recentAccounts = [
                   </Button>
                 );
               })}
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -795,8 +797,8 @@ const recentAccounts = [
               <div className="w-full h-full rounded-full bg-primary/20" />
             </div>
           </div>
-          <p className="mt-6 text-lg font-medium text-gray-700 dark:text-gray-300">جاري تحميل لوحة السوبر أدمن...</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">قد يستغرق هذا بضع ثوانٍ</p>
+          <p className="mt-6 text-lg font-medium text-gray-700 dark:text-gray-300">{t('جاري تحميل لوحة السوبر أدمن...')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{t('قد يستغرق هذا بضع ثوانٍ')}</p>
         </div>
       </div>
     );
@@ -805,7 +807,7 @@ const recentAccounts = [
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-950">
       <Navbar />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header مع تصميم جديد */}
         <motion.div
@@ -817,7 +819,7 @@ const recentAccounts = [
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 to-red-500 p-8 shadow-2xl">
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-3xl" />
-            
+
             <div className="relative z-10">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div>
@@ -827,40 +829,40 @@ const recentAccounts = [
                     </div>
                     <div>
                       <h1 className="text-3xl lg:text-4xl font-bold text-white">
-                        لوحة تحكم السوبر أدمن
+                        {t('لوحة تحكم السوبر أدمن')}
                       </h1>
                       <p className="text-white/90 mt-2 text-lg">
-                        التحكم الكامل في إدارة المشرفين والمستخدمين
+                        {t('التحكم الكامل في إدارة المشرفين والمستخدمين')}
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-wrap items-center gap-4 mt-6">
                     <div className="flex items-center gap-2 text-white/80">
                       <Calendar className="h-5 w-5" />
-                      <span>{new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      <span>{new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     </div>
                     <div className="w-2 h-2 rounded-full bg-white/50" />
                     <div className="flex items-center gap-2 text-white/80">
                       <Clock className="h-5 w-5" />
-                      <span>{new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                      <span>{new Date().toLocaleTimeString(lang === 'en' ? 'en-US' : 'ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                     </div>
                     <div className="w-2 h-2 rounded-full bg-white/50" />
                     <Badge className="bg-white/20 text-white border-0 hover:bg-white/30">
                       <Shield className="h-3 w-3 ml-2" />
-                      المستوى: سوبر أدمن
+                      {t('المستوى: سوبر أدمن')}
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
-                  <Button 
-                    onClick={fetchAllData} 
+                  <Button
+                    onClick={fetchAllData}
                     className="bg-white text-red-600 hover:bg-white/90 shadow-lg gap-2"
                     disabled={isRefreshing}
                   >
                     <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    {isRefreshing ? 'جاري التحديث...' : 'تحديث البيانات'}
+                    {isRefreshing ? t('جاري التحديث...') : t('تحديث البيانات')}
                   </Button>
                 </div>
               </div>
@@ -879,12 +881,12 @@ const recentAccounts = [
               <div className="flex items-center gap-3">
                 <AlertCircle className="h-5 w-5" />
                 <div className="flex-1">
-                  <AlertTitle>تنبيه هام</AlertTitle>
+                  <AlertTitle>{t('تنبيه هام')}</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setError(null)}
                   className="h-8 w-8 p-0"
                 >
@@ -898,79 +900,79 @@ const recentAccounts = [
         {/* بطاقات الإحصائيات السريعة */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <EnhancedStatCard
-            title="إجمالي المشرفين"
+            title={t('إجمالي المشرفين')}
             value={admins.length}
             icon={<UserCog className="h-5 w-5" />}
             color="blue"
-            subtitle={`${admins.filter(a => a.isVerified).length} مفعل`}
+            subtitle={`${admins.filter(a => a.isVerified).length} ${t('مفعل')}`}
             trend={12}
           />
-          
+
           <EnhancedStatCard
-            title="إجمالي المستخدمين"
+            title={t('إجمالي المستخدمين')}
             value={users.length}
             icon={<Users className="h-5 w-5" />}
             color="green"
-            subtitle={`${users.filter(u => u.isVerified).length} مفعل`}
+            subtitle={`${users.filter(u => u.isVerified).length} ${t('مفعل')}`}
             trend={18}
           />
-          
+
           <EnhancedStatCard
-            title="آخر الحسابات"
+            title={t('آخر الحسابات')}
             value={recentAccounts.length}
             icon={<Activity className="h-5 w-5" />}
             color="purple"
-            subtitle="آخر 8 حسابات مضافة"
+            subtitle={t('آخر 8 حسابات مضافة')}
             trend={8}
           />
-          
+
           <EnhancedStatCard
-            title="الحسابات النشطة"
+            title={t('الحسابات النشطة')}
             value={admins.filter(a => a.isVerified).length + users.filter(u => u.isVerified).length}
             icon={<CheckCircle className="h-5 w-5" />}
             color="orange"
-            subtitle="إجمالي الحسابات المفعلة"
+            subtitle={t('إجمالي الحسابات المفعلة')}
             trend={5}
           />
         </div>
 
         {/* محتوى التبويبات */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl border">
-            <TabsTrigger 
-              value="overview" 
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl border h-auto">
+            <TabsTrigger
+              value="overview"
               className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg dark:data-[state=active]:bg-gray-900 transition-all"
             >
               <Eye className="h-4 w-4 ml-2" />
-              نظرة عامة
+              {t('نظرة عامة')}
             </TabsTrigger>
-            <TabsTrigger 
-              value="admins" 
+            <TabsTrigger
+              value="admins"
               className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg dark:data-[state=active]:bg-gray-900 transition-all"
             >
               <UserCog className="h-4 w-4 ml-2" />
-              المشرفين
+              {t('المشرفين')}
             </TabsTrigger>
-            <TabsTrigger 
-              value="users" 
+            <TabsTrigger
+              value="users"
               className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg dark:data-[state=active]:bg-gray-900 transition-all"
             >
               <Users className="h-4 w-4 ml-2" />
-              المستخدمين
+              {t('المستخدمين')}
             </TabsTrigger>
           </TabsList>
-          
+
           {/* تبويب النظرة العامة */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <RecentAccountsCard />
               </div>
-              
+
               <div className="space-y-6">
                 <Card className="border-2 border-gray-100 dark:border-gray-800">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-bold">ملخص النظام</CardTitle>
+                    <CardTitle className="text-lg font-bold">{t('ملخص النظام')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -979,79 +981,79 @@ const recentAccounts = [
                           <CheckCircle className="h-4 w-4 text-green-600" />
                         </div>
                         <div>
-                          <div className="font-medium">حالة النظام</div>
-                          <div className="text-sm text-muted-foreground">جميع الخدمات تعمل</div>
+                          <div className="font-medium">{t('حالة النظام')}</div>
+                          <div className="text-sm text-muted-foreground">{t('جميع الخدمات تعمل')}</div>
                         </div>
                       </div>
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">سليم</Badge>
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">{t('سليم')}</Badge>
                     </div>
-                    
+
                     <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
                           <Shield className="h-4 w-4 text-blue-600" />
                         </div>
                         <div>
-                          <div className="font-medium">الأمان</div>
-                          <div className="text-sm text-muted-foreground">جميع الأنظمة آمنة</div>
+                          <div className="font-medium">{t('الأمان')}</div>
+                          <div className="text-sm text-muted-foreground">{t('جميع الأنظمة آمنة')}</div>
                         </div>
                       </div>
-                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">محمي</Badge>
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">{t('محمي')}</Badge>
                     </div>
-                    
+
                     <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
                           <Activity className="h-4 w-4 text-purple-600" />
                         </div>
                         <div>
-                          <div className="font-medium">آخر تحديث</div>
-                          <div className="text-sm text-muted-foreground">{new Date().toLocaleTimeString('ar-SA')}</div>
+                          <div className="font-medium">{t('آخر تحديث')}</div>
+                          <div className="text-sm text-muted-foreground">{new Date().toLocaleTimeString(lang === 'en' ? 'en-US' : 'ar-SA')}</div>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="border-2 border-gray-100 dark:border-gray-800">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-bold">إجراءات سريعة</CardTitle>
+                    <CardTitle className="text-lg font-bold">{t('إجراءات سريعة')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full justify-start"
                       onClick={() => setActiveTab('admins')}
                     >
                       <UserCog className="h-4 w-4 ml-2" />
-                      عرض جميع المشرفين
+                      {t('عرض جميع المشرفين')}
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full justify-start"
                       onClick={() => setActiveTab('users')}
                     >
                       <Users className="h-4 w-4 ml-2" />
-                      عرض جميع المستخدمين
+                      {t('عرض جميع المستخدمين')}
                     </Button>
-                    <Button 
+                    <Button
                       className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-500"
                       onClick={() => setShowCreateDialog(true)}
                     >
                       <UserPlus className="h-4 w-4 ml-2" />
-                      إضافة مشرف جديد
+                      {t('إضافة مشرف جديد')}
                     </Button>
                   </CardContent>
                 </Card>
               </div>
             </div>
           </TabsContent>
-          
+
           {/* تبويب المشرفين */}
           <TabsContent value="admins">
             <AdminsTable />
           </TabsContent>
-          
+
           {/* تبويب المستخدمين */}
           <TabsContent value="users">
             <UsersTable />
@@ -1064,80 +1066,80 @@ const recentAccounts = [
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <UserPlus className="h-5 w-5" />
-                إضافة مشرف جديد
+                {t('إضافة مشرف جديد')}
               </DialogTitle>
               <DialogDescription>
-                قم بملء البيانات التالية لإنشاء مشرف جديد في النظام
+                {t('قم بملء البيانات التالية لإنشاء مشرف جديد في النظام')}
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">الاسم الكامل *</Label>
+                <Label htmlFor="fullName">{t('الاسم الكامل *')}</Label>
                 <Input
                   id="fullName"
                   value={newAdmin.fullName}
-                  onChange={(e) => setNewAdmin({...newAdmin, fullName: e.target.value})}
-                  placeholder="أحمد محمد"
+                  onChange={(e) => setNewAdmin({ ...newAdmin, fullName: e.target.value })}
+                  placeholder={t('أحمد محمد')}
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="email">البريد الإلكتروني *</Label>
+                <Label htmlFor="email">{t('البريد الإلكتروني *')}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={newAdmin.email}
-                  onChange={(e) => setNewAdmin({...newAdmin, email: e.target.value})}
-                  placeholder="ahmed@example.com"
+                  onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                  placeholder={t('ahmed@example.com')}
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="phoneNumber">رقم الهاتف</Label>
+                <Label htmlFor="phoneNumber">{t('رقم الهاتف')}</Label>
                 <Input
                   id="phoneNumber"
                   value={newAdmin.phoneNumber}
-                  onChange={(e) => setNewAdmin({...newAdmin, phoneNumber: e.target.value})}
-                  placeholder="01012345678"
+                  onChange={(e) => setNewAdmin({ ...newAdmin, phoneNumber: e.target.value })}
+                  placeholder={t('01012345678')}
                 />
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="password">كلمة المرور *</Label>
+                  <Label htmlFor="password">{t('كلمة المرور *')}</Label>
                   <Input
                     id="password"
                     type="password"
                     value={newAdmin.password}
-                    onChange={(e) => setNewAdmin({...newAdmin, password: e.target.value})}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
                     placeholder="••••••••"
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="cpassword">تأكيد كلمة المرور *</Label>
+                  <Label htmlFor="cpassword">{t('تأكيد كلمة المرور *')}</Label>
                   <Input
                     id="cpassword"
                     type="password"
                     value={newAdmin.cpassword}
-                    onChange={(e) => setNewAdmin({...newAdmin, cpassword: e.target.value})}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, cpassword: e.target.value })}
                     placeholder="••••••••"
                     required
                   />
                 </div>
               </div>
             </div>
-            
+
             <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
-                إلغاء
+                {t('إلغاء')}
               </Button>
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 className="bg-gradient-to-r from-blue-600 to-blue-500"
                 onClick={handleCreateAdmin}
                 disabled={isCreating}
@@ -1145,10 +1147,10 @@ const recentAccounts = [
                 {isCreating ? (
                   <>
                     <RefreshCw className="h-4 w-4 ml-2 animate-spin" />
-                    جاري الإنشاء...
+                    {t('جاري الإنشاء...')}
                   </>
                 ) : (
-                  'إنشاء المشرف'
+                  t('إنشاء المشرف')
                 )}
               </Button>
             </DialogFooter>

@@ -15,8 +15,10 @@ import SearchService from '../services/searchService'
 import { timeService } from '../services/timeService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
+import { useTranslation } from '../hooks/useTranslation'
 
 const ExamsPage = () => {
+  const { t, lang } = useTranslation()
   const [exams, setExams] = useState([])
   const [filteredExams, setFilteredExams] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -29,42 +31,42 @@ const ExamsPage = () => {
     try {
       setIsLoading(true)
       setError(null)
-      
-      // التحقق من وجود التوكن
+
+      // Check for token
       const token = localStorage.getItem('token')
       if (!token) {
-        setError('يجب تسجيل الدخول للوصول إلى الامتحانات')
+        setError(t('auth.login.required_desc') || 'You must be logged in to access exams')
         toast({
-          title: 'يجب تسجيل الدخول',
-          description: 'يرجى تسجيل الدخول للوصول إلى الامتحانات',
+          title: t('auth.login.required') || 'Login Required',
+          description: t('auth.login.required_desc') || 'Please login to access exams',
           variant: 'destructive'
         })
         return
       }
 
-      // جلب الامتحانات
+      // Fetch exams
       const examsData = await examsAPI.getAllExams({ page: 1, limit: 100 })
-      
+
       if (!examsData || examsData.length === 0) {
-        setError('لا توجد امتحانات متاحة في الوقت الحالي')
+        // We don't set error here to avoid showing alert, just empty state
         setExams([])
         setFilteredExams([])
         return
       }
-      
-      // معالجة البيانات
+
+      // Process data
       const processedExams = examsData.map(exam => {
-        // استخراج بيانات الامتحان من الهياكل المختلفة
+        // Extract exam data from different structures
         const examData = exam.exam || exam.data || exam
-        
+
         return {
           _id: examData._id || exam._id,
-          title: examData.title || examData.name || 'بدون عنوان',
-          description: examData.description || 'لا يوجد وصف',
-          subject: examData.subject || examData.classLevel || 'غير محدد',
+          title: examData.title || examData.name || t('common.untitled'),
+          description: examData.description || t('common.no_desc'),
+          subject: examData.subject || examData.classLevel || t('common.unknown'),
           duration: examData.duration || 60,
-          questionsCount: examData.questionsCount || examData.numberOfQuestions || 
-                        (examData.questions ? examData.questions.length : 0),
+          questionsCount: examData.questionsCount || examData.numberOfQuestions ||
+            (examData.questions ? examData.questions.length : 0),
           totalScore: examData.totalScore || 100,
           deadline: examData.endDate || examData.deadline,
           startDate: examData.startDate,
@@ -75,33 +77,33 @@ const ExamsPage = () => {
           createdAt: examData.createdAt
         }
       })
-      
+
       setExams(processedExams)
       setFilteredExams(processedExams)
-      
-      // تحديث بيانات الامتحانات في خدمة البحث
+
+      // Update exams data in search service
       SearchService.updateExamsData(processedExams);
-      
+
     } catch (error) {
-      let errorMessage = 'خطأ في تحميل الامتحانات'
-      
+      let errorMessage = t('dashboard.error_load')
+
       if (error.message?.includes('Session expired') || error.status === 401) {
-        errorMessage = 'انتهت جلسة العمل. يرجى تسجيل الدخول مرة أخرى'
+        errorMessage = t('dashboard.error_session')
         localStorage.removeItem('token')
         window.location.href = '/login'
       } else if (error.message?.includes('Network')) {
-        errorMessage = 'خطأ في الاتصال بالإنترنت'
+        errorMessage = t('dashboard.error_network')
       } else {
-        errorMessage = error.message || 'حدث خطأ غير معروف'
+        errorMessage = error.message || t('dashboard.error_unknown')
       }
-      
+
       setError(errorMessage)
       toast({
-        title: 'خطأ',
+        title: t('common.error'),
         description: errorMessage,
         variant: 'destructive'
       })
-      
+
       setExams([])
       setFilteredExams([])
     } finally {
@@ -115,13 +117,13 @@ const ExamsPage = () => {
 
   useEffect(() => {
     let filtered = [...exams]
-    
-    // فلترة حسب حالة النشاط (لم تنته بعد)
+
+    // Filter by active status
     if (showActiveOnly) {
       const now = new Date()
       filtered = filtered.filter(exam => {
         if (!exam.endDate) return true
-        
+
         try {
           const endDate = new Date(exam.endDate)
           return endDate > now
@@ -130,8 +132,8 @@ const ExamsPage = () => {
         }
       })
     }
-    
-    // فلترة حسب البحث
+
+    // Filter by search
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       filtered = filtered.filter(exam =>
@@ -140,7 +142,7 @@ const ExamsPage = () => {
         String(exam.subject || '').toLowerCase().includes(q)
       )
     }
-    
+
     setFilteredExams(filtered)
   }, [exams, searchQuery, showActiveOnly])
 
@@ -154,33 +156,33 @@ const ExamsPage = () => {
         return true
       }
     }
-    
+
     const getTimeRemaining = () => {
-      if (!exam.endDate) return 'غير محدد'
-      
+      if (!exam.endDate) return t('exams.card.unknown_time')
+
       try {
         const endDate = new Date(exam.endDate)
         const now = new Date()
         const diffMs = endDate - now
-        
-        if (diffMs <= 0) return 'منتهي'
-        
+
+        if (diffMs <= 0) return t('exams.card.expired')
+
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
         const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-        
+
         if (diffDays > 0) {
-          return `${diffDays} يوم ${diffHours} ساعة`
+          return `${diffDays} ${t('exams.card.days')} ${diffHours} ${t('exams.card.hours')}`
         } else if (diffHours > 0) {
-          return `${diffHours} ساعة`
+          return `${diffHours} ${t('exams.card.hours')}`
         } else {
           const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-          return `${diffMinutes} دقيقة`
+          return `${diffMinutes} ${t('exams.card.minutes')}`
         }
       } catch (error) {
-        return 'غير محدد'
+        return t('exams.card.unknown_time')
       }
     }
-    
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -194,14 +196,14 @@ const ExamsPage = () => {
                 <div className="flex items-center gap-2 mb-1">
                   <CardTitle className="text-lg">{exam.title}</CardTitle>
                   {isActive() ? (
-                    <Badge variant="success" className="flex items-center gap-1">
+                    <Badge variant="success" className="flex items-center gap-1 bg-green-100 text-green-800 hover:bg-green-200">
                       <CheckCircle className="h-3 w-3" />
-                      نشط
+                      {t('exams.card.active')}
                     </Badge>
                   ) : (
                     <Badge variant="destructive" className="flex items-center gap-1">
                       <XCircle className="h-3 w-3" />
-                      منتهي
+                      {t('exams.card.expired')}
                     </Badge>
                   )}
                 </div>
@@ -214,53 +216,53 @@ const ExamsPage = () => {
               </Badge>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             <div className="space-y-4">
-              {/* معلومات الامتحان */}
+              {/* Exam Info */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 text-blue-500 ml-2" />
                   <div>
-                    <p className="text-gray-500">المدة</p>
-                    <p className="font-semibold">{exam.duration} دقيقة</p>
+                    <p className="text-gray-500">{t('exams.card.duration')}</p>
+                    <p className="font-semibold">{exam.duration} {t('exams.card.minutes')}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center">
                   <BookOpen className="h-4 w-4 text-green-500 ml-2" />
                   <div>
-                    <p className="text-gray-500">الأسئلة</p>
+                    <p className="text-gray-500">{t('exams.card.questions')}</p>
                     <p className="font-semibold">{exam.questionsCount}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center">
                   <BarChart3 className="h-4 w-4 text-yellow-500 ml-2" />
                   <div>
-                    <p className="text-gray-500">الدرجة</p>
+                    <p className="text-gray-500">{t('exams.card.score')}</p>
                     <p className="font-semibold">{exam.totalScore}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 text-purple-500 ml-2" />
                   <div>
-                    <p className="text-gray-500">الوقت المتبقي</p>
+                    <p className="text-gray-500">{t('exams.card.remaining_time')}</p>
                     <p className="font-semibold">{getTimeRemaining()}</p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex space-x-2 rtl:space-x-reverse">
                 <Link to={`/exams/${exam._id}`} className="flex-1">
                   <Button variant="outline" className="w-full">
-                    عرض التفاصيل
+                    {t('exams.card.details')}
                   </Button>
                 </Link>
                 <Link to={`/exams/${exam._id}`} className="flex-1">
                   <Button className="w-full" disabled={!isActive()}>
-                    بدء الامتحان
+                    {t('exams.card.start')}
                   </Button>
                 </Link>
               </div>
@@ -285,7 +287,7 @@ const ExamsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div
@@ -295,10 +297,10 @@ const ExamsPage = () => {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            الامتحانات
+            {t('exams.title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            اختبر معرفتك من خلال الامتحانات التفاعلية
+            {t('exams.subtitle')}
           </p>
         </motion.div>
 
@@ -328,18 +330,18 @@ const ExamsPage = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="البحث في الامتحانات..."
+                  placeholder={t('exams.search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              
+
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center space-x-2">
                   <Filter className="h-4 w-4 text-gray-500" />
                   <Label htmlFor="active-only" className="text-sm text-gray-600 dark:text-gray-300">
-                    عرض الامتحانات النشطة فقط
+                    {t('exams.filter_active')}
                   </Label>
                   <Switch
                     id="active-only"
@@ -347,19 +349,19 @@ const ExamsPage = () => {
                     onCheckedChange={setShowActiveOnly}
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={fetchExams}
                     className="flex items-center"
                   >
-                    <span>تحديث</span>
+                    <span>{t('exams.refresh')}</span>
                   </Button>
-                  
+
                   <Badge variant={showActiveOnly ? "default" : "outline"}>
-                    {showActiveOnly ? "النشطة فقط" : "جميع الامتحانات"}
+                    {showActiveOnly ? t('exams.active_only') : t('exams.all_exams')}
                   </Badge>
                 </div>
               </div>
@@ -375,13 +377,13 @@ const ExamsPage = () => {
           className="mb-6 flex items-center justify-between"
         >
           <p className="text-gray-600 dark:text-gray-300">
-            عرض {filteredExams.length} من {exams.length} امتحان
+            {t('exams.showing_results', { count: filteredExams.length, total: exams.length })}
           </p>
-          
+
           {showActiveOnly && (
             <Badge variant="outline" className="flex items-center gap-1">
               <CheckCircle className="h-3 w-3" />
-              {filteredExams.length} امتحان نشط
+              {t('exams.active_count', { count: filteredExams.length })}
             </Badge>
           )}
         </motion.div>
@@ -402,16 +404,16 @@ const ExamsPage = () => {
           >
             <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {exams.length === 0 ? 'لا توجد امتحانات متاحة' : 'لم يتم العثور على امتحانات'}
+              {exams.length === 0 ? t('exams.empty.title') : t('exams.empty.subtitle')}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              {exams.length === 0 
-                ? 'لا توجد امتحانات في النظام حالياً' 
-                : 'جرب إلغاء الفلتر أو تغيير معايير البحث'
+              {exams.length === 0
+                ? t('exams.empty.desc_no_exams')
+                : t('exams.empty.desc_filter')
               }
             </p>
             <Button onClick={fetchExams}>
-              تحديث القائمة
+              {t('exams.empty.refresh_list')}
             </Button>
           </motion.div>
         )}

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast'
 import { examsAPI } from '../../services/api'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Navbar from '../../components/Navbar'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const AdminExams = () => {
   const [exams, setExams] = useState([])
@@ -28,6 +29,7 @@ const AdminExams = () => {
     isPublished: false
   })
   const { toast } = useToast()
+  const { t, lang } = useTranslation()
 
   // pagination states
   const [page, setPage] = useState(1)
@@ -54,7 +56,7 @@ const AdminExams = () => {
       else setIsLoading(true)
 
       const response = await examsAPI.getAllExams({ page: p, limit })
-      
+
       // معالجة الاستجابة لاستخراج المصفوفة بشكل صحيح
       let examsArray = []
       let pagination = null
@@ -115,8 +117,8 @@ const AdminExams = () => {
     } catch (error) {
       console.error('Error fetching exams:', error)
       toast({
-        title: 'خطأ في تحميل الامتحانات',
-        description: 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى',
+        title: t('admin.exams.messages.error_load'),
+        description: t('admin.admins.error_load_desc'),
         variant: 'destructive'
       })
       setExams([])
@@ -138,8 +140,8 @@ const AdminExams = () => {
       // تحقق من أن جميع الحقول المطلوبة موجودة
       if (!formData.title || !formData.description || !formData.duration || !formData.classLevel) {
         toast({
-          title: 'خطأ',
-          description: 'يرجى ملء جميع الحقول المطلوبة',
+          title: t('admin.exams.messages.error'),
+          description: t('admin.exams.messages.fill_required'),
           variant: 'destructive'
         })
         return
@@ -159,14 +161,14 @@ const AdminExams = () => {
       if (editingExam) {
         await examsAPI.updateExam(editingExam._id, examData)
         toast({
-          title: 'تم التحديث',
-          description: 'تم تحديث الامتحان بنجاح'
+          title: t('admin.exams.messages.update_success'),
+          description: t('admin.exams.messages.update_success_desc')
         })
       } else {
         await examsAPI.createExam(examData)
         toast({
-          title: 'تم الإضافة',
-          description: 'تم إضافة الامتحان بنجاح'
+          title: t('admin.exams.messages.add_success'),
+          description: t('admin.exams.messages.add_success_desc')
         })
       }
       setIsDialogOpen(false)
@@ -184,8 +186,8 @@ const AdminExams = () => {
     } catch (error) {
       console.error('Error saving exam:', error)
       toast({
-        title: 'خطأ',
-        description: error.message || 'فشل في حفظ الامتحان',
+        title: t('admin.exams.messages.error'),
+        description: error.message || t('admin.exams.messages.error_save'),
         variant: 'destructive'
       })
     }
@@ -206,19 +208,19 @@ const AdminExams = () => {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('هل أنت متأكد من حذف هذا الامتحان؟')) return
-    
+    if (!confirm(t('admin.exams.messages.delete_confirm'))) return
+
     try {
       await examsAPI.deleteExam(id)
       toast({
-        title: 'تم الحذف',
-        description: 'تم حذف الامتحان بنجاح'
+        title: t('admin.exams.messages.delete_success'),
+        description: t('admin.exams.messages.delete_success_desc')
       })
       fetchExamsPage(1, false)
     } catch (error) {
       toast({
-        title: 'خطأ',
-        description: error.message || 'فشل في حذف الامتحان',
+        title: t('admin.exams.messages.error'),
+        description: error.message || t('admin.exams.messages.error_delete'),
         variant: 'destructive'
       })
     }
@@ -248,15 +250,15 @@ const AdminExams = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                إدارة الامتحانات
+                {t('admin.exams.title')}
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                إضافة وتعديل وحذف الامتحانات
+                {t('admin.exams.subtitle')}
               </p>
             </div>
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 ml-2" />
-              إضافة امتحان جديد
+              {t('admin.exams.add_new')}
             </Button>
           </div>
         </motion.div>
@@ -265,15 +267,15 @@ const AdminExams = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle>قائمة الامتحانات</CardTitle>
+                <CardTitle>{t('admin.exams.list.title')}</CardTitle>
                 <CardDescription>
-                  عرض {filteredExams.length} من {total || exams.length} امتحان
+                  {t('admin.exams.list.desc', { shown: filteredExams.length, total: total || exams.length })}
                 </CardDescription>
               </div>
               <div className="relative">
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="بحث..."
+                  placeholder={t('admin.exams.search_placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -282,53 +284,54 @@ const AdminExams = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>العنوان</TableHead>
-                  <TableHead>المستوى</TableHead>
-                  <TableHead>المدة (دقيقة)</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredExams.length > 0 ? (
-                  filteredExams.map((exam) => (
-                    <TableRow key={exam._id}>
-                      <TableCell className="font-medium">{exam.title}</TableCell>
-                      <TableCell>{exam.classLevel}</TableCell>
-                      <TableCell>{exam.duration}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          exam.isPublished 
-                            ? 'bg-green-100 text-green-800' 
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.exams.table.title')}</TableHead>
+                    <TableHead>{t('admin.exams.table.level')}</TableHead>
+                    <TableHead>{t('admin.exams.table.duration')}</TableHead>
+                    <TableHead>{t('admin.exams.table.status')}</TableHead>
+                    <TableHead>{t('admin.exams.table.actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredExams.length > 0 ? (
+                    filteredExams.map((exam) => (
+                      <TableRow key={exam._id}>
+                        <TableCell className="font-medium">{exam.title}</TableCell>
+                        <TableCell>{exam.classLevel}</TableCell>
+                        <TableCell>{exam.duration}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs ${exam.isPublished
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {exam.isPublished ? 'منشور' : 'مسودة'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(exam)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDelete(exam._id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                            }`}>
+                            {exam.isPublished ? t('admin.exams.table.published') : t('admin.exams.table.draft')}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEdit(exam)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => handleDelete(exam._id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        {t('admin.exams.list.empty')}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
-                      لا توجد امتحانات متاحة
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
 
             {/* Load more / pagination controls for admin */}
             <div className="mt-6 flex justify-center items-center space-x-3">
@@ -339,7 +342,7 @@ const AdminExams = () => {
               ) : (
                 page < totalPages && (
                   <Button onClick={loadMore}>
-                    تحميل المزيد
+                    {t('common.more')}
                   </Button>
                 )
               )}
@@ -352,12 +355,12 @@ const AdminExams = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <Card className="w-full max-w-md">
               <CardHeader>
-                <CardTitle>{editingExam ? 'تعديل الامتحان' : 'إضافة امتحان جديد'}</CardTitle>
+                <CardTitle>{editingExam ? t('admin.exams.edit_title') : t('admin.exams.add_new')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">عنوان الامتحان *</Label>
+                    <Label htmlFor="title">{t('admin.exams.form.title')}</Label>
                     <Input
                       id="title"
                       value={formData.title}
@@ -366,7 +369,7 @@ const AdminExams = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">الوصف *</Label>
+                    <Label htmlFor="description">{t('admin.exams.form.desc')}</Label>
                     <Input
                       id="description"
                       value={formData.description}
@@ -375,7 +378,7 @@ const AdminExams = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="duration">المدة (دقيقة) *</Label>
+                    <Label htmlFor="duration">{t('admin.exams.form.duration')}</Label>
                     <Input
                       id="duration"
                       type="number"
@@ -385,7 +388,7 @@ const AdminExams = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="classLevel">المستوى الدراسي *</Label>
+                    <Label htmlFor="classLevel">{t('admin.exams.form.level')}</Label>
                     <Input
                       id="classLevel"
                       value={formData.classLevel}
@@ -394,7 +397,7 @@ const AdminExams = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="startDate">تاريخ البدء</Label>
+                    <Label htmlFor="startDate">{t('admin.exams.form.start_date')}</Label>
                     <Input
                       id="startDate"
                       type="date"
@@ -403,7 +406,7 @@ const AdminExams = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="endDate">تاريخ الانتهاء</Label>
+                    <Label htmlFor="endDate">{t('admin.exams.form.end_date')}</Label>
                     <Input
                       id="endDate"
                       type="date"
@@ -419,17 +422,17 @@ const AdminExams = () => {
                       onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
                       className="rounded border-gray-300"
                     />
-                    <Label htmlFor="isPublished">نشر الامتحان</Label>
+                    <Label htmlFor="isPublished">{t('admin.exams.form.publish')}</Label>
                   </div>
                   <div className="flex space-x-2 pt-4">
                     <Button type="submit">
-                      {editingExam ? 'تحديث' : 'إضافة'}
+                      {editingExam ? t('admin.exams.form.update') : t('admin.exams.form.save')}
                     </Button>
                     <Button variant="outline" onClick={() => {
                       setIsDialogOpen(false)
                       setEditingExam(null)
                     }}>
-                      إلغاء
+                      {t('admin.exams.form.cancel')}
                     </Button>
                   </div>
                 </form>

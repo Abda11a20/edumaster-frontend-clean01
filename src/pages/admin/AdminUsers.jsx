@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 import { adminAPI } from '../../services/api'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Navbar from '../../components/Navbar'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([])
@@ -22,6 +23,7 @@ const AdminUsers = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [expandedUserId, setExpandedUserId] = useState(null)
   const { toast } = useToast()
+  const { t, lang } = useTranslation()
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -33,8 +35,8 @@ const AdminUsers = () => {
       } catch (error) {
         console.error('Error fetching users:', error)
         toast({
-          title: 'خطأ في تحميل البيانات',
-          description: 'فشل في تحميل بيانات المستخدمين',
+          title: t('admin.users.filter.error_load'),
+          description: t('admin.users.filter.error_load_desc'),
           variant: 'destructive'
         })
       } finally {
@@ -47,7 +49,7 @@ const AdminUsers = () => {
 
   useEffect(() => {
     let result = users
-    
+
     if (searchTerm) {
       result = result.filter(user =>
         user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,11 +57,11 @@ const AdminUsers = () => {
         user.phoneNumber?.includes(searchTerm)
       )
     }
-    
+
     if (roleFilter !== 'all') {
       result = result.filter(user => user.role === roleFilter)
     }
-    
+
     setFilteredUsers(result)
   }, [searchTerm, roleFilter, users])
 
@@ -77,17 +79,17 @@ const AdminUsers = () => {
   const getRoleBadgeText = (role) => {
     switch (role) {
       case 'admin':
-        return 'مشرف'
+        return t('admin.users.list.role_admin')
       case 'user':
-        return 'مستخدم'
+        return t('admin.users.list.role_user')
       default:
         return role
     }
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'غير متوفر'
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    if (!dateString) return t('admin.users.details.not_available')
+    return new Date(dateString).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -114,7 +116,7 @@ const AdminUsers = () => {
         <span>{label}</span>
       </div>
       <span className="text-sm font-medium text-gray-900 dark:text-white">
-        {value || 'غير متوفر'}
+        {value || t('admin.users.details.not_available')}
       </span>
     </div>
   )
@@ -133,7 +135,7 @@ const AdminUsers = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -142,10 +144,10 @@ const AdminUsers = () => {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            إدارة المستخدمين
+            {t('admin.users.title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            عرض جميع المستخدمين المسجلين في النظام
+            {t('admin.users.subtitle')}
           </p>
         </motion.div>
 
@@ -160,7 +162,7 @@ const AdminUsers = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm">إجمالي المستخدمين</p>
+                  <p className="text-blue-100 text-sm">{t('admin.users.stats.total')}</p>
                   <p className="text-3xl font-bold">{users.length}</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-200" />
@@ -172,7 +174,7 @@ const AdminUsers = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-100 text-sm">المشرفين</p>
+                  <p className="text-green-100 text-sm">{t('admin.users.stats.admins')}</p>
                   <p className="text-3xl font-bold">
                     {users.filter(user => user.role === 'admin').length}
                   </p>
@@ -186,7 +188,7 @@ const AdminUsers = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm">المستخدمين العاديين</p>
+                  <p className="text-purple-100 text-sm">{t('admin.users.stats.regular')}</p>
                   <p className="text-3xl font-bold">
                     {users.filter(user => user.role === 'user').length}
                   </p>
@@ -210,35 +212,35 @@ const AdminUsers = () => {
                 <div className="relative flex-1">
                   <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="ابحث بالاسم، البريد الإلكتروني أو رقم الهاتف..."
+                    placeholder={t('admin.users.filter.placeholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-gray-400" />
                   <Select value={roleFilter} onValueChange={setRoleFilter}>
                     <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="الجميع" />
+                      <SelectValue placeholder={t('admin.users.filter.all')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">الجميع</SelectItem>
-                      <SelectItem value="admin">المشرفين</SelectItem>
-                      <SelectItem value="user">المستخدمين</SelectItem>
+                      <SelectItem value="all">{t('admin.users.filter.all')}</SelectItem>
+                      <SelectItem value="admin">{t('admin.users.filter.admin')}</SelectItem>
+                      <SelectItem value="user">{t('admin.users.filter.user')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <Button 
-                  variant="outline" 
+
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setSearchTerm('')
                     setRoleFilter('all')
                   }}
                 >
-                  إعادة الضبط
+                  {t('admin.users.filter.reset')}
                 </Button>
               </div>
             </CardContent>
@@ -253,17 +255,17 @@ const AdminUsers = () => {
         >
           <Card>
             <CardHeader>
-              <CardTitle>المستخدمون المسجلون</CardTitle>
+              <CardTitle>{t('admin.users.list.title')}</CardTitle>
               <CardDescription>
-                {filteredUsers.length} من أصل {users.length} مستخدم
+                {t('admin.users.list.count_info', { shown: filteredUsers.length, total: users.length })}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {filteredUsers.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredUsers.map((user) => (
-                    <Card 
-                      key={user._id} 
+                    <Card
+                      key={user._id}
                       className="hover:shadow-md transition-shadow cursor-pointer"
                       onClick={() => handleUserClick(user)}
                     >
@@ -276,34 +278,34 @@ const AdminUsers = () => {
                             {getRoleBadgeText(user.role)}
                           </Badge>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
-                            {user.fullName || 'بدون اسم'}
+                            {user.fullName || t('admin.users.list.no_name')}
                           </h3>
-                          
+
                           <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                             <Mail className="h-4 w-4 ml-1" />
                             <span className="truncate">{user.email}</span>
                           </div>
-                          
+
                           {user.phoneNumber && (
                             <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                               <Phone className="h-4 w-4 ml-1" />
                               <span>{user.phoneNumber}</span>
                             </div>
                           )}
-                          
+
                           <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                             <Calendar className="h-4 w-4 ml-1" />
-                            <span>انضم في {formatDate(user.createdAt)}</span>
+                            <span>{t('admin.users.list.joined')} {formatDate(user.createdAt)}</span>
                           </div>
                         </div>
-                        
+
                         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="w-full flex items-center justify-center"
                             onClick={(e) => {
                               e.stopPropagation()
@@ -313,16 +315,16 @@ const AdminUsers = () => {
                             {expandedUserId === user._id ? (
                               <>
                                 <ChevronUp className="h-4 w-4 ml-1" />
-                                إخفاء التفاصيل
+                                {t('admin.users.list.hide_details')}
                               </>
                             ) : (
                               <>
                                 <ChevronDown className="h-4 w-4 ml-1" />
-                                عرض التفاصيل
+                                {t('admin.users.list.show_details')}
                               </>
                             )}
                           </Button>
-                          
+
                           <AnimatePresence>
                             {expandedUserId === user._id && (
                               <motion.div
@@ -332,38 +334,38 @@ const AdminUsers = () => {
                                 transition={{ duration: 0.2 }}
                                 className="mt-3 space-y-2 text-sm"
                               >
-                                <UserDetailItem 
-                                  icon={Mail} 
-                                  label="البريد الإلكتروني" 
-                                  value={user.email} 
+                                <UserDetailItem
+                                  icon={Mail}
+                                  label={t('admin.users.details.email')}
+                                  value={user.email}
                                 />
-                                <UserDetailItem 
-                                  icon={Phone} 
-                                  label="رقم الهاتف" 
-                                  value={user.phoneNumber} 
+                                <UserDetailItem
+                                  icon={Phone}
+                                  label={t('admin.users.details.phone')}
+                                  value={user.phoneNumber}
                                 />
-                                <UserDetailItem 
-                                  icon={User} 
-                                  label="الدور" 
-                                  value={getRoleBadgeText(user.role)} 
+                                <UserDetailItem
+                                  icon={User}
+                                  label={t('admin.users.details.role')}
+                                  value={getRoleBadgeText(user.role)}
                                 />
-                                <UserDetailItem 
-                                  icon={Calendar} 
-                                  label="تاريخ الإنضمام" 
-                                  value={formatDate(user.createdAt)} 
+                                <UserDetailItem
+                                  icon={Calendar}
+                                  label={t('admin.users.details.join_date')}
+                                  value={formatDate(user.createdAt)}
                                 />
                                 {user.address && (
-                                  <UserDetailItem 
-                                    icon={MapPin} 
-                                    label="العنوان" 
-                                    value={user.address} 
+                                  <UserDetailItem
+                                    icon={MapPin}
+                                    label={t('admin.users.details.address')}
+                                    value={user.address}
                                   />
                                 )}
                                 {user.lastLogin && (
-                                  <UserDetailItem 
-                                    icon={Clock} 
-                                    label="آخر تسجيل دخول" 
-                                    value={formatDate(user.lastLogin)} 
+                                  <UserDetailItem
+                                    icon={Clock}
+                                    label={t('admin.users.details.last_login')}
+                                    value={formatDate(user.lastLogin)}
                                   />
                                 )}
                               </motion.div>
@@ -378,12 +380,12 @@ const AdminUsers = () => {
                 <div className="text-center py-12">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    لا يوجد مستخدمين
+                    {t('admin.users.list.empty_title')}
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400">
-                    {searchTerm || roleFilter !== 'all' 
-                      ? 'لم يتم العثور على مستخدمين مطابقين للبحث' 
-                      : 'لا يوجد مستخدمين مسجلين في النظام'
+                    {searchTerm || roleFilter !== 'all'
+                      ? t('admin.users.list.empty_search')
+                      : t('admin.users.list.empty_system')
                     }
                   </p>
                 </div>
@@ -397,7 +399,7 @@ const AdminUsers = () => {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
-                <span>تفاصيل المستخدم</span>
+                <span>{t('admin.users.details.title')}</span>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -407,7 +409,7 @@ const AdminUsers = () => {
                 </Button>
               </DialogTitle>
             </DialogHeader>
-            
+
             {selectedUser && (
               <div className="space-y-4 mt-4">
                 <div className="flex items-center justify-center">
@@ -415,58 +417,58 @@ const AdminUsers = () => {
                     <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
-                
+
                 <div className="text-center">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {selectedUser.fullName || 'بدون اسم'}
+                    {selectedUser.fullName || t('admin.users.list.no_name')}
                   </h3>
                   <Badge variant={getRoleBadgeVariant(selectedUser.role)} className="mt-2">
                     {getRoleBadgeText(selectedUser.role)}
                   </Badge>
                 </div>
-                
+
                 <div className="space-y-3">
-                  <UserDetailItem 
-                    icon={Mail} 
-                    label="البريد الإلكتروني" 
-                    value={selectedUser.email} 
+                  <UserDetailItem
+                    icon={Mail}
+                    label={t('admin.users.details.email')}
+                    value={selectedUser.email}
                   />
-                  <UserDetailItem 
-                    icon={Phone} 
-                    label="رقم الهاتف" 
-                    value={selectedUser.phoneNumber} 
+                  <UserDetailItem
+                    icon={Phone}
+                    label={t('admin.users.details.phone')}
+                    value={selectedUser.phoneNumber}
                   />
-                  <UserDetailItem 
-                    icon={Calendar} 
-                    label="تاريخ الإنضمام" 
-                    value={formatDate(selectedUser.createdAt)} 
+                  <UserDetailItem
+                    icon={Calendar}
+                    label={t('admin.users.details.join_date')}
+                    value={formatDate(selectedUser.createdAt)}
                   />
                   {selectedUser.address && (
-                    <UserDetailItem 
-                      icon={MapPin} 
-                      label="العنوان" 
-                      value={selectedUser.address} 
+                    <UserDetailItem
+                      icon={MapPin}
+                      label={t('admin.users.details.address')}
+                      value={selectedUser.address}
                     />
                   )}
                   {selectedUser.lastLogin && (
-                    <UserDetailItem 
-                      icon={Clock} 
-                      label="آخر تسجيل دخول" 
-                      value={formatDate(selectedUser.lastLogin)} 
+                    <UserDetailItem
+                      icon={Clock}
+                      label={t('admin.users.details.last_login')}
+                      value={formatDate(selectedUser.lastLogin)}
                     />
                   )}
                   {selectedUser.dateOfBirth && (
-                    <UserDetailItem 
-                      icon={Calendar} 
-                      label="تاريخ الميلاد" 
-                      value={formatDate(selectedUser.dateOfBirth)} 
+                    <UserDetailItem
+                      icon={Calendar}
+                      label={t('admin.users.details.dob')}
+                      value={formatDate(selectedUser.dateOfBirth)}
                     />
                   )}
                   {selectedUser.gender && (
-                    <UserDetailItem 
-                      icon={User} 
-                      label="الجنس" 
-                      value={selectedUser.gender === 'male' ? 'ذكر' : 'أنثى'} 
+                    <UserDetailItem
+                      icon={User}
+                      label={t('admin.users.details.gender')}
+                      value={selectedUser.gender === 'male' ? t('admin.users.details.male') : t('admin.users.details.female')}
                     />
                   )}
                 </div>

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  BookOpen, 
-  Users, 
-  Award, 
-  TrendingUp, 
-  Play, 
-  CheckCircle, 
+import {
+  BookOpen,
+  Users,
+  Award,
+  TrendingUp,
+  Play,
+  CheckCircle,
   Star,
   ArrowRight,
   Menu,
@@ -23,12 +23,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import ThemeToggleIcon from '../components/ThemeToggleIcon';
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useTranslation } from '../hooks/useTranslation'
 
 const LandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { isAuthenticated } = useAuth()
+  const { t, lang, toggleLanguage } = useTranslation()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -40,50 +42,50 @@ const LandingPage = () => {
   const features = [
     {
       icon: BookOpen,
-      title: 'دروس تفاعلية',
-      description: 'محتوى تعليمي غني بالفيديوهات والتمارين التفاعلية'
+      title: t('landing.features.interactive_lessons'),
+      description: t('landing.features.interactive_desc')
     },
     {
       icon: Award,
-      title: 'امتحانات ذكية',
-      description: 'نظام امتحانات متطور مع تقييم فوري ونتائج مفصلة'
+      title: t('landing.features.smart_exams'),
+      description: t('landing.features.smart_desc')
     },
     {
       icon: TrendingUp,
-      title: 'تتبع التقدم',
-      description: 'راقب تطورك الأكاديمي مع إحصائيات مفصلة'
+      title: t('landing.features.track_progress'),
+      description: t('landing.features.track_desc')
     },
     {
       icon: Users,
-      title: 'مجتمع تعليمي',
-      description: 'تفاعل مع زملائك والمعلمين في بيئة تعليمية محفزة'
+      title: t('landing.features.community'),
+      description: t('landing.features.community_desc')
     }
   ]
 
   const stats = [
-    { number: '10,000+', label: 'طالب نشط' },
-    { number: '500+', label: 'درس تفاعلي' },
-    { number: '50+', label: 'معلم خبير' },
-    { number: '95%', label: 'معدل النجاح' }
+    { number: '10,000+', label: t('landing.stats.active_students') },
+    { number: '500+', label: t('landing.stats.interactive_lessons') },
+    { number: '50+', label: t('landing.stats.expert_teachers') },
+    { number: '95%', label: t('landing.stats.success_rate') }
   ]
 
   const testimonials = [
     {
-      name: 'أحمد محمد',
-      role: 'طالب ثانوية عامة',
-      content: 'منصة رائعة ساعدتني في تحسين درجاتي بشكل كبير',
+      name: t('landing.testimonials.student1_name'),
+      role: t('landing.testimonials.student1_role'),
+      content: t('landing.testimonials.student1_content'),
       rating: 5
     },
     {
-      name: 'فاطمة علي',
-      role: 'طالبة الصف الثاني الثانوي',
-      content: 'الدروس واضحة والامتحانات زي الامتحانات الحقيقية',
+      name: t('landing.testimonials.student2_name'),
+      role: t('landing.testimonials.student2_role'),
+      content: t('landing.testimonials.student2_content'),
       rating: 5
     },
     {
-      name: 'محمد حسن',
-      role: 'طالب الصف الأول الثانوي',
-      content: 'أفضل منصة تعليمية استخدمتها في حياتي',
+      name: t('landing.testimonials.student3_name'),
+      role: t('landing.testimonials.student3_role'),
+      content: t('landing.testimonials.student3_content'),
       rating: 5
     }
   ]
@@ -98,17 +100,17 @@ const LandingPage = () => {
               <GraduationCap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">EduMaster</span>
             </div>
-            
+
             <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
+              <div className="ml-10 flex items-baseline space-x-4 rtl:space-x-reverse">
                 <a href="#features" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  المميزات
+                  {t('landing.footer.features')}
                 </a>
                 <a href="#about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  عن المنصة
+                  {t('landing.footer.about')}
                 </a>
                 <a href="#testimonials" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  آراء الطلاب
+                  {t('landing.footer.testimonials')}
                 </a>
               </div>
             </div>
@@ -117,12 +119,21 @@ const LandingPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={toggleLanguage}
+                className="font-bold text-sm"
+              >
+                {lang === 'ar' ? 'EN' : 'AR'}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={toggleTheme}
                 className="p-2 relative overflow-hidden group"
-                aria-label={theme === 'light' ? 'التبديل إلى الوضع الداكن' : 'التبديل إلى الوضع الفاتح'}
+                aria-label={theme === 'light' ? t('common.theme.toggle_dark') : t('common.theme.toggle_light')}
               >
                 <ThemeToggleIcon theme={theme} />
-                
+
                 {/* تأثير إضافي عند التمرير */}
                 <motion.div
                   initial={false}
@@ -133,19 +144,19 @@ const LandingPage = () => {
                   transition={{ duration: 0.3 }}
                   className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full"
                 />
-                
+
                 {/* تلميح توضيحي */}
                 <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                  {theme === 'light' ? 'التبديل إلى الوضع الداكن' : 'التبديل إلى الوضع الفاتح'}
+                  {theme === 'light' ? t('common.theme.toggle_dark') : t('common.theme.toggle_light')}
                 </div>
               </Button>
-              
-              <div className="hidden md:flex items-center space-x-2">
+
+              <div className="hidden md:flex items-center space-x-2 rtl:space-x-reverse">
                 <Link to="/login">
-                  <Button variant="ghost">تسجيل الدخول</Button>
+                  <Button variant="ghost">{t('auth.login.submit')}</Button>
                 </Link>
                 <Link to="/register">
-                  <Button>إنشاء حساب</Button>
+                  <Button>{t('auth.register.submit')}</Button>
                 </Link>
               </div>
 
@@ -172,21 +183,29 @@ const LandingPage = () => {
           >
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               <a href="#features" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                المميزات
+                {t('landing.footer.features')}
               </a>
               <a href="#about" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                عن المنصة
+                {t('landing.footer.about')}
               </a>
               <a href="#testimonials" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                آراء الطلاب
+                {t('landing.footer.testimonials')}
               </a>
               <div className="flex flex-col space-y-2 px-3 pt-4">
                 <Link to="/login">
-                  <Button variant="ghost" className="w-full">تسجيل الدخول</Button>
+                  <Button variant="ghost" className="w-full">{t('auth.login.submit')}</Button>
                 </Link>
                 <Link to="/register">
-                  <Button className="w-full">إنشاء حساب</Button>
+                  <Button className="w-full">{t('auth.register.submit')}</Button>
                 </Link>
+                <div className="border-t border-gray-200 dark:border-gray-700 my-2" />
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={toggleLanguage}
+                >
+                  <span className="mr-2">{lang === 'ar' ? 'English' : 'العربية'}</span>
+                </Button>
               </div>
             </div>
           </motion.div>
@@ -203,29 +222,29 @@ const LandingPage = () => {
               transition={{ duration: 0.6 }}
             >
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-                مستقبلك التعليمي
+                {t('landing.hero.title_start')}
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                  يبدأ من هنا
+                  {t('landing.hero.title_end')}
                 </span>
               </h1>
               <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-                انضم إلى آلاف الطلاب الذين يحققون أحلامهم الأكاديمية مع منصة EduMaster التعليمية المتطورة
+                {t('landing.hero.subtitle')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/register">
                   <Button size="lg" className="text-lg px-8 py-3">
-                    ابدأ رحلتك التعليمية
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    {t('landing.hero.start_journey')}
+                    <ArrowRight className="ml-2 h-5 w-5 rtl:rotate-180" />
                   </Button>
                 </Link>
-                <Button 
-                  variant="outline" 
-                  size="lg" 
+                <Button
+                  variant="outline"
+                  size="lg"
                   className="text-lg px-8 py-3"
                   onClick={() => setShowVideo(true)}
                 >
                   <Play className="mr-2 h-5 w-5" />
-                  شاهد العرض التوضيحي
+                  {t('landing.hero.watch_demo')}
                 </Button>
               </div>
             </motion.div>
@@ -262,10 +281,10 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              لماذا تختار EduMaster?
+              {t('landing.features.title')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              نوفر لك أحدث التقنيات التعليمية لضمان تجربة تعلم فريدة ومثمرة
+              {t('landing.features.subtitle')}
             </p>
           </div>
 
@@ -301,10 +320,10 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              ماذا يقول طلابنا؟
+              {t('landing.testimonials.title')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300">
-              اكتشف تجارب الطلاب الناجحة مع منصتنا
+              {t('landing.testimonials.subtitle')}
             </p>
           </div>
 
@@ -351,21 +370,21 @@ const LandingPage = () => {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-              هل أنت مستعد لتغيير مستقبلك؟
+              {t('landing.cta.title')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-              انضم إلى آلاف الطلاب الذين حققوا أهدافهم الأكاديمية معنا
+              {t('landing.cta.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/register">
                 <Button size="lg" className="text-lg px-8 py-3">
-                  ابدأ مجاناً الآن
+                  {t('landing.cta.start_free')}
                   <Zap className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/login">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-3">
-                  لديك حساب؟ سجل دخولك
+                  {t('landing.cta.have_account')}
                 </Button>
               </Link>
             </div>
@@ -380,24 +399,25 @@ const LandingPage = () => {
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center mb-4">
                 <GraduationCap className="h-8 w-8 text-blue-400" />
-                <span className="ml-2 text-xl font-bold">EduMaster</span>
+                <span className="ml-2 text-xl font-bold">{t('navbar.logo')}</span>
               </div>
               <p className="text-gray-400 mb-4">
-                منصة تعليمية متطورة تهدف إلى تمكين الطلاب من تحقيق أهدافهم الأكاديمية بأحدث الوسائل التقنية
+                {t('landing.footer.desc')}
               </p>
             </div>
-            
+
             <div>
-              <h3 className="text-lg font-semibold mb-4">روابط سريعة</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('landing.footer.quick_links')}</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#features" className="hover:text-white transition-colors">المميزات</a></li>
-                <li><a href="#about" className="hover:text-white transition-colors">عن المنصة</a></li>
-                <li><a href="#testimonials" className="hover:text-white transition-colors">آراء الطلاب</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">{t('landing.footer.features')}</a></li>
+                <li><a href="#about" className="hover:text-white transition-colors">{t('landing.footer.about')}</a></li>
+                <li><a href="#testimonials" className="hover:text-white transition-colors">{t('landing.footer.testimonials')}</a></li>
               </ul>
             </div>
-            
+
             <div>
-              <h3 className="text-lg font-semibold mb-4">تواصل معنا</h3>
+
+              <h3 className="text-lg font-semibold mb-4">{t('landing.footer.contact')}</h3>
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-center">
                   <Mail className="h-4 w-4 ml-2" />
@@ -413,9 +433,9 @@ const LandingPage = () => {
                 </li>
                 <li className="flex items-center">
                   <MessageCircle className="h-5 w-5 ml-2 text-green-500" />
-                  <a 
-                    href="https://wa.me/201016864615" 
-                    target="_blank" 
+                  <a
+                    href="https://wa.me/201016864615"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-full transition-colors"
                   >
@@ -425,9 +445,9 @@ const LandingPage = () => {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 EduMaster. جميع الحقوق محفوظة.</p>
+            <p>&copy; 2025 {t('navbar.logo')}. {t('landing.footer.rights')}</p>
           </div>
         </div>
       </footer>
@@ -436,16 +456,16 @@ const LandingPage = () => {
       {showVideo && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="relative bg-black rounded-lg overflow-hidden max-w-4xl w-full">
-            <button 
+            <button
               className="absolute top-4 right-4 text-white z-10 bg-gray-800 rounded-full p-2 hover:bg-gray-700"
               onClick={() => setShowVideo(false)}
             >
               <X className="h-6 w-6" />
             </button>
             <div className="aspect-video">
-              <video 
-                controls 
-                autoPlay 
+              <video
+                controls
+                autoPlay
                 className="w-full h-full"
                 onEnded={() => setShowVideo(false)}
               >

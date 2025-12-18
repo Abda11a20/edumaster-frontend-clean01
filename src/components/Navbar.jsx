@@ -1,17 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  GraduationCap, 
-  Home, 
-  BookOpen, 
-  FileText, 
+import {
+  GraduationCap,
+  Home,
+  BookOpen,
+  FileText,
   BarChart3,
-  User, 
+  User,
   Users,
-  Settings, 
-  LogOut, 
-  Menu, 
+  Settings,
+  LogOut,
+  Menu,
   X,
   Bell,
   CheckCircle,
@@ -19,27 +19,29 @@ import {
   Info
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { useNotifications } from '../contexts/NotificationsContext'
+import { useTranslation } from '../hooks/useTranslation'
 import SearchBar from './SearchBar'
 import ThemeToggleIcon from './ThemeToggleIcon'
 
 
 const Navbar = () => {
+  const { t, lang, toggleLanguage } = useTranslation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
-  
+
   const { user, logout, isAdmin, isSuperAdmin } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
@@ -94,22 +96,22 @@ const Navbar = () => {
 
   const navigationItems = [
     {
-      name: 'الرئيسية',
+      name: t('navbar.home'),
       href: '/dashboard',
       icon: Home
     },
     {
-      name: 'الدروس',
+      name: t('navbar.lessons'),
       href: '/lessons',
       icon: BookOpen
     },
     {
-      name: 'الامتحانات',
+      name: t('navbar.exams'),
       href: '/exams',
       icon: FileText
     },
     {
-      name: 'نتائجي',
+      name: t('navbar.results'),
       href: '/results',
       icon: BarChart3
     }
@@ -117,27 +119,27 @@ const Navbar = () => {
 
   const adminNavigationItems = [
     {
-      name: 'إدارة الدروس',
+      name: t('navbar.admin.lessons'),
       href: '/admin/lessons',
       icon: BookOpen
     },
     {
-      name: 'إدارة الامتحانات',
+      name: t('navbar.admin.exams'),
       href: '/admin/exams',
       icon: FileText
     },
     {
-      name: 'نتائج الامتحانات',
+      name: t('navbar.admin.results'),
       href: '/admin/exam-results',
       icon: BarChart3
     },
     {
-      name: 'إدارة الأسئلة',
+      name: t('navbar.admin.questions'),
       href: '/admin/questions',
       icon: FileText
     },
     {
-      name: 'إدارة المستخدمين',
+      name: t('navbar.admin.users'),
       href: '/admin/users',
       icon: User
     }
@@ -145,7 +147,7 @@ const Navbar = () => {
 
   const superAdminNavigationItems = [
     {
-      name: 'إدارة المشرفين',
+      name: t('navbar.admin.admins'),
       href: '/super-admin/admins',
       icon: Users
     }
@@ -157,7 +159,7 @@ const Navbar = () => {
       // للمسؤولين: إظهار فقط الرئيسية + عناصر الإدارة
       return [
         {
-          name: 'الرئيسية',
+          name: t('navbar.home'),
           href: '/dashboard',
           icon: Home
         }
@@ -191,7 +193,7 @@ const Navbar = () => {
             <Link to="/dashboard" className="flex items-center">
               <GraduationCap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-                EduMaster
+                {t('navbar.logo')}
               </span>
             </Link>
           </div>
@@ -205,18 +207,17 @@ const Navbar = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActivePath(item.href)
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActivePath(item.href)
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
                   >
                     <Icon className="h-4 w-4 mr-2" />
                     {item.name}
                   </Link>
                 )
               })}
-              
+
               {/* Admin Navigation */}
               {(isAdmin() || isSuperAdmin()) && (
                 <>
@@ -229,11 +230,10 @@ const Navbar = () => {
                       <Link
                         key={item.name}
                         to={item.href}
-                        className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                          isActivePath(item.href)
-                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
-                            : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
+                        className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActivePath(item.href)
+                          ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                          : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          }`}
                       >
                         <Icon className="h-4 w-4 mr-2" />
                         {item.name}
@@ -246,11 +246,10 @@ const Navbar = () => {
                       <Link
                         key={item.name}
                         to={item.href}
-                        className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                          isActivePath(item.href)
-                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
-                            : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
+                        className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActivePath(item.href)
+                          ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                          : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          }`}
                       >
                         <Icon className="h-4 w-4 mr-2" />
                         {item.name}
@@ -273,12 +272,21 @@ const Navbar = () => {
             <Button
               variant="ghost"
               size="sm"
+              onClick={toggleLanguage}
+              className="font-bold text-sm"
+            >
+              {lang === 'ar' ? 'EN' : 'AR'}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={toggleTheme}
               className="p-2 relative overflow-hidden group"
-              aria-label={theme === 'light' ? 'التبديل إلى الوضع الداكن' : 'التبديل إلى الوضع الفاتح'}
+              aria-label={theme === 'light' ? t('common.theme.toggle_dark') : t('common.theme.toggle_light')}
             >
               <ThemeToggleIcon theme={theme} />
-              
+
               {/* تأثير إضافي عند التمرير */}
               <motion.div
                 initial={false}
@@ -289,25 +297,25 @@ const Navbar = () => {
                 transition={{ duration: 0.3 }}
                 className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full"
               />
-              
+
               {/* تأثير هالة عند التمرير فوق الزر */}
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
                 whileHover={{ scale: 1.5, opacity: 0.1 }}
                 className="absolute inset-0 bg-current rounded-full"
               />
-              
+
               {/* تلميح توضيحي */}
               <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                {theme === 'light' ? 'التبديل إلى الوضع الداكن' : 'التبديل إلى الوضع الفاتح'}
+                {theme === 'light' ? t('common.theme.toggle_dark') : t('common.theme.toggle_light')}
               </div>
             </Button>
 
             {/* Notifications */}
             <div className="relative" ref={notificationsRef}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="p-2 relative"
                 onClick={() => setShowNotifications(!showNotifications)}
               >
@@ -323,14 +331,14 @@ const Navbar = () => {
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
                   <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h3 className="font-semibold">الإشعارات</h3>
+                    <h3 className="font-semibold">{t('common.notifications')}</h3>
                     {unreadCount > 0 && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={handleMarkAllAsRead}
                       >
-                        تعيين الكل كمقروء
+                        {t('common.mark_all_read')}
                       </Button>
                     )}
                   </div>
@@ -338,15 +346,14 @@ const Navbar = () => {
                   <div className="max-h-96 overflow-y-auto">
                     {notifications.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                        لا توجد إشعارات
+                        {t('common.no_notifications')}
                       </div>
                     ) : (
                       notifications.map(notification => (
                         <div
                           key={notification.id}
-                          className={`p-3 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                            !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                          }`}
+                          className={`p-3 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                            }`}
                           onClick={() => handleNotificationClick(notification.id)}
                         >
                           <div className="flex items-start">
@@ -410,19 +417,19 @@ const Navbar = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/profile" className="flex items-center">
                     <User className="mr-2 h-4 w-4" />
-                    <span>الملف الشخصي</span>
+                    <span>{t('common.profile')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/settings" className="flex items-center">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>الإعدادات</span>
+                    <span>{t('common.settings')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>تسجيل الخروج</span>
+                  <span>{t('common.logout')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -467,11 +474,10 @@ const Navbar = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
-                      isActivePath(item.href)
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
+                    className={`flex items-center px-3 py-3 rounded-md text-base font-medium ${isActivePath(item.href)
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Icon className="h-5 w-5 mr-3" />
@@ -488,7 +494,7 @@ const Navbar = () => {
                   )}
                   <div className="px-3 py-2">
                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      إدارة النظام
+                      {t('navbar.admin.system')}
                     </p>
                   </div>
                   {adminNavigationItems.map((item) => {
@@ -497,11 +503,10 @@ const Navbar = () => {
                       <Link
                         key={item.name}
                         to={item.href}
-                        className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
-                          isActivePath(item.href)
-                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
-                            : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
+                        className={`flex items-center px-3 py-3 rounded-md text-base font-medium ${isActivePath(item.href)
+                          ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                          : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          }`}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Icon className="h-5 w-5 mr-3" />

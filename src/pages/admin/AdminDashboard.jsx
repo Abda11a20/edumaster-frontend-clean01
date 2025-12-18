@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  BookOpen, 
-  FileText, 
-  Users, 
-  HelpCircle, 
-  AlertCircle, 
-  RefreshCw, 
+import {
+  BookOpen,
+  FileText,
+  Users,
+  HelpCircle,
+  AlertCircle,
+  RefreshCw,
   GraduationCap,
   TrendingUp,
   TrendingDown,
@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminAPI, lessonsAPI, examsAPI, questionsAPI } from '../../services/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Navbar from '../../components/Navbar';
+import { useTranslation } from '../../hooks/useTranslation'
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -40,13 +41,14 @@ const AdminDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const { t, lang } = useTranslation();
 
   // دالة لتنسيق التاريخ بالعربية
   const formatDate = (dateString) => {
-    if (!dateString) return 'غير محدد';
+    if (!dateString) return t('admin.users.details.not_available');
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('ar-SA', {
+      return date.toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -55,7 +57,7 @@ const AdminDashboard = () => {
         minute: '2-digit'
       });
     } catch {
-      return 'غير محدد';
+      return t('admin.users.details.not_available');
     }
   };
 
@@ -97,12 +99,12 @@ const AdminDashboard = () => {
       const g = toGrade(item?.classLevel ?? item?.level);
       if (g && gradeStats[g]) gradeStats[g].lessons++;
     });
-    
+
     exams.forEach((item) => {
       const g = toGrade(item?.classLevel ?? item?.level);
       if (g && gradeStats[g]) gradeStats[g].exams++;
     });
-    
+
     questions.forEach((item) => {
       let g = toGrade(item?.classLevel ?? item?.level);
       if (!g && item?.exam) g = examGrade.get(item.exam) ?? null;
@@ -113,26 +115,26 @@ const AdminDashboard = () => {
     const totalLessons = lessons.length;
     const totalExams = exams.length;
     const totalQuestions = questions.length;
-    
+
     // حساب النسب المئوية
     const userDistribution = [
-      { 
-        name: 'الصف الأول', 
-        value: gradeStats[1].users, 
+      {
+        name: t('admin.dashboard.grades.grade1'),
+        value: gradeStats[1].users,
         percentage: users.length > 0 ? (gradeStats[1].users / users.length * 100).toFixed(1) : 0,
         color: '#3b82f6',
         icon: '1️⃣'
       },
-      { 
-        name: 'الصف الثاني', 
-        value: gradeStats[2].users, 
+      {
+        name: t('admin.dashboard.grades.grade2'),
+        value: gradeStats[2].users,
         percentage: users.length > 0 ? (gradeStats[2].users / users.length * 100).toFixed(1) : 0,
         color: '#10b981',
         icon: '2️⃣'
       },
-      { 
-        name: 'الصف الثالث', 
-        value: gradeStats[3].users, 
+      {
+        name: t('admin.dashboard.grades.grade3'),
+        value: gradeStats[3].users,
         percentage: users.length > 0 ? (gradeStats[3].users / users.length * 100).toFixed(1) : 0,
         color: '#8b5cf6',
         icon: '3️⃣'
@@ -146,13 +148,13 @@ const AdminDashboard = () => {
 
     // حساب صحة النظام
     const issues = [];
-    if (users.length === 0) issues.push('لا يوجد مستخدمين مسجلين');
-    if (lessons.length === 0) issues.push('لا يوجد دروس منشورة');
-    if (exams.length === 0) issues.push('لا يوجد امتحانات متاحة');
-    if (questions.length === 0) issues.push('لا يوجد أسئلة مخزنة');
-    
-    const systemStatus = issues.length === 0 ? 'healthy' : 
-                        issues.length <= 2 ? 'warning' : 'critical';
+    if (users.length === 0) issues.push(t('admin.users.list.empty_system'));
+    if (lessons.length === 0) issues.push(t('admin.dashboard.distribution.empty'));
+    if (exams.length === 0) issues.push(t('admin.exams.empty.desc_no_exams'));
+    if (questions.length === 0) issues.push(t('admin.questions.list.empty_system'));
+
+    const systemStatus = issues.length === 0 ? 'healthy' :
+      issues.length <= 2 ? 'warning' : 'critical';
 
     // حساب الإحصائيات الإضافية
     const growthRates = {
@@ -162,8 +164,8 @@ const AdminDashboard = () => {
       questions: questions.length > 0 ? Math.round(Math.random() * 25) + 8 : 0
     };
 
-    return { 
-      usersCount: users.length, 
+    return {
+      usersCount: users.length,
       gradeStats,
       userDistribution,
       totals: {
@@ -233,19 +235,19 @@ const AdminDashboard = () => {
         });
         return [...map.values()];
       };
-      
+
       lessonsArr = dedupe(lessonsArr);
       examsArr = dedupe(examsArr);
       questionsArr = dedupe(questionsArr);
 
       const failed = [];
-      if (usersRes.status === 'rejected') failed.push('المستخدمين');
-      if (lessonsRes.status === 'rejected') failed.push('الدروس');
-      if (examsRes.status === 'rejected') failed.push('الامتحانات');
-      if (questionsRes.status === 'rejected') failed.push('الأسئلة');
-      
+      if (usersRes.status === 'rejected') failed.push(t('admin.dashboard.entities.users'));
+      if (lessonsRes.status === 'rejected') failed.push(t('admin.dashboard.entities.lessons'));
+      if (examsRes.status === 'rejected') failed.push(t('admin.dashboard.entities.exams'));
+      if (questionsRes.status === 'rejected') failed.push(t('admin.dashboard.entities.questions'));
+
       if (failed.length) {
-        setError(`تعذر تحميل: ${failed.join('، ')} (سيتم عرض ما توفر).`);
+        setError(`${t('admin.users.filter.error_load')}: ${failed.join('， ')}`);
       }
 
       const processedStats = processData(usersArr, lessonsArr, examsArr, questionsArr);
@@ -255,7 +257,7 @@ const AdminDashboard = () => {
 
     } catch (err) {
       console.error('Error fetching admin dashboard data:', err);
-      setError('حدث خطأ غير متوقع أثناء تحميل البيانات.');
+      setError(t('admin.users.filter.error_load_desc'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -264,12 +266,12 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    
+
     // تحديث تلقائي كل ساعة
     const interval = setInterval(() => {
       fetchDashboardData();
     }, 3600000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -320,7 +322,7 @@ const AdminDashboard = () => {
                       <TrendingDown className="h-4 w-4" />
                     )}
                     <span className="text-sm font-medium">{Math.abs(change)}%</span>
-                    <span className="text-xs text-muted-foreground">نمو عن الشهر الماضي</span>
+                    <span className="text-xs text-muted-foreground">{t('admin.dashboard.stats.growth_desc')}</span>
                   </div>
                 )}
               </div>
@@ -340,7 +342,7 @@ const AdminDashboard = () => {
   // مكون مخطط توزيع المستخدمين
   const UserDistributionChart = ({ data }) => {
     const totalUsers = data.reduce((sum, item) => sum + item.value, 0);
-    
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -351,9 +353,9 @@ const AdminDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PieChartIcon className="h-5 w-5 text-primary" />
-              توزيع المستخدمين حسب الصف
+              {t('admin.dashboard.distribution.title')}
             </CardTitle>
-            <CardDescription>نسبة المستخدمين في كل صف دراسي</CardDescription>
+            <CardDescription>{t('admin.dashboard.distribution.desc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {totalUsers > 0 ? (
@@ -370,19 +372,19 @@ const AdminDashboard = () => {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <div className="text-lg">{item.icon}</div>
-                          <div 
-                            className="w-3 h-3 rounded-full" 
+                          <div
+                            className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: item.color }}
                           />
                           <span className="font-medium">{item.name}</span>
                         </div>
                         <div className="text-right">
-                          <div className="font-bold text-lg">{item.value} مستخدم</div>
+                          <div className="font-bold text-lg">{item.value} {t('admin.dashboard.distribution.user')}</div>
                           <div className="text-sm text-muted-foreground">{item.percentage}%</div>
                         </div>
                       </div>
                       <div className="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <motion.div 
+                        <motion.div
                           className="h-full rounded-full"
                           initial={{ width: 0 }}
                           animate={{ width: `${item.percentage}%` }}
@@ -398,13 +400,13 @@ const AdminDashboard = () => {
                     </motion.div>
                   ))}
                 </div>
-                
+
                 <div className="mt-6 grid grid-cols-3 gap-4 text-center">
                   {data.map((item, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="p-3 rounded-xl transition-all hover:scale-105"
-                      style={{ 
+                      style={{
                         background: `linear-gradient(135deg, ${item.color}20, ${item.color}10)`,
                         border: `1px solid ${item.color}30`
                       }}
@@ -413,7 +415,7 @@ const AdminDashboard = () => {
                         {item.percentage}%
                       </div>
                       <div className="text-sm text-muted-foreground mt-1">{item.name}</div>
-                      <div className="text-xs opacity-75 mt-1">{item.value} مستخدم</div>
+                      <div className="text-xs opacity-75 mt-1">{item.value} {t('admin.dashboard.distribution.user')}</div>
                     </div>
                   ))}
                 </div>
@@ -424,8 +426,8 @@ const AdminDashboard = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 rounded-full animate-pulse" />
                   <Users className="h-12 w-12 absolute inset-0 m-auto text-gray-400 dark:text-gray-600" />
                 </div>
-                <p className="text-muted-foreground">لا توجد بيانات كافية لعرض التوزيع</p>
-                <p className="text-sm text-muted-foreground mt-2">سيتم عرض البيانات عند تسجيل المستخدمين</p>
+                <p className="text-muted-foreground">{t('admin.dashboard.distribution.empty')}</p>
+                <p className="text-sm text-muted-foreground mt-2">{t('admin.dashboard.distribution.empty_desc')}</p>
               </div>
             )}
           </CardContent>
@@ -458,18 +460,18 @@ const AdminDashboard = () => {
         transition={{ duration: 0.4, delay: index * 0.1 }}
       >
         <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-          <div 
+          <div
             className="absolute top-0 right-0 w-32 h-32 opacity-10 group-hover:opacity-20 transition-opacity"
-            style={{ 
+            style={{
               background: `radial-gradient(circle, ${color} 0%, transparent 70%)`
             }}
           />
           <CardHeader className="pb-3 relative">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
-                <div 
+                <div
                   className="p-3 rounded-xl"
-                  style={{ 
+                  style={{
                     background: `linear-gradient(135deg, ${color}20, ${color}10)`,
                     border: `1px solid ${color}30`
                   }}
@@ -478,11 +480,11 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <span>الصف {grade}</span>
-                    <Badge 
-                      variant="outline" 
+                    <span>{grade}</span>
+                    <Badge
+                      variant="outline"
                       className="text-xs"
-                      style={{ 
+                      style={{
                         backgroundColor: `${color}15`,
                         borderColor: color,
                         color: color
@@ -494,7 +496,7 @@ const AdminDashboard = () => {
                   <CardDescription>
                     <div className="flex items-center gap-2 mt-1">
                       <Users className="h-3 w-3" />
-                      <span>{data.users} مستخدم مسجل</span>
+                      <span>{data.users} {t('admin.dashboard.grades.registered')}</span>
                     </div>
                   </CardDescription>
                 </div>
@@ -503,7 +505,7 @@ const AdminDashboard = () => {
                 <div className="text-2xl font-bold" style={{ color }}>
                   {((data.users / Math.max(stats?.usersCount, 1)) * 100).toFixed(0)}%
                 </div>
-                <div className="text-xs text-muted-foreground">من إجمالي المستخدمين</div>
+                <div className="text-xs text-muted-foreground">Ratio</div>
               </div>
             </div>
           </CardHeader>
@@ -514,19 +516,19 @@ const AdminDashboard = () => {
                 <div className="flex justify-between text-sm">
                   <span className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" style={{ color }} />
-                    <span>الدروس</span>
+                    <span>{t('admin.dashboard.grades.lessons')}</span>
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="font-bold">{data.lessons}</span>
                     <span className="text-xs text-muted-foreground">
-                      ({data.users > 0 ? (data.lessons / data.users).toFixed(1) : 0}/مستخدم)
+                      ({data.users > 0 ? (data.lessons / data.users).toFixed(1) : 0}{t('admin.dashboard.grades.per_user')})
                     </span>
                   </div>
                 </div>
-                <Progress 
-                  value={(data.lessons / Math.max(stats?.totals.lessons, 1)) * 100} 
+                <Progress
+                  value={(data.lessons / Math.max(stats?.totals.lessons, 1)) * 100}
                   className="h-2"
-                  style={{ 
+                  style={{
                     backgroundColor: `${color}20`,
                     '--progress-background': color
                   }}
@@ -538,19 +540,19 @@ const AdminDashboard = () => {
                 <div className="flex justify-between text-sm">
                   <span className="flex items-center gap-2">
                     <FileText className="h-4 w-4" style={{ color }} />
-                    <span>الامتحانات</span>
+                    <span>{t('admin.dashboard.grades.exams')}</span>
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="font-bold">{data.exams}</span>
                     <span className="text-xs text-muted-foreground">
-                      ({data.users > 0 ? (data.exams / data.users).toFixed(1) : 0}/مستخدم)
+                      ({data.users > 0 ? (data.exams / data.users).toFixed(1) : 0}{t('admin.dashboard.grades.per_user')})
                     </span>
                   </div>
                 </div>
-                <Progress 
-                  value={(data.exams / Math.max(stats?.totals.exams, 1)) * 100} 
+                <Progress
+                  value={(data.exams / Math.max(stats?.totals.exams, 1)) * 100}
                   className="h-2"
-                  style={{ 
+                  style={{
                     backgroundColor: `${color}20`,
                     '--progress-background': color
                   }}
@@ -562,19 +564,19 @@ const AdminDashboard = () => {
                 <div className="flex justify-between text-sm">
                   <span className="flex items-center gap-2">
                     <HelpCircle className="h-4 w-4" style={{ color }} />
-                    <span>الأسئلة</span>
+                    <span>{t('admin.dashboard.grades.questions')}</span>
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="font-bold">{data.questions}</span>
                     <span className="text-xs text-muted-foreground">
-                      ({data.exams > 0 ? (data.questions / data.exams).toFixed(1) : 0}/امتحان)
+                      ({data.exams > 0 ? (data.questions / data.exams).toFixed(1) : 0}{t('admin.dashboard.grades.per_exam')})
                     </span>
                   </div>
                 </div>
-                <Progress 
-                  value={(data.questions / Math.max(stats?.totals.questions, 1)) * 100} 
+                <Progress
+                  value={(data.questions / Math.max(stats?.totals.questions, 1)) * 100}
                   className="h-2"
-                  style={{ 
+                  style={{
                     backgroundColor: `${color}20`,
                     '--progress-background': color
                   }}
@@ -588,19 +590,19 @@ const AdminDashboard = () => {
                 <div className="text-lg font-bold" style={{ color }}>
                   {data.users > 0 ? Math.round((data.lessons / data.users) * 10) / 10 : 0}
                 </div>
-                <div className="text-xs text-muted-foreground">درس/مستخدم</div>
+                <div className="text-xs text-muted-foreground">{t('admin.dashboard.kpi.density_desc')}</div>
               </div>
               <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                 <div className="text-lg font-bold" style={{ color }}>
                   {data.users > 0 ? Math.round((data.exams / data.users) * 10) / 10 : 0}
                 </div>
-                <div className="text-xs text-muted-foreground">امتحان/مستخدم</div>
+                <div className="text-xs text-muted-foreground">Exam/User</div>
               </div>
               <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                 <div className="text-lg font-bold" style={{ color }}>
                   {data.exams > 0 ? Math.round((data.questions / data.exams) * 10) / 10 : 0}
                 </div>
-                <div className="text-xs text-muted-foreground">سؤال/امتحان</div>
+                <div className="text-xs text-muted-foreground">{t('admin.dashboard.kpi.diversity_desc')}</div>
               </div>
             </div>
 
@@ -610,7 +612,7 @@ const AdminDashboard = () => {
                 <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
                   <p className="text-xs text-yellow-700 dark:text-yellow-300 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
-                    يحتاج المزيد من الدروس
+                    {t('admin.dashboard.grades.more_lessons')}
                   </p>
                 </div>
               )}
@@ -638,9 +640,9 @@ const AdminDashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-primary" />
-            المستخدمون الجدد
+            {t('admin.dashboard.recent_users.title')}
           </CardTitle>
-          <CardDescription>آخر 5 مستخدمين انضموا للمنصة</CardDescription>
+          <CardDescription>{t('admin.dashboard.recent_users.desc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -654,7 +656,7 @@ const AdminDashboard = () => {
                   className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md"
                       style={{ backgroundColor: getRandomColor(index) }}
                     >
@@ -662,10 +664,10 @@ const AdminDashboard = () => {
                     </div>
                     <div>
                       <p className="font-medium group-hover:text-primary transition-colors">
-                        {user.fullName || 'مستخدم جديد'}
+                        {user.fullName || t('admin.dashboard.recent_users.new_user')}
                       </p>
                       <p className="text-sm text-muted-foreground truncate max-w-[180px]">
-                        {user.email || user.phoneNumber || 'لا يوجد معلومات'}
+                        {user.email || user.phoneNumber || t('admin.dashboard.recent_users.no_info')}
                       </p>
                     </div>
                   </div>
@@ -674,7 +676,7 @@ const AdminDashboard = () => {
                       {formatDate(user.createdAt).split('،')[0]}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {user.classLevel || 'غير محدد'}
+                      {user.classLevel || t('admin.dashboard.recent_users.unknown_level')}
                     </div>
                   </div>
                 </motion.div>
@@ -684,20 +686,20 @@ const AdminDashboard = () => {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <UserPlus className="h-8 w-8 text-gray-400" />
                 </div>
-                <p className="text-muted-foreground">لا توجد بيانات للمستخدمين</p>
-                <p className="text-sm text-muted-foreground mt-1">سيظهر المستخدمون الجدد هنا عند تسجيلهم</p>
+                <p className="text-muted-foreground">{t('admin.dashboard.recent_users.empty')}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('admin.dashboard.recent_users.empty_desc')}</p>
               </div>
             )}
           </div>
-          
+
           {users.length > 0 && (
             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex justify-between items-center">
                 <div className="text-sm text-muted-foreground">
-                  مجموع {users.length} مستخدم جديد
+                  {t('admin.dashboard.recent_users.total_new', { count: users.length })}
                 </div>
                 <Button variant="ghost" size="sm" className="text-xs">
-                  عرض الكل →
+                  {t('admin.dashboard.recent_users.view_all')} →
                 </Button>
               </div>
             </div>
@@ -715,29 +717,29 @@ const AdminDashboard = () => {
           return {
             color: 'green',
             icon: <CheckCircle className="h-5 w-5" />,
-            text: 'سليم',
-            description: 'جميع الأنظمة تعمل بشكل طبيعي'
+            text: t('admin.dashboard.health.healthy'),
+            description: t('admin.dashboard.health.healthy_desc')
           };
         case 'warning':
           return {
             color: 'yellow',
             icon: <AlertCircle className="h-5 w-5" />,
-            text: 'تحذير',
-            description: 'بعض المشاكل تحتاج للانتباه'
+            text: t('admin.dashboard.health.warning'),
+            description: t('admin.dashboard.health.warning_desc')
           };
         case 'critical':
           return {
             color: 'red',
             icon: <XCircle className="h-5 w-5" />,
-            text: 'حرج',
-            description: 'يوجد مشاكل تحتاج إلى حل عاجل'
+            text: t('admin.dashboard.health.critical'),
+            description: t('admin.dashboard.health.critical_desc')
           };
         default:
           return {
             color: 'gray',
             icon: <AlertCircle className="h-5 w-5" />,
-            text: 'غير معروف',
-            description: 'حالة النظام غير معروفة'
+            text: t('admin.dashboard.health.unknown'),
+            description: t('admin.dashboard.health.unknown_desc')
           };
       }
     };
@@ -749,9 +751,9 @@ const AdminDashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
-            صحة النظام
+            {t('admin.dashboard.health.title')}
           </CardTitle>
-          <CardDescription>حالة المنصة والمشاكل المحتملة</CardDescription>
+          <CardDescription>{t('admin.dashboard.health.desc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-6">
@@ -772,17 +774,17 @@ const AdminDashboard = () => {
               <div className="text-2xl font-bold">
                 {health.issues.length === 0 ? '100%' : `${100 - (health.issues.length * 20)}%`}
               </div>
-              <div className="text-xs text-muted-foreground">معدل الصحة</div>
+              <div className="text-xs text-muted-foreground">{t('admin.dashboard.health.score')}</div>
             </div>
           </div>
-          
+
           {health.issues.length > 0 && (
             <div className="space-y-3">
-              <div className="text-sm font-medium">المشاكل المكتشفة:</div>
+              <div className="text-sm font-medium">{t('admin.dashboard.health.issues_title')}:</div>
               <div className="space-y-2">
                 {health.issues.map((issue, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="flex items-center gap-2 p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800"
                   >
                     <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
@@ -792,25 +794,25 @@ const AdminDashboard = () => {
               </div>
             </div>
           )}
-          
+
           <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
-            <div className="text-sm font-medium mb-3">نصائح وإحصائيات:</div>
+            <div className="text-sm font-medium mb-3">{t('admin.dashboard.health.tips_title')}:</div>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">آخر تحديث</span>
+                <span className="text-muted-foreground">{t('admin.dashboard.last_updated')}</span>
                 <span className="font-medium">{new Date().toLocaleTimeString('ar-SA')}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">حالة الخادم</span>
+                <span className="text-muted-foreground">{t('admin.dashboard.server_status')}</span>
                 <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/30">
                   <div className="w-2 h-2 rounded-full bg-green-600 mr-1"></div>
-                  متصل
+                  {t('admin.dashboard.connected')}
                 </Badge>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">استجابة الـ API</span>
+                <span className="text-muted-foreground">{t('admin.dashboard.api_response')}</span>
                 <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/30">
-                  سريعة
+                  {t('admin.dashboard.fast')}
                 </Badge>
               </div>
             </div>
@@ -831,8 +833,8 @@ const AdminDashboard = () => {
               <div className="w-full h-full rounded-full bg-primary/20" />
             </div>
           </div>
-          <p className="mt-6 text-lg font-medium">جاري تحميل لوحة التحكم...</p>
-          <p className="text-sm text-muted-foreground mt-2">قد يستغرق هذا بضع ثوانٍ</p>
+          <p className="mt-6 text-lg font-medium">{t('admin.dashboard.loading')}</p>
+          <p className="text-sm text-muted-foreground mt-2">{t('admin.dashboard.loading_desc')}</p>
         </div>
       </div>
     );
@@ -841,7 +843,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-950">
       <Navbar />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header مع الأنيميشن */}
         <motion.div
@@ -856,11 +858,11 @@ const AdminDashboard = () => {
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-foreground bg-clip-text text-transparent">
-                لوحة تحكم المشرف
+                {t('admin.dashboard.title')}
               </h1>
             </div>
             <p className="text-muted-foreground text-lg">
-              مركز التحكم والإدارة الشاملة للمنصة التعليمية
+              {t('admin.dashboard.subtitle')}
             </p>
             <div className="flex items-center gap-3 mt-3 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
@@ -874,16 +876,16 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <Button 
-              onClick={fetchDashboardData} 
+            <Button
+              onClick={fetchDashboardData}
               variant="outline"
               className="gap-2 hover:shadow-md hover:scale-105 transition-all border-primary/20"
               disabled={isRefreshing}
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? 'جاري التحديث...' : 'تحديث البيانات'}
+              {isRefreshing ? t('admin.dashboard.refreshing') : t('admin.dashboard.refresh')}
             </Button>
           </div>
         </motion.div>
@@ -897,12 +899,12 @@ const AdminDashboard = () => {
           >
             <Alert variant="destructive" className="mb-6 border-0 shadow-lg">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>تنبيه هام</AlertTitle>
+              <AlertTitle>{t('admin.dashboard.error_title')}</AlertTitle>
               <AlertDescription className="flex items-center justify-between">
                 <span>{error}</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setError(null)}
                   className="h-8 px-2"
                 >
@@ -916,72 +918,72 @@ const AdminDashboard = () => {
         {/* بطاقات الإحصائيات السريعة */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <QuickStatCard
-            title="إجمالي المستخدمين"
+            title={t('admin.dashboard.stats.users')}
             value={stats?.usersCount || 0}
             change={stats?.growthRates?.users || 0}
             icon={<Users className="h-5 w-5" />}
             color="blue"
             subtitle={`${stats?.userDistribution?.[0]?.value || 0} | ${stats?.userDistribution?.[1]?.value || 0} | ${stats?.userDistribution?.[2]?.value || 0}`}
-            tooltip="عدد المستخدمين المسجلين في المنصة"
+            tooltip={t('admin.dashboard.stats.users_tooltip')}
           />
-          
+
           <QuickStatCard
-            title="إجمالي الدروس"
+            title={t('admin.dashboard.stats.lessons')}
             value={stats?.totals?.lessons || 0}
             change={stats?.growthRates?.lessons || 0}
             icon={<BookOpen className="h-5 w-5" />}
             color="green"
             subtitle={`${stats?.gradeStats?.[1]?.lessons || 0} | ${stats?.gradeStats?.[2]?.lessons || 0} | ${stats?.gradeStats?.[3]?.lessons || 0}`}
-            tooltip="عدد الدروس المنشورة في المنصة"
+            tooltip={t('admin.dashboard.stats.lessons_tooltip')}
           />
-          
+
           <QuickStatCard
-            title="إجمالي الامتحانات"
+            title={t('admin.dashboard.stats.exams')}
             value={stats?.totals?.exams || 0}
             change={stats?.growthRates?.exams || 0}
             icon={<FileText className="h-5 w-5" />}
             color="purple"
             subtitle={`${stats?.gradeStats?.[1]?.exams || 0} | ${stats?.gradeStats?.[2]?.exams || 0} | ${stats?.gradeStats?.[3]?.exams || 0}`}
-            tooltip="عدد الامتحانات المتاحة في المنصة"
+            tooltip={t('admin.dashboard.stats.exams_tooltip')}
           />
-          
+
           <QuickStatCard
-            title="إجمالي الأسئلة"
+            title={t('admin.dashboard.stats.questions')}
             value={stats?.totals?.questions || 0}
             change={stats?.growthRates?.questions || 0}
             icon={<HelpCircle className="h-5 w-5" />}
             color="orange"
-            subtitle={`متوسط ${stats?.averages?.questionsPerExam?.toFixed(1) || 0} سؤال/امتحان`}
-            tooltip="عدد الأسئلة المخزنة في بنك الأسئلة"
+            subtitle={`${t('admin.common.average')} ${stats?.averages?.questionsPerExam?.toFixed(1) || 0} ${t('admin.dashboard.stats.per_exam')}`}
+            tooltip={t('admin.dashboard.stats.questions_tooltip')}
           />
         </div>
 
         {/* تبويبات المحتوى الرئيسي */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-            <TabsTrigger 
-              value="overview" 
+            <TabsTrigger
+              value="overview"
               className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-900"
             >
               <Eye className="h-4 w-4 mr-2" />
-              نظرة عامة
+              {t('admin.dashboard.tabs.overview')}
             </TabsTrigger>
-            <TabsTrigger 
-              value="grades" 
+            <TabsTrigger
+              value="grades"
               className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-900"
             >
               <GraduationCap className="h-4 w-4 mr-2" />
-              الصفوف الدراسية
+              {t('admin.dashboard.tabs.grades')}
             </TabsTrigger>
-            <TabsTrigger 
-              value="analytics" 
+            <TabsTrigger
+              value="analytics"
               className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-900"
             >
               <BarChart3 className="h-4 w-4 mr-2" />
-              التحليلات
+              {t('admin.dashboard.tabs.analytics')}
             </TabsTrigger>
           </TabsList>
-          
+
           {/* تبويب النظرة العامة */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -993,41 +995,41 @@ const AdminDashboard = () => {
                 <RecentUsersCard users={recentUsers} />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="border-0 shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    مؤشرات الأداء الرئيسية
+                    {t('admin.dashboard.kpi.title')}
                   </CardTitle>
-                  <CardDescription>مقاييس مهمة لأداء المنصة</CardDescription>
+                  <CardDescription>{t('admin.dashboard.kpi.desc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {[
                       {
-                        title: 'كثافة المحتوى',
+                        title: t('admin.dashboard.kpi.density'),
                         value: stats?.usersCount > 0 ? (stats.totals.lessons / stats.usersCount).toFixed(2) : '0.00',
-                        description: 'درس لكل مستخدم',
+                        description: t('admin.dashboard.kpi.density_desc'),
                         icon: '📚',
                         progress: stats?.usersCount > 0 ? Math.min((stats.totals.lessons / stats.usersCount) * 50, 100) : 0
                       },
                       {
-                        title: 'تنوع المحتوى',
+                        title: t('admin.dashboard.kpi.diversity'),
                         value: stats?.totals.exams > 0 ? (stats.totals.questions / stats.totals.exams).toFixed(1) : '0.0',
-                        description: 'سؤال لكل امتحان',
+                        description: t('admin.dashboard.kpi.diversity_desc'),
                         icon: '❓',
                         progress: stats?.totals.exams > 0 ? Math.min((stats.totals.questions / stats.totals.exams) / 5 * 100, 100) : 0
                       },
                       {
-                        title: 'التوازن بين الصفوف',
-                        value: stats ? Math.max(...Object.values(stats.gradeStats).map(g => g.users)) - 
-                                     Math.min(...Object.values(stats.gradeStats).map(g => g.users)) : 0,
-                        description: 'فرق في عدد المستخدمين',
+                        title: t('admin.dashboard.kpi.balance'),
+                        value: stats ? Math.max(...Object.values(stats.gradeStats).map(g => g.users)) -
+                          Math.min(...Object.values(stats.gradeStats).map(g => g.users)) : 0,
+                        description: t('admin.dashboard.kpi.balance_desc'),
                         icon: '⚖️',
-                        progress: stats?.usersCount > 0 ? 100 - (Math.max(...Object.values(stats.gradeStats).map(g => g.users)) - 
-                                     Math.min(...Object.values(stats.gradeStats).map(g => g.users))) / stats.usersCount * 100 : 100
+                        progress: stats?.usersCount > 0 ? 100 - (Math.max(...Object.values(stats.gradeStats).map(g => g.users)) -
+                          Math.min(...Object.values(stats.gradeStats).map(g => g.users))) / stats.usersCount * 100 : 100
                       }
                     ].map((item, index) => (
                       <motion.div
@@ -1055,27 +1057,27 @@ const AdminDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="border-0 shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-primary" />
-                    إحصائيات سريعة
+                    {t('admin.dashboard.kpi.quick_stats')}
                   </CardTitle>
-                  <CardDescription>أرقام مهمة للسرعة</CardDescription>
+                  <CardDescription>{t('admin.dashboard.kpi.speed_desc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { label: 'المتوسط/صف', value: stats?.averages?.usersPerGrade.toFixed(1) || '0.0', color: 'blue' },
-                      { label: 'الدروس/صف', value: stats?.averages?.lessonsPerGrade.toFixed(1) || '0.0', color: 'green' },
-                      { label: 'الامتحانات/صف', value: stats?.averages?.examsPerGrade.toFixed(1) || '0.0', color: 'purple' },
-                      { label: 'النمو الشهري', value: `${stats?.growthRates?.users || 0}%`, color: 'orange' },
+                      { label: t('admin.dashboard.kpi.avg_per_grade'), value: stats?.averages?.usersPerGrade.toFixed(1) || '0.0', color: 'blue' },
+                      { label: t('admin.dashboard.kpi.lessons_per_grade'), value: stats?.averages?.lessonsPerGrade.toFixed(1) || '0.0', color: 'green' },
+                      { label: t('admin.dashboard.kpi.exams_per_grade'), value: stats?.averages?.examsPerGrade.toFixed(1) || '0.0', color: 'purple' },
+                      { label: t('admin.dashboard.kpi.monthly_growth'), value: `${stats?.growthRates?.users || 0}%`, color: 'orange' },
                     ].map((stat, index) => (
-                      <div 
+                      <div
                         key={index}
                         className="p-4 rounded-xl text-center transition-transform hover:scale-105"
-                        style={{ 
+                        style={{
                           background: `linear-gradient(135deg, var(--${stat.color}-100), var(--${stat.color}-50))`,
                           border: `1px solid var(--${stat.color}-200)`
                         }}
@@ -1087,12 +1089,12 @@ const AdminDashboard = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                     <div className="text-sm text-muted-foreground text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Clock className="h-4 w-4" />
-                        <span>آخر تحديث للبيانات: {new Date().toLocaleTimeString('ar-SA')}</span>
+                        <span>{t('admin.dashboard.kpi.last_update')}: {new Date().toLocaleTimeString('ar-SA')}</span>
                       </div>
                     </div>
                   </div>
@@ -1100,11 +1102,11 @@ const AdminDashboard = () => {
               </Card>
             </div>
           </TabsContent>
-          
+
           {/* تبويب الصفوف الدراسية */}
           <TabsContent value="grades" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {['الأول', 'الثاني', 'الثالث'].map((grade, index) => (
+              {[t('admin.dashboard.grades.grade1'), t('admin.dashboard.grades.grade2'), t('admin.dashboard.grades.grade3')].map((grade, index) => (
                 <EnhancedGradeCard
                   key={index}
                   grade={grade}
@@ -1113,42 +1115,42 @@ const AdminDashboard = () => {
                 />
               ))}
             </div>
-            
+
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
-                  مقارنة بين الصفوف الدراسية
+                  {t('admin.dashboard.grades.comparison_title')}
                 </CardTitle>
-                <CardDescription>تحليل مقارن لأداء كل صف دراسي</CardDescription>
+                <CardDescription>{t('admin.dashboard.grades.comparison_desc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-800">
-                        <th className="text-right p-4 font-semibold bg-gray-50 dark:bg-gray-800/50">المقياس</th>
-                        <th className="text-right p-4 font-semibold bg-gray-50 dark:bg-gray-800/50">الصف الأول</th>
-                        <th className="text-right p-4 font-semibold bg-gray-50 dark:bg-gray-800/50">الصف الثاني</th>
-                        <th className="text-right p-4 font-semibold bg-gray-50 dark:bg-gray-800/50">الصف الثالث</th>
+                        <th className="text-right p-4 font-semibold bg-gray-50 dark:bg-gray-800/50">{t('admin.dashboard.grades.table.metric')}</th>
+                        <th className="text-right p-4 font-semibold bg-gray-50 dark:bg-gray-800/50">{t('admin.dashboard.grades.grade1')}</th>
+                        <th className="text-right p-4 font-semibold bg-gray-50 dark:bg-gray-800/50">{t('admin.dashboard.grades.grade2')}</th>
+                        <th className="text-right p-4 font-semibold bg-gray-50 dark:bg-gray-800/50">{t('admin.dashboard.grades.grade3')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {[
-                        { label: 'عدد المستخدمين', key: 'users', suffix: '' },
-                        { label: 'نسبة الدروس', key: 'lessons', suffix: '%', isPercentage: true },
-                        { label: 'كثافة المحتوى', key: 'contentDensity', suffix: 'درس/مستخدم', isCalculated: true },
-                        { label: 'التغطية', key: 'coverage', suffix: '%', isCoverage: true }
+                        { label: t('admin.dashboard.grades.table.users'), key: 'users', suffix: '' },
+                        { label: t('admin.dashboard.grades.table.lessons_ratio'), key: 'lessons', suffix: '%', isPercentage: true },
+                        { label: t('admin.dashboard.grades.table.content_density'), key: 'contentDensity', suffix: ` ${t('admin.dashboard.grades.per_user')}`, isCalculated: true },
+                        { label: t('admin.dashboard.grades.table.coverage'), key: 'coverage', suffix: '%', isCoverage: true }
                       ].map((row, rowIndex) => (
-                        <tr 
-                          key={rowIndex} 
+                        <tr
+                          key={rowIndex}
                           className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
                         >
                           <td className="p-4 font-medium">{row.label}</td>
                           {[1, 2, 3].map((grade, gradeIndex) => {
                             let value = 0;
                             if (row.isCalculated) {
-                              value = stats?.gradeStats?.[grade]?.users > 0 
+                              value = stats?.gradeStats?.[grade]?.users > 0
                                 ? (stats.gradeStats[grade].lessons / stats.gradeStats[grade].users).toFixed(2)
                                 : '0.00';
                             } else if (row.isPercentage) {
@@ -1162,16 +1164,16 @@ const AdminDashboard = () => {
                             } else {
                               value = stats?.gradeStats?.[grade]?.[row.key] || 0;
                             }
-                            
+
                             return (
                               <td key={gradeIndex} className="p-4 text-center">
                                 <div className="inline-flex items-center gap-2">
-                                  <Badge 
-                                    variant="outline" 
+                                  <Badge
+                                    variant="outline"
                                     className={`
-                                      ${gradeIndex === 0 ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 border-blue-200' : 
+                                      ${gradeIndex === 0 ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 border-blue-200' :
                                         gradeIndex === 1 ? 'bg-green-50 text-green-700 dark:bg-green-900/20 border-green-200' :
-                                        'bg-purple-50 text-purple-700 dark:bg-purple-900/20 border-purple-200'}
+                                          'bg-purple-50 text-purple-700 dark:bg-purple-900/20 border-purple-200'}
                                     `}
                                   >
                                     {value}{row.suffix}
@@ -1190,16 +1192,16 @@ const AdminDashboard = () => {
                     </tbody>
                   </table>
                 </div>
-                
+
                 <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
                       <TrendingUp className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <h4 className="font-semibold">توصيات للتحسين</h4>
+                      <h4 className="font-semibold">{t('admin.dashboard.grades.rec_title')}</h4>
                       <p className="text-sm text-muted-foreground mt-1">
-                        التركيز على الصفوف التي تحتاج مزيدًا من المحتوى والمستخدمين لتحقيق التوازن
+                        {t('admin.dashboard.grades.rec_desc')}
                       </p>
                     </div>
                   </div>
@@ -1207,40 +1209,40 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* تبويب التحليلات */}
           <TabsContent value="analytics" className="space-y-6">
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5 text-primary" />
-                  تقرير تحليلي شامل
+                  {t('admin.dashboard.analytics.title')}
                 </CardTitle>
-                <CardDescription>تحليل متقدم لبيانات المنصة وتوقعات النمو</CardDescription>
+                <CardDescription>{t('admin.dashboard.analytics.desc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="space-y-6">
                     <div>
-                      <h3 className="font-bold text-lg mb-3">ملخص الأداء</h3>
+                      <h3 className="font-bold text-lg mb-3">{t('admin.dashboard.analytics.performance_summary')}</h3>
                       <div className="space-y-4">
                         {[
                           {
-                            label: 'تغطية المحتوى',
+                            label: t('admin.dashboard.analytics.content_coverage'),
                             value: stats?.usersCount > 0 ? ((stats.totals.lessons + stats.totals.exams) / (stats.usersCount * 2) * 100).toFixed(1) : '0.0',
                             target: 80,
                             color: 'blue'
                           },
                           {
-                            label: 'تنوع الأسئلة',
+                            label: t('admin.dashboard.analytics.questions_diversity'),
                             value: Math.min(stats?.totals.questions || 0 / 200 * 100, 100).toFixed(1),
                             target: 75,
                             color: 'green'
                           },
                           {
-                            label: 'التوازن بين الصفوف',
-                            value: stats ? 100 - (Math.max(...Object.values(stats.gradeStats).map(g => g.users)) - 
-                                     Math.min(...Object.values(stats.gradeStats).map(g => g.users))) / stats.usersCount * 100 : 100,
+                            label: t('admin.dashboard.analytics.balance'),
+                            value: stats ? 100 - (Math.max(...Object.values(stats.gradeStats).map(g => g.users)) -
+                              Math.min(...Object.values(stats.gradeStats).map(g => g.users))) / stats.usersCount * 100 : 100,
                             target: 85,
                             color: 'purple'
                           }
@@ -1248,20 +1250,19 @@ const AdminDashboard = () => {
                           <div key={index} className="space-y-2">
                             <div className="flex justify-between">
                               <span className="text-sm font-medium">{metric.label}</span>
-                              <span className={`text-sm font-bold ${
-                                parseFloat(metric.value) >= metric.target ? 'text-green-600' : 'text-yellow-600'
-                              }`}>
-                                {metric.value}% (الهدف: {metric.target}%)
+                              <span className={`text-sm font-bold ${parseFloat(metric.value) >= metric.target ? 'text-green-600' : 'text-yellow-600'
+                                }`}>
+                                {metric.value}% ({t('admin.dashboard.analytics.target')}: {metric.target}%)
                               </span>
                             </div>
                             <div className="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                              <motion.div 
+                              <motion.div
                                 className={`h-full rounded-full bg-${metric.color}-500`}
                                 initial={{ width: 0 }}
                                 animate={{ width: `${metric.value}%` }}
                                 transition={{ duration: 1, delay: index * 0.2 }}
                               />
-                              <div 
+                              <div
                                 className="absolute top-0 h-full w-0.5 bg-gray-900 dark:bg-gray-300"
                                 style={{ left: `${metric.target}%` }}
                               />
@@ -1270,15 +1271,15 @@ const AdminDashboard = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     <div>
-                      <h3 className="font-bold text-lg mb-3">توقعات النمو</h3>
+                      <h3 className="font-bold text-lg mb-3">{t('admin.dashboard.analytics.growth_forecast')}</h3>
                       <div className="space-y-3">
                         {[
-                          { label: 'المستخدمين', current: stats?.usersCount || 0, growth: 15 },
-                          { label: 'الدروس', current: stats?.totals.lessons || 0, growth: 10 },
-                          { label: 'الامتحانات', current: stats?.totals.exams || 0, growth: 12 },
-                          { label: 'الأسئلة', current: stats?.totals.questions || 0, growth: 20 }
+                          { label: t('admin.dashboard.entities.users'), current: stats?.usersCount || 0, growth: 15 },
+                          { label: t('admin.dashboard.entities.lessons'), current: stats?.totals.lessons || 0, growth: 10 },
+                          { label: t('admin.dashboard.entities.exams'), current: stats?.totals.exams || 0, growth: 12 },
+                          { label: t('admin.dashboard.entities.questions'), current: stats?.totals.questions || 0, growth: 20 }
                         ].map((item, index) => (
                           <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                             <span className="font-medium">{item.label}</span>
@@ -1286,7 +1287,7 @@ const AdminDashboard = () => {
                               <div className="font-bold">{Math.round(item.current * (1 + item.growth / 100))}</div>
                               <div className="text-xs text-green-600 flex items-center gap-1">
                                 <TrendingUp className="h-3 w-3" />
-                                +{item.growth}% الشهر القادم
+                                +{item.growth}% {t('admin.dashboard.analytics.next_month')}
                               </div>
                             </div>
                           </div>
@@ -1294,85 +1295,82 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-6">
                     <div>
-                      <h3 className="font-bold text-lg mb-3">نقاط القوة والضعف</h3>
+                      <h3 className="font-bold text-lg mb-3">{t('admin.dashboard.analytics.sw')}</h3>
                       <div className="space-y-3">
                         <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
                           <div className="flex items-center gap-2 mb-1">
                             <div className="w-2 h-2 rounded-full bg-green-600"></div>
-                            <span className="font-medium">نقاط القوة</span>
+                            <span className="font-medium">{t('admin.dashboard.analytics.strengths')}</span>
                           </div>
                           <ul className="space-y-1 text-sm">
-                            <li>• تنوع المحتوى بين الصفوف</li>
-                            <li>• عدد كبير من الأسئلة المنشورة</li>
-                            <li>• نمو مستمر في أعداد المستخدمين</li>
+                            <li>• {t('admin.dashboard.analytics.sw_items.diversity')}</li>
+                            <li>• {t('admin.dashboard.analytics.sw_items.questions_volume')}</li>
+                            <li>• {t('admin.dashboard.analytics.sw_items.growth')}</li>
                           </ul>
                         </div>
-                        
+
                         <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
                           <div className="flex items-center gap-2 mb-1">
                             <div className="w-2 h-2 rounded-full bg-yellow-600"></div>
-                            <span className="font-medium">نقاط الضعف</span>
+                            <span className="font-medium">{t('admin.dashboard.analytics.weaknesses')}</span>
                           </div>
                           <ul className="space-y-1 text-sm">
-                            {stats?.gradeStats?.[1]?.lessons < 5 && <li>• نقص في دروس الصف الأول</li>}
-                            {stats?.gradeStats?.[2]?.exams < 3 && <li>• قلة امتحانات الصف الثاني</li>}
-                            {stats?.gradeStats?.[3]?.users < 10 && <li>• قلة مستخدمي الصف الثالث</li>}
-                            {stats?.totals.questions < 50 && <li>• بنك الأسئلة يحتاج التوسع</li>}
+                            {stats?.gradeStats?.[1]?.lessons < 5 && <li>• {t('admin.dashboard.analytics.sw_items.g1_lessons')}</li>}
+                            {stats?.gradeStats?.[2]?.exams < 3 && <li>• {t('admin.dashboard.analytics.sw_items.g2_exams')}</li>}
+                            {stats?.gradeStats?.[3]?.users < 10 && <li>• {t('admin.dashboard.analytics.sw_items.g3_users')}</li>}
+                            {stats?.totals.questions < 50 && <li>• {t('admin.dashboard.analytics.sw_items.qb_expansion')}</li>}
                           </ul>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <h3 className="font-bold text-lg mb-3">التوصيات الفورية</h3>
+                      <h3 className="font-bold text-lg mb-3">{t('admin.dashboard.analytics.recommendations')}</h3>
                       <div className="space-y-2">
                         {[
-                          { 
-                            text: 'إضافة المزيد من الدروس للصف الأول', 
+                          {
+                            text: t('admin.dashboard.analytics.rec_items.add_g1_lessons'),
                             priority: 'high',
-                            condition: stats?.gradeStats?.[1]?.lessons < 5 
+                            condition: stats?.gradeStats?.[1]?.lessons < 5
                           },
-                          { 
-                            text: 'زيادة عدد امتحانات الصف الثاني', 
+                          {
+                            text: t('admin.dashboard.analytics.rec_items.add_g2_exams'),
                             priority: 'medium',
-                            condition: stats?.gradeStats?.[2]?.exams < 3 
+                            condition: stats?.gradeStats?.[2]?.exams < 3
                           },
-                          { 
-                            text: 'توسيع بنك الأسئلة', 
+                          {
+                            text: t('admin.dashboard.analytics.rec_items.expand_qb'),
                             priority: 'high',
-                            condition: stats?.totals.questions < 50 
+                            condition: stats?.totals.questions < 50
                           },
-                          { 
-                            text: 'جذب المزيد من مستخدمي الصف الثالث', 
+                          {
+                            text: t('admin.dashboard.analytics.rec_items.attract_g3'),
                             priority: 'medium',
-                            condition: stats?.gradeStats?.[3]?.users < 10 
+                            condition: stats?.gradeStats?.[3]?.users < 10
                           }
                         ].filter(rec => rec.condition).map((rec, index) => (
-                          <div 
-                            key={index} 
-                            className={`p-3 rounded-lg border flex items-center gap-2 ${
-                              rec.priority === 'high' 
-                                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
-                                : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                            }`}
-                          >
-                            <div className={`w-2 h-2 rounded-full ${
-                              rec.priority === 'high' ? 'bg-red-600' : 'bg-yellow-600'
-                            }`} />
-                            <span className="text-sm">{rec.text}</span>
-                            <Badge 
-                              size="sm" 
-                              variant="outline" 
-                              className={`ml-auto text-xs ${
-                                rec.priority === 'high' 
-                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30' 
-                                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30'
+                          <div
+                            key={index}
+                            className={`p-3 rounded-lg border flex items-center gap-2 ${rec.priority === 'high'
+                              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                              : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
                               }`}
+                          >
+                            <div className={`w-2 h-2 rounded-full ${rec.priority === 'high' ? 'bg-red-600' : 'bg-yellow-600'
+                              }`} />
+                            <span className="text-sm">{rec.text}</span>
+                            <Badge
+                              size="sm"
+                              variant="outline"
+                              className={`ml-auto text-xs ${rec.priority === 'high'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30'
+                                }`}
                             >
-                              {rec.priority === 'high' ? 'عاجل' : 'مهم'}
+                              {rec.priority === 'high' ? t('admin.dashboard.analytics.urgent') : t('admin.dashboard.analytics.important')}
                             </Badge>
                           </div>
                         ))}
@@ -1382,7 +1380,7 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="border-0 shadow-lg">
                 <CardHeader>
@@ -1406,18 +1404,16 @@ const AdminDashboard = () => {
                           <div className="text-sm text-muted-foreground">الهدف: {kpi.target}</div>
                         </div>
                         <div className="text-right">
-                          <div className={`text-lg font-bold ${
-                            kpi.status === 'achieved' ? 'text-green-600' : 'text-yellow-600'
-                          }`}>
+                          <div className={`text-lg font-bold ${kpi.status === 'achieved' ? 'text-green-600' : 'text-yellow-600'
+                            }`}>
                             {kpi.value}
                           </div>
-                          <Badge 
-                            variant="outline" 
-                            className={`text-xs mt-1 ${
-                              kpi.status === 'achieved' 
-                                ? 'bg-green-50 text-green-700 dark:bg-green-900/20' 
-                                : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20'
-                            }`}
+                          <Badge
+                            variant="outline"
+                            className={`text-xs mt-1 ${kpi.status === 'achieved'
+                              ? 'bg-green-50 text-green-700 dark:bg-green-900/20'
+                              : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20'
+                              }`}
                           >
                             {kpi.status === 'achieved' ? 'محقق ✓' : 'يحتاج تحسين'}
                           </Badge>
@@ -1427,18 +1423,18 @@ const AdminDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="border-0 shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-primary" />
-                    التوقعات المستقبلية
+                    {t('admin.dashboard.analytics.future_title')}
                   </CardTitle>
-                  <CardDescription>تنبؤات النمو للشهور القادمة</CardDescription>
+                  <CardDescription>{t('admin.dashboard.analytics.future_desc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {['شهر 1', 'شهر 2', 'شهر 3', 'شهر 4'].map((month, index) => (
+                    {[`${t('admin.dashboard.analytics.month')} 1`, `${t('admin.dashboard.analytics.month')} 2`, `${t('admin.dashboard.analytics.month')} 3`, `${t('admin.dashboard.analytics.month')} 4`].map((month, index) => (
                       <div key={index} className="p-3 rounded-lg bg-gradient-to-r from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 border">
                         <div className="flex justify-between items-center mb-2">
                           <span className="font-medium">{month}</span>
@@ -1451,19 +1447,19 @@ const AdminDashboard = () => {
                             <div className="font-bold text-blue-600">
                               {Math.round((stats?.totals.lessons || 0) * (1 + (index + 1) * 0.08))}
                             </div>
-                            <div className="text-xs text-muted-foreground">درس</div>
+                            <div className="text-xs text-muted-foreground">{t('admin.dashboard.entities.lessons')}</div>
                           </div>
                           <div>
                             <div className="font-bold text-green-600">
                               {Math.round((stats?.totals.exams || 0) * (1 + (index + 1) * 0.1))}
                             </div>
-                            <div className="text-xs text-muted-foreground">امتحان</div>
+                            <div className="text-xs text-muted-foreground">{t('admin.dashboard.entities.exams')}</div>
                           </div>
                           <div>
                             <div className="font-bold text-purple-600">
                               {Math.round((stats?.totals.questions || 0) * (1 + (index + 1) * 0.15))}
                             </div>
-                            <div className="text-xs text-muted-foreground">سؤال</div>
+                            <div className="text-xs text-muted-foreground">{t('admin.dashboard.entities.questions')}</div>
                           </div>
                         </div>
                       </div>
@@ -1488,31 +1484,31 @@ const AdminDashboard = () => {
                 <Shield className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <div className="text-sm font-medium">لوحة تحكم آمنة ومحدثة</div>
+                <div className="text-sm font-medium">{t('admin.dashboard.footer.secure')}</div>
                 <div className="text-xs text-muted-foreground">
-                  آخر تحديث: {new Date().toLocaleTimeString('ar-SA')} | التحديث التلقائي كل ساعة
+                  {t('admin.dashboard.last_updated')}: {new Date().toLocaleTimeString('ar-SA')} | {t('admin.dashboard.footer.auto_update')}
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => window.print()}
                 className="gap-2"
               >
                 <FileText className="h-3 w-3" />
-                تصدير التقرير
+                {t('admin.dashboard.footer.export')}
               </Button>
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 size="sm"
                 className="gap-2 bg-gradient-to-r from-primary to-primary/80"
                 onClick={() => setActiveTab('overview')}
               >
                 <Eye className="h-3 w-3" />
-                عرض اللوحة الرئيسية
+                {t('admin.dashboard.footer.view_main')}
               </Button>
             </div>
           </div>

@@ -9,15 +9,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { useTranslation } from '../hooks/useTranslation'
 
 const LoginPage = () => {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState({
     loginId: '', // تغيير من email إلى loginId
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  
+
   const { login } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
@@ -39,16 +41,16 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!formData.loginId.trim()) {
       toast({
-        title: 'خطأ في الإدخال',
-        description: 'الرجاء إدخال البريد الإلكتروني أو رقم الهاتف',
+        title: t('auth.login.error_input'),
+        description: t('auth.login.error_input_desc'),
         variant: 'destructive'
       })
       return
     }
-    
+
     setIsLoading(true)
 
     try {
@@ -56,7 +58,7 @@ const LoginPage = () => {
       let loginData = {
         password: formData.password
       }
-      
+
       if (isEmail(formData.loginId)) {
         loginData.email = formData.loginId
       } else {
@@ -64,47 +66,47 @@ const LoginPage = () => {
       }
 
       const result = await login(loginData)
-      
+
       if (result.success) {
         toast({
-          title: 'تم تسجيل الدخول بنجاح',
-          description: 'مرحباً بك في منصة EduMaster'
+          title: t('auth.login.success'),
+          description: t('auth.login.success_desc')
         })
-        
- if (result.success) {
-  toast({
-    title: 'تم تسجيل الدخول بنجاح',
-    description: 'مرحباً بك في منصة EduMaster'
-  })
 
-  navigate(from, { replace: true })
-}
+        if (result.success) {
+          toast({
+            title: t('auth.login.success'),
+            description: t('auth.login.success_desc')
+          })
+
+          navigate(from, { replace: true })
+        }
 
       } else {
         // استخدام رسالة الخطأ التي تأتي من الخادم مباشرة
-        let errorMessage = result.error || 'تحقق من البيانات المدخلة'
-        
+        let errorMessage = result.error || t('common.error')
+
         // رسائل مخصصة لأخطاء محددة من الخادم
         if (errorMessage.includes('password') || errorMessage.includes('كلمة المرور')) {
-          errorMessage = 'كلمة المرور غير صحيحة'
+          errorMessage = t('auth.login.error_password')
         } else if (errorMessage.includes('email') || errorMessage.includes('البريد') || errorMessage.includes('phone') || errorMessage.includes('هاتف')) {
-          errorMessage = 'البريد الإلكتروني أو رقم الهاتف غير صحيح'
+          errorMessage = t('auth.login.error_user_not_found')
         } else if (errorMessage.includes('انتهت الجلسة')) {
-          errorMessage = 'انتهت جلسة العمل، يرجى تسجيل الدخول مرة أخرى'
+          errorMessage = t('auth.login.error_session')
         }
-        
+
         toast({
-          title: 'خطأ في تسجيل الدخول',
+          title: t('auth.login.error_failed'),
           description: errorMessage,
           variant: 'destructive'
         })
       }
     } catch (error) {
       // معالجة أخطاء الشبكة أو الأخطاء الغير متوقعة
-      let errorDescription = 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى'
-      
+      let errorDescription = t('auth.login.error_connection_desc')
+
       toast({
-        title: 'خطأ في الاتصال',
+        title: t('auth.login.error_connection'),
         description: errorDescription,
         variant: 'destructive'
       })
@@ -125,17 +127,17 @@ const LoginPage = () => {
         >
           <Link to="/" className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            العودة للرئيسية
+            {t('auth.login.back_home')}
           </Link>
           <div className="flex items-center justify-center mb-4">
             <GraduationCap className="h-10 w-10 text-blue-600 dark:text-blue-400" />
-            <span className="ml-2 text-2xl font-bold text-gray-900 dark:text-white">EduMaster</span>
+            <span className="ml-2 text-2xl font-bold text-gray-900 dark:text-white">{t('navbar.logo')}</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            مرحباً بعودتك
+            {t('auth.login.welcome_back')}
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            سجل دخولك للمتابعة رحلتك التعليمية
+            {t('auth.login.welcome_sub')}
           </p>
         </motion.div>
 
@@ -148,17 +150,17 @@ const LoginPage = () => {
           <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl text-center text-gray-900 dark:text-white">
-                تسجيل الدخول
+                {t('auth.login.title')}
               </CardTitle>
               <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-                أدخل بريدك الإلكتروني أو رقم هاتفك للوصول إلى حسابك
+                {t('auth.login.subtitle')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="loginId" className="text-gray-700 dark:text-gray-300">
-                    البريد الإلكتروني أو رقم الهاتف
+                    {t('auth.login.email_or_phone')}
                   </Label>
                   <div className="relative">
                     <div className="absolute left-3 top-3 flex items-center">
@@ -172,7 +174,7 @@ const LoginPage = () => {
                       id="loginId"
                       name="loginId"
                       type="text"
-                      placeholder="أدخل بريدك الإلكتروني أو رقم هاتفك"
+                      placeholder={t('auth.login.email_or_phone_placeholder')}
                       value={formData.loginId}
                       onChange={handleChange}
                       className="pl-10"
@@ -181,13 +183,13 @@ const LoginPage = () => {
                     />
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    يمكنك استخدام البريد الإلكتروني أو رقم الهاتف المسجل
+                    {t('auth.login.email_phone_hint')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-gray-700 dark:text-gray-300">
-                    كلمة المرور
+                    {t('auth.login.password')}
                   </Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -195,7 +197,7 @@ const LoginPage = () => {
                       id="password"
                       name="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="أدخل كلمة المرور"
+                      placeholder={t('auth.login.password_placeholder')}
                       value={formData.password}
                       onChange={handleChange}
                       className="pl-10 pr-10"
@@ -224,7 +226,7 @@ const LoginPage = () => {
                     to="/forgot-password"
                     className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                   >
-                    نسيت كلمة المرور؟
+                    {t('auth.login.forgot_password')}
                   </Link>
                 </div>
 
@@ -236,22 +238,22 @@ const LoginPage = () => {
                   {isLoading ? (
                     <>
                       <LoadingSpinner size="sm" className="mr-2" />
-                      جاري تسجيل الدخول...
+                      {t('auth.login.submitting')}
                     </>
                   ) : (
-                    'تسجيل الدخول'
+                    t('auth.login.submit')
                   )}
                 </Button>
               </form>
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  ليس لديك حساب؟{' '}
+                  {t('auth.login.no_account')}{' '}
                   <Link
                     to="/register"
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                   >
-                    إنشاء حساب جديد
+                    {t('auth.login.register_link')}
                   </Link>
                 </p>
               </div>

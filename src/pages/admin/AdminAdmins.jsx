@@ -10,8 +10,10 @@ import { useToast } from '@/hooks/use-toast'
 import { adminAPI } from '../../services/api'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Navbar from '../../components/Navbar'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const AdminAdmins = () => {
+  const { t } = useTranslation()
   const [admins, setAdmins] = useState([])
   const [users, setUsers] = useState([])
   const [filteredAdmins, setFilteredAdmins] = useState([])
@@ -46,7 +48,7 @@ const AdminAdmins = () => {
         adminAPI.getAllAdmins(),
         adminAPI.getAllUsers()
       ])
-      
+
       // معالجة استجابة المشرفين
       let adminsArray = []
       if (Array.isArray(adminsResponse)) {
@@ -56,7 +58,7 @@ const AdminAdmins = () => {
       } else if (adminsResponse && Array.isArray(adminsResponse.data)) {
         adminsArray = adminsResponse.data
       }
-      
+
       // معالجة استجابة المستخدمين
       let usersArray = []
       if (Array.isArray(usersResponse)) {
@@ -66,14 +68,14 @@ const AdminAdmins = () => {
       } else if (usersResponse && Array.isArray(usersResponse.data)) {
         usersArray = usersResponse.data
       }
-      
+
       setAdmins(adminsArray)
       setFilteredAdmins(adminsArray)
       setUsers(usersArray)
     } catch (error) {
       toast({
-        title: 'خطأ في تحميل البيانات',
-        description: 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى',
+        title: t('admin.admins.error_load'),
+        description: t('admin.admins.error_load_desc'),
         variant: 'destructive'
       })
       setAdmins([])
@@ -89,8 +91,8 @@ const AdminAdmins = () => {
     try {
       if (formData.password !== formData.cpassword) {
         toast({
-          title: 'خطأ',
-          description: 'كلمة المرور وتأكيدها غير متطابقتين',
+          title: t('common.error'),
+          description: t('auth.register.error_password_match'),
           variant: 'destructive'
         })
         return
@@ -98,8 +100,8 @@ const AdminAdmins = () => {
 
       await adminAPI.createAdmin(formData)
       toast({
-        title: 'تم الإضافة',
-        description: 'تم إضافة المشرف بنجاح'
+        title: t('admin.admins.add_success'),
+        description: t('admin.admins.add_success_desc')
       })
       setIsDialogOpen(false)
       setFormData({
@@ -112,8 +114,8 @@ const AdminAdmins = () => {
       fetchData()
     } catch (error) {
       toast({
-        title: 'خطأ',
-        description: error.message || 'فشل في إضافة المشرف',
+        title: t('common.error'),
+        description: error.message || t('admin.admins.add_error'),
         variant: 'destructive'
       })
     }
@@ -143,15 +145,15 @@ const AdminAdmins = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                إدارة المشرفين
+                {t('admin.admins.title')}
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                إضافة وعرض المشرفين في النظام
+                {t('admin.admins.subtitle')}
               </p>
             </div>
             <Button onClick={() => setIsDialogOpen(true)}>
               <UserPlus className="h-4 w-4 ml-2" />
-              إضافة مشرف جديد
+              {t('admin.admins.add_new')}
             </Button>
           </div>
         </motion.div>
@@ -159,36 +161,36 @@ const AdminAdmins = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي المشرفين</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.admins.stats.total_admins')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{admins.length}</div>
-              <p className="text-xs text-muted-foreground">عدد المشرفين في النظام</p>
+              <p className="text-xs text-muted-foreground">{t('admin.admins.stats.total_admins_desc')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي المستخدمين</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.admins.stats.total_users')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{users.length}</div>
-              <p className="text-xs text-muted-foreground">عدد المستخدمين في النظام</p>
+              <p className="text-xs text-muted-foreground">{t('admin.admins.stats.total_users_desc')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">نسبة المشرفين</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.admins.stats.ratio')}</CardTitle>
               <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {users.length > 0 ? ((admins.length / users.length) * 100).toFixed(1) : 0}%
               </div>
-              <p className="text-xs text-muted-foreground">نسبة المشرفين إلى المستخدمين</p>
+              <p className="text-xs text-muted-foreground">{t('admin.admins.stats.ratio_desc')}</p>
             </CardContent>
           </Card>
         </div>
@@ -197,15 +199,15 @@ const AdminAdmins = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle>قائمة المشرفين</CardTitle>
+                <CardTitle>{t('admin.admins.list_title')}</CardTitle>
                 <CardDescription>
-                  جميع المشرفين في النظام
+                  {t('admin.admins.list_desc')}
                 </CardDescription>
               </div>
               <div className="relative">
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="بحث..."
+                  placeholder={t('navbar.search_placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -214,36 +216,38 @@ const AdminAdmins = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>الاسم</TableHead>
-                  <TableHead>البريد الإلكتروني</TableHead>
-                  <TableHead>رقم الهاتف</TableHead>
-                  <TableHead>تاريخ الانضمام</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAdmins.length > 0 ? (
-                  filteredAdmins.map((admin) => (
-                    <TableRow key={admin._id}>
-                      <TableCell className="font-medium">{admin.fullName}</TableCell>
-                      <TableCell>{admin.email}</TableCell>
-                      <TableCell>{admin.phoneNumber || 'غير متاح'}</TableCell>
-                      <TableCell>
-                        {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString('ar-EG') : 'غير معروف'}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.admins.table.name')}</TableHead>
+                    <TableHead>{t('admin.admins.table.email')}</TableHead>
+                    <TableHead>{t('admin.admins.table.phone')}</TableHead>
+                    <TableHead>{t('admin.admins.table.join_date')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAdmins.length > 0 ? (
+                    filteredAdmins.map((admin) => (
+                      <TableRow key={admin._id}>
+                        <TableCell className="font-medium">{admin.fullName}</TableCell>
+                        <TableCell>{admin.email}</TableCell>
+                        <TableCell>{admin.phoneNumber || 'غير متاح'}</TableCell>
+                        <TableCell>
+                          {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString('ar-EG') : 'غير معروف'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4">
+                        {t('admin.admins.table.empty')}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4">
-                      لا توجد مشرفين متاحين
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
@@ -252,12 +256,12 @@ const AdminAdmins = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <Card className="w-full max-w-md">
               <CardHeader>
-                <CardTitle>إضافة مشرف جديد</CardTitle>
+                <CardTitle>{t('admin.admins.add_new')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">الاسم الكامل</Label>
+                    <Label htmlFor="fullName">{t('auth.register.fullname')}</Label>
                     <Input
                       id="fullName"
                       value={formData.fullName}
@@ -266,7 +270,7 @@ const AdminAdmins = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">البريد الإلكتروني</Label>
+                    <Label htmlFor="email">{t('auth.register.email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -276,7 +280,7 @@ const AdminAdmins = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">رقم الهاتف</Label>
+                    <Label htmlFor="phoneNumber">{t('auth.register.phone')}</Label>
                     <Input
                       id="phoneNumber"
                       type="tel"
@@ -285,7 +289,7 @@ const AdminAdmins = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">كلمة المرور</Label>
+                    <Label htmlFor="password">{t('auth.register.password')}</Label>
                     <Input
                       id="password"
                       type="password"
@@ -295,7 +299,7 @@ const AdminAdmins = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cpassword">تأكيد كلمة المرور</Label>
+                    <Label htmlFor="cpassword">{t('auth.register.cpassword')}</Label>
                     <Input
                       id="cpassword"
                       type="password"
@@ -306,10 +310,10 @@ const AdminAdmins = () => {
                   </div>
                   <div className="flex space-x-2 pt-4">
                     <Button type="submit">
-                      إضافة
+                      {t('common.add')}
                     </Button>
                     <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      إلغاء
+                      {t('common.cancel')}
                     </Button>
                   </div>
                 </form>

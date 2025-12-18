@@ -11,9 +11,11 @@ import { examsAPI } from '../services/api'
 import { timeService } from '../services/timeService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
+import { useTranslation } from '../hooks/useTranslation'
 
 const ExamDetailPage = () => {
   const { id } = useParams()
+  const { t, lang } = useTranslation()
   const [exam, setExam] = useState(null)
   const [hasAttempt, setHasAttempt] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -27,49 +29,49 @@ const ExamDetailPage = () => {
       try {
         setIsLoading(true)
         setError(null)
-        
+
         console.log('📡 جلب تفاصيل الامتحان...')
         const examData = await examsAPI.getExamById(id)
-        
+
         console.log('📦 بيانات الامتحان:', examData)
-        
+
         if (!examData) {
-          throw new Error('الامتحان غير موجود')
+          throw new Error(t('exams.detail.not_found') || 'Exam not found')
         }
-        
-        // تحقق من هيكل البيانات
+
+        // Check data structure
         let examDetails = examData.data || examData
-        
-        // إذا كان يحتوي على حقل exam بداخله
+
+        // If it contains an exam field inside
         if (examDetails.exam) {
           examDetails = { ...examDetails, ...examDetails.exam }
         }
-        
+
         setExam(examDetails)
-        
-        // التحقق إذا كان المستخدم قد حاول الامتحان من قبل
+
+        // Check if user has attempted the exam before
         try {
           const attempt = await examsAPI.checkExamAttempt(id)
           setHasAttempt(attempt)
         } catch (attemptError) {
-          console.log('لا يمكن التحقق من المحاولات:', attemptError)
+          console.log('Cannot check attempts:', attemptError)
         }
-        
+
       } catch (error) {
         console.error('Error fetching exam:', error)
-        
-        let errorMessage = 'خطأ في تحميل الامتحان'
+
+        let errorMessage = t('dashboard.error_load')
         if (error.message?.includes('Exam not found') || error.status === 404) {
-          errorMessage = 'الامتحان غير موجود'
+          errorMessage = t('exams.detail.not_found')
         } else if (error.message?.includes('Session expired') || error.status === 401) {
-          errorMessage = 'انتهت جلسة العمل'
+          errorMessage = t('dashboard.error_session')
           localStorage.removeItem('token')
           navigate('/login')
         }
-        
+
         setError(errorMessage)
         toast({
-          title: 'خطأ',
+          title: t('common.error'),
           description: errorMessage,
           variant: 'destructive'
         })
@@ -86,34 +88,34 @@ const ExamDetailPage = () => {
   const handleStartExam = async () => {
     try {
       setIsStarting(true)
-      
-      // بدء الامتحان من خلال API
+
+      // Start exam via API
       const startResponse = await examsAPI.startExam(id)
-      
+
       if (startResponse) {
         toast({
-          title: 'تم بدء الامتحان',
-          description: 'حظاً موفقاً!',
+          title: t('exams.detail.starting'),
+          description: 'Good luck!',
           variant: 'default'
         })
-        
-        // اذهب إلى صفحة الامتحان
+
+        // Go to exam page
         navigate(`/exams/${id}/take`)
       }
     } catch (error) {
       console.error('Error starting exam:', error)
-      
-      let errorMessage = 'خطأ في بدء الامتحان'
+
+      let errorMessage = t('dashboard.error_unknown')
       if (error.message?.includes('already submitted')) {
-        errorMessage = 'لقد قدمت هذا الامتحان بالفعل'
+        errorMessage = t('exams.detail.alerts.attempted')
       } else if (error.message?.includes('already started')) {
-        errorMessage = 'لقد بدأت هذا الامتحان بالفعل'
+        errorMessage = t('exams.detail.starting')
         navigate(`/exams/${id}/take`)
         return
       }
-      
+
       toast({
-        title: 'خطأ',
+        title: t('common.error'),
         description: errorMessage,
         variant: 'destructive'
       })
@@ -145,12 +147,12 @@ const ExamDetailPage = () => {
           <div className="text-center">
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              {error || 'الامتحان غير موجود'}
+              {error || t('exams.detail.not_found')}
             </h1>
             <Link to="/exams">
               <Button>
                 <ArrowLeft className="h-4 w-4 ml-2" />
-                العودة إلى الامتحانات
+                {t('exams.detail.back')}
               </Button>
             </Link>
           </div>
@@ -159,7 +161,7 @@ const ExamDetailPage = () => {
     )
   }
 
-  // التحقق من حالة الامتحان
+  // Check exam status
   const isExamActive = () => {
     if (!exam.endDate) return true
     try {
@@ -175,14 +177,14 @@ const ExamDetailPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <div className="mb-6">
           <Link to="/exams">
             <Button variant="ghost" className="flex items-center">
               <ArrowLeft className="h-4 w-4 ml-2" />
-              العودة إلى الامتحانات
+              {t('exams.detail.back')}
             </Button>
           </Link>
         </div>
@@ -197,39 +199,39 @@ const ExamDetailPage = () => {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Badge>{exam.classLevel || exam.subject || 'غير محدد'}</Badge>
+                <Badge>{exam.classLevel || exam.subject || t('common.unknown')}</Badge>
                 {isActive ? (
-                  <Badge variant="success" className="flex items-center">
+                  <Badge variant="success" className="flex items-center bg-green-100 text-green-800 hover:bg-green-200">
                     <CheckCircle className="h-3 w-3 ml-1" />
-                    نشط
+                    {t('exams.card.active')}
                   </Badge>
                 ) : (
                   <Badge variant="destructive" className="flex items-center">
                     <XCircle className="h-3 w-3 ml-1" />
-                    منتهي
+                    {t('exams.card.expired')}
                   </Badge>
                 )}
               </div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {exam.title || 'بدون عنوان'}
+                {exam.title || t('exams.detail.no_title')}
               </h1>
               <p className="text-gray-600 dark:text-gray-300 text-lg">
-                {exam.description || 'لا يوجد وصف للامتحان'}
+                {exam.description || t('exams.detail.no_desc')}
               </p>
             </div>
-            
+
             <div className="mt-4 md:mt-0 flex flex-col gap-2">
               {hasAttempt ? (
                 <>
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700" 
+                  <Button
+                    className="bg-green-600 hover:bg-green-700"
                     onClick={handleViewResult}
                   >
                     <BarChart3 className="h-4 w-4 ml-2" />
-                    عرض النتيجة
+                    {t('exams.detail.view_result')}
                   </Button>
                   {isActive && (
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={handleStartExam}
                       disabled={!isActive || isStarting}
@@ -237,32 +239,32 @@ const ExamDetailPage = () => {
                       {isStarting ? (
                         <>
                           <LoadingSpinner size="sm" className="ml-2" />
-                          جاري البدء...
+                          {t('exams.detail.starting')}
                         </>
                       ) : (
                         <>
                           <Play className="h-4 w-4 ml-2" />
-                          إعادة الامتحان
+                          {t('exams.detail.retake')}
                         </>
                       )}
                     </Button>
                   )}
                 </>
               ) : (
-                <Button 
-                  className="bg-green-600 hover:bg-green-700" 
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
                   onClick={handleStartExam}
                   disabled={!isActive || isStarting}
                 >
                   {isStarting ? (
                     <>
                       <LoadingSpinner size="sm" className="ml-2" />
-                      جاري البدء...
+                      {t('exams.detail.starting')}
                     </>
                   ) : (
                     <>
                       <Play className="h-4 w-4 ml-2" />
-                      {isActive ? 'بدء الامتحان' : 'الامتحان منتهي'}
+                      {isActive ? t('exams.detail.start_button') : t('exams.detail.expired_button')}
                     </>
                   )}
                 </Button>
@@ -278,8 +280,8 @@ const ExamDetailPage = () => {
               <div className="flex items-center">
                 <Clock className="h-8 w-8 text-blue-400 ml-3" />
                 <div>
-                  <p className="text-sm text-gray-500">المدة</p>
-                  <p className="font-semibold">{exam.duration || 0} دقيقة</p>
+                  <p className="text-sm text-gray-500">{t('exams.detail.duration')}</p>
+                  <p className="font-semibold">{exam.duration || 0} {t('exams.card.minutes')}</p>
                 </div>
               </div>
             </CardContent>
@@ -290,9 +292,9 @@ const ExamDetailPage = () => {
               <div className="flex items-center">
                 <BookOpen className="h-8 w-8 text-green-400 ml-3" />
                 <div>
-                  <p className="text-sm text-gray-500">عدد الأسئلة</p>
+                  <p className="text-sm text-gray-500">{t('exams.detail.questions_count')}</p>
                   <p className="font-semibold">
-                    {exam.questionsCount || exam.numberOfQuestions || exam.questions?.length || 0} سؤال
+                    {exam.questionsCount || exam.numberOfQuestions || exam.questions?.length || 0} {t('common.questions')}
                   </p>
                 </div>
               </div>
@@ -304,8 +306,8 @@ const ExamDetailPage = () => {
               <div className="flex items-center">
                 <BarChart3 className="h-8 w-8 text-yellow-400 ml-3" />
                 <div>
-                  <p className="text-sm text-gray-500">الدرجة النهائية</p>
-                  <p className="font-semibold">{exam.totalScore || 100} درجة</p>
+                  <p className="text-sm text-gray-500">{t('exams.detail.total_score')}</p>
+                  <p className="font-semibold">{exam.totalScore || 100} {t('common.marks')}</p>
                 </div>
               </div>
             </CardContent>
@@ -316,11 +318,11 @@ const ExamDetailPage = () => {
               <div className="flex items-center">
                 <Calendar className="h-8 w-8 text-purple-400 ml-3" />
                 <div>
-                  <p className="text-sm text-gray-500">تاريخ الانتهاء</p>
+                  <p className="text-sm text-gray-500">{t('exams.detail.end_date')}</p>
                   <p className="font-semibold">
                     {exam.endDate && timeService.isValidTime(new Date(exam.endDate).getTime())
-                      ? new Date(exam.endDate).toLocaleDateString('ar-EG') 
-                      : 'غير محدد'}
+                      ? new Date(exam.endDate).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')
+                      : t('exams.card.unknown_time')}
                   </p>
                 </div>
               </div>
@@ -331,9 +333,9 @@ const ExamDetailPage = () => {
         {/* Exam Instructions */}
         <Card>
           <CardHeader>
-            <CardTitle>تعليمات الامتحان</CardTitle>
+            <CardTitle>{t('exams.detail.instructions.title')}</CardTitle>
             <CardDescription>
-              اقرأ التعليمات بعناية قبل بدء الامتحان
+              {t('exams.detail.instructions.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -341,34 +343,30 @@ const ExamDetailPage = () => {
               <Alert>
                 <AlertCircle className="h-5 w-5" />
                 <AlertDescription>
-                  <strong>ملاحظة هامة:</strong> لا يمكنك الخروج من الامتحان بعد بدئه، وتأكد من أن اتصالك بالإنترنت مستقر.
+                  <strong>{t('exams.detail.instructions.important')}</strong> {t('exams.detail.instructions.important_text')}
                 </AlertDescription>
               </Alert>
-              
+
               <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
-                <li>يجب إكمال الامتحان في المدة المحددة ({exam.duration || 0} دقيقة)</li>
-                <li>لا يمكن إعادة فتح الامتحان بعد إنهائه</li>
-                <li>سيتم احتساب النتيجة فور إنهاء الامتحان</li>
-                <li>يجب الحصول على {exam.passingScore || 60}% على الأقل لاجتياز الامتحان</li>
-                <li>الإجابات النهائية لا يمكن تعديلها بعد الإرسال</li>
-                <li>يُسمح بمحاولة واحدة فقط لكل امتحان</li>
-                <li>الأسئلة قد تكون اختيار من متعدد أو صح/خطأ أو مقالية</li>
+                {(t('exams.detail.instructions.list', { returnObjects: true }) || []).map((instruction, idx) => (
+                  <li key={idx}>{instruction}</li>
+                ))}
               </ul>
-              
+
               {hasAttempt && (
-                <Alert variant="success" className="mt-4">
+                <Alert variant="success" className="mt-4 bg-green-50 text-green-800 border-green-200">
                   <CheckCircle className="h-5 w-5" />
                   <AlertDescription>
-                    <strong>لقد قدمت هذا الامتحان من قبل.</strong> يمكنك إعادة الامتحان لتحسين نتيجتك.
+                    {t('exams.detail.alerts.attempted')}
                   </AlertDescription>
                 </Alert>
               )}
-              
+
               {!isActive && (
                 <Alert variant="destructive" className="mt-4">
                   <XCircle className="h-5 w-5" />
                   <AlertDescription>
-                    <strong>هذا الامتحان منتهي الصلاحية.</strong> لم يعد بالإمكان تقديمه.
+                    {t('exams.detail.alerts.expired')}
                   </AlertDescription>
                 </Alert>
               )}

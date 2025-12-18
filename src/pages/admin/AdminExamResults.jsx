@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Search, RefreshCw } from 'lucide-react'
+import { useTranslation } from "../../hooks/useTranslation";
 
 const AdminExamResults = () => {
   const [exams, setExams] = useState([])
@@ -18,32 +19,33 @@ const AdminExamResults = () => {
   const [isFetching, setIsFetching] = useState(false)
   const [studentName, setStudentName] = useState('')
   const { toast } = useToast()
+  const { t, lang } = useTranslation()
 
   // دالة لحساب الدرجة الكلية للامتحان
   const calculateTotalScore = (exam) => {
     if (!exam) return 100;
-    
+
     // إذا كان totalScore موجوداً ونسبة أكبر من 0 نستخدمه
     if (exam.totalScore && exam.totalScore > 0) {
       return exam.totalScore;
     }
-    
+
     // حساب المجموع من نقاط الأسئلة
     if (Array.isArray(exam.questions) && exam.questions.length > 0) {
       const totalFromQuestions = exam.questions.reduce((sum, question) => {
         return sum + (question.points || 1); // إذا لم تكن هناك points نستخدم 1 كافتراضي
       }, 0);
-      
+
       if (totalFromQuestions > 0) {
         return totalFromQuestions;
       }
     }
-    
+
     // إذا لم توجد أسئلة أو كانت النقاط صفر، نستخدم عدد الأسئلة كدرجة كلية
     if (exam.questions?.length > 0) {
       return exam.questions.length;
     }
-    
+
     // افتراضي 100 إذا لم يكن هناك بيانات كافية
     return 100;
   };
@@ -56,7 +58,7 @@ const AdminExamResults = () => {
         const list = res?.data || res || []
         setExams(Array.isArray(list) ? list : [])
       } catch (error) {
-        toast({ title: 'خطأ', description: 'تعذر تحميل قائمة الامتحانات', variant: 'destructive' })
+        toast({ title: t('common.error'), description: t('admin.exam_results.messages.error_load_exams'), variant: 'destructive' })
       } finally {
         setIsLoading(false)
       }
@@ -69,15 +71,15 @@ const AdminExamResults = () => {
       setScores([])
       return
     }
-    
+
     try {
       setIsFetching(true)
       const res = await examsAPI.getAdminExamScores(examId, nameFilter)
       console.log('نتائج الامتحانات:', res) // للتصحيح
-      
+
       // معالجة البيانات المختلفة التي قد تأتي من الخادم
       let scoresData = []
-      
+
       if (Array.isArray(res)) {
         scoresData = res
       } else if (res && Array.isArray(res.data)) {
@@ -85,21 +87,21 @@ const AdminExamResults = () => {
       } else if (res && res.scores) {
         scoresData = res.scores
       }
-      
+
       setScores(scoresData)
-      
+
       if (scoresData.length === 0) {
-        toast({ 
-          title: 'لا توجد نتائج', 
-          description: 'لم يتم العثور على نتائج لهذا الامتحان' 
+        toast({
+          title: t('admin.exam_results.messages.no_results'),
+          description: t('admin.exam_results.messages.no_results_desc')
         })
       }
     } catch (error) {
       console.error('خطأ في جلب النتائج:', error)
-      toast({ 
-        title: 'تعذر جلب النتائج', 
-        description: error.message || 'حاول مرة أخرى', 
-        variant: 'destructive' 
+      toast({
+        title: t('admin.exam_results.messages.error_fetch'),
+        description: error.message || t('common.retry'),
+        variant: 'destructive'
       })
       setScores([])
     } finally {
@@ -116,8 +118,8 @@ const AdminExamResults = () => {
     }
   }, [selectedExam, studentName])
 
-  const selectedExamObj = useMemo(() => 
-    exams.find(e => e._id === selectedExam), 
+  const selectedExamObj = useMemo(() =>
+    exams.find(e => e._id === selectedExam),
     [exams, selectedExam]
   )
 
@@ -126,8 +128,8 @@ const AdminExamResults = () => {
       fetchScores(selectedExam, studentName)
     } else {
       toast({
-        title: 'اختر امتحان',
-        description: 'يرجى اختيار امتحان أولاً',
+        title: t('admin.exam_results.select_exam'),
+        description: t('admin.exam_results.messages.select_exam_error'),
         variant: 'destructive'
       })
     }
@@ -139,8 +141,8 @@ const AdminExamResults = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
           <CardHeader>
-            <CardTitle>نتائج الامتحانات (لوحة تحكم المدير)</CardTitle>
-            <CardDescription>عرض نتائج الطلاب حسب الامتحان مع إمكانية التصفية بالاسم</CardDescription>
+            <CardTitle>{t('admin.exam_results.title')}</CardTitle>
+            <CardDescription>{t('admin.exam_results.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -153,7 +155,7 @@ const AdminExamResults = () => {
                   <div className="flex items-center gap-2 w-full md:w-72">
                     <Select value={selectedExam} onValueChange={setSelectedExam}>
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر الامتحان" />
+                        <SelectValue placeholder={t('admin.exam_results.select_exam')} />
                       </SelectTrigger>
                       <SelectContent>
                         {exams.map(ex => (
@@ -168,7 +170,7 @@ const AdminExamResults = () => {
                   <div className="flex items-center gap-2 w-full md:flex-1">
                     <Search className="h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="اسم الطالب (اختياري)"
+                      placeholder={t('admin.exam_results.student_name_ph')}
                       value={studentName}
                       onChange={(e) => setStudentName(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -176,12 +178,12 @@ const AdminExamResults = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button 
-                      onClick={handleSearch} 
+                    <Button
+                      onClick={handleSearch}
                       disabled={!selectedExam || isFetching}
                     >
                       <RefreshCw className={`h-4 w-4 ml-2 ${isFetching ? 'animate-spin' : ''}`} />
-                      {isFetching ? 'جاري البحث' : 'بحث'}
+                      {isFetching ? t('common.searching') : t('common.search')}
                     </Button>
                   </div>
                 </div>
@@ -191,15 +193,15 @@ const AdminExamResults = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium text-blue-800">
-                          {selectedExamObj?.title || 'امتحان غير معروف'}
+                          {selectedExamObj?.title || t('common.unknown')}
                         </h3>
                         <p className="text-sm text-blue-600">
-                          عدد الأسئلة: {selectedExamObj?.questions?.length || 0} | 
-                          الدرجة الكلية: {calculateTotalScore(selectedExamObj)}
+                          {t('admin.exam_results.stats.questions_count')} {selectedExamObj?.questions?.length || 0} |
+                          {t('admin.exam_results.stats.total_score')} {calculateTotalScore(selectedExamObj)}
                         </p>
                       </div>
                       <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
-                        {scores.length} نتيجة
+                        {scores.length} {t('admin.exam_results.stats.result_count')}
                       </span>
                     </div>
                   </div>
@@ -209,17 +211,17 @@ const AdminExamResults = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>الطالب</TableHead>
-                        <TableHead>الدرجة</TableHead>
-                        <TableHead>النسبة</TableHead>
-                        <TableHead>الحالة</TableHead>
+                        <TableHead>{t('admin.exam_results.table.student')}</TableHead>
+                        <TableHead>{t('admin.exam_results.table.score')}</TableHead>
+                        <TableHead>{t('admin.exam_results.table.percentage')}</TableHead>
+                        <TableHead>{t('admin.exam_results.table.status')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {scores.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-                            {selectedExam ? 'لا توجد نتائج لعرضها' : 'اختر امتحاناً لعرض النتائج'}
+                            {selectedExam ? t('admin.exam_results.list.empty') : t('admin.exam_results.list.select_prompt')}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -228,11 +230,11 @@ const AdminExamResults = () => {
                           const scoreValue = row?.score || row?.result?.score || 0
                           const percentage = total > 0 ? Math.round((scoreValue / total) * 100) : 0
                           const isPassed = percentage >= 60
-                          
+
                           return (
                             <TableRow key={row._id || row.id || `row-${index}`}>
                               <TableCell className="font-medium">
-                                {row.student?.fullName || row.user?.fullName || row.fullName || 'طالب غير معروف'}
+                                {row.student?.fullName || row.user?.fullName || row.fullName || t('common.unknown')}
                               </TableCell>
                               <TableCell>
                                 {scoreValue} / {total}
@@ -243,12 +245,11 @@ const AdminExamResults = () => {
                                 </span>
                               </TableCell>
                               <TableCell>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  isPassed 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {isPassed ? 'ناجح' : 'راسب'}
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${isPassed
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                                  }`}>
+                                  {isPassed ? t('admin.exam_results.status.passed') : t('admin.exam_results.status.failed')}
                                 </span>
                               </TableCell>
                             </TableRow>

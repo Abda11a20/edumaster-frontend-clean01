@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  BookOpen, 
-  FileText, 
-  Award, 
-  TrendingUp, 
-  Clock, 
+import {
+  BookOpen,
+  FileText,
+  Award,
+  TrendingUp,
+  Clock,
   CheckCircle,
   BarChart3,
   Target,
@@ -37,12 +37,14 @@ import { useAuth } from '../contexts/AuthContext'
 import { lessonsAPI, examsAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
+import { useTranslation } from '../hooks/useTranslation'
 
 const DashboardPage = () => {
+  const { t, lang } = useTranslation()
   const { user, isSuperAdmin, isAdmin } = useAuth()
   const navigate = useNavigate()
   const confettiRef = useRef(null)
-  
+
   const [stats, setStats] = useState({
     totalLessons: 0,
     completedLessons: 0,
@@ -53,7 +55,7 @@ const DashboardPage = () => {
     progressPercentage: 0,
     examScores: []
   })
-  
+
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(null)
@@ -99,69 +101,69 @@ const DashboardPage = () => {
   const generateEncouragementMessage = (averageScore, completedLessons, completedExams, progressPercentage) => {
     const messages = {
       excellent: [
-        { 
-          message: "🎉 مذهل! أنت نجم متألق في سماء التعلم. استمر في هذا التميز!",
+        {
+          message: t('dashboard.encouragement.excellent'), // Simplified for now, or add specific messages
           icon: Crown,
           color: "text-yellow-500"
         },
-        { 
-          message: "💎 أداء استثنائي! مهاراتك تضعك في مصاف المتفوقين.",
+        {
+          message: t('dashboard.encouragement.excellent'),
           icon: Trophy,
           color: "text-purple-500"
         },
-        { 
-          message: "🚀 أنت تتجاوز التوقعات! اجتهادك يثمر نتائج مبهرة.",
+        {
+          message: t('dashboard.encouragement.excellent'),
           icon: Rocket,
           color: "text-orange-500"
         }
       ],
       good: [
-        { 
-          message: "💪 تقدم ممتاز! أنت على الطريق الصحيح للتفوق.",
+        {
+          message: t('dashboard.encouragement.good'),
           icon: TrendingUpIcon,
           color: "text-green-500"
         },
-        { 
-          message: "🌟 أداء مشرف! استمر في المثابرة لتحقيق المزيد.",
+        {
+          message: t('dashboard.encouragement.good'),
           icon: Trophy,
           color: "text-blue-500"
         },
-        { 
-          message: "📈 مستوى متقدم! جهودك تثمر نتائج إيجابية.",
+        {
+          message: t('dashboard.encouragement.good'),
           icon: LineChart,
           color: "text-teal-500"
         }
       ],
       average: [
-        { 
-          message: "📚 بداية قوية! ركز أكثر لتصل إلى مستويات أعلى.",
+        {
+          message: t('dashboard.encouragement.average'),
           icon: BookOpen,
           color: "text-blue-500"
         },
-        { 
-          message: "💡 لديك إمكانيات عالية! نظم وقتك للمذاكرة.",
+        {
+          message: t('dashboard.encouragement.average'),
           icon: Lightbulb,
           color: "text-yellow-500"
         },
-        { 
-          message: "🌱 نمو مستمر! كل يوم تتعلم شيء جديد.",
+        {
+          message: t('dashboard.encouragement.average'),
           icon: TrendingUpIcon,
           color: "text-orange-500"
         }
       ],
       needsImprovement: [
-        { 
-          message: "💪 لا تيأس! كل عظيم بدأ من حيث أنت الآن.",
+        {
+          message: t('dashboard.encouragement.beginner'),
           icon: Target,
           color: "text-red-500"
         },
-        { 
-          message: "🌅 اليوم بداية جديدة! ابدأ رحلة التعلم الآن.",
+        {
+          message: t('dashboard.encouragement.beginner'),
           icon: Target,
           color: "text-orange-500"
         },
-        { 
-          message: "📖 العلم بحر! كل قطرة معرفة تقربك من الشاطئ.",
+        {
+          message: t('dashboard.encouragement.beginner'),
           icon: BookOpen,
           color: "text-blue-500"
         }
@@ -169,26 +171,26 @@ const DashboardPage = () => {
     };
 
     let category = 'needsImprovement';
-    let level = 'مبتدئ';
+    let level = t('dashboard.encouragement.beginner');
     let levelColor = 'bg-gray-500';
-    
+
     if (averageScore >= 85) {
       category = 'excellent';
-      level = 'خبير';
+      level = t('dashboard.encouragement.expert');
       levelColor = 'bg-yellow-500';
     } else if (averageScore >= 70) {
       category = 'good';
-      level = 'متقدم';
+      level = t('dashboard.encouragement.advanced');
       levelColor = 'bg-green-500';
     } else if (averageScore >= 50) {
       category = 'average';
-      level = 'متوسط';
+      level = t('dashboard.encouragement.average');
       levelColor = 'bg-blue-500';
     }
-    
+
     const randomIndex = Math.floor(Math.random() * messages[category].length);
     setPerformanceLevel(level);
-    
+
     return {
       ...messages[category][randomIndex],
       level,
@@ -199,36 +201,36 @@ const DashboardPage = () => {
   // تحديد الأهداف التالية
   const determineNextGoal = (completedLessons, completedExams, totalLessons, totalExams) => {
     const goals = [
-      { 
-        title: "أكمل 5 دروس", 
-        icon: BookOpen, 
+      {
+        title: t('dashboard.next_goal.complete_lessons', { count: 5 }),
+        icon: BookOpen,
         color: "bg-blue-500",
         points: 25,
         current: completedLessons,
         target: Math.min(completedLessons + 5, totalLessons),
         type: "lessons"
       },
-      { 
-        title: "احصل على 80% في امتحان", 
-        icon: Trophy, 
+      {
+        title: t('dashboard.next_goal.achieve_score', { score: 80 }),
+        icon: Trophy,
         color: "bg-yellow-500",
         points: 50,
         current: 0,
         target: 80,
         type: "score"
       },
-      { 
-        title: "حافظ على سلسلة 7 أيام نشاط", 
-        icon: Flame, 
+      {
+        title: t('dashboard.next_goal.maintain_streak', { days: 7 }),
+        icon: Flame,
         color: "bg-orange-500",
         points: 100,
         current: streakDays,
         target: 7,
         type: "streak"
       },
-      { 
-        title: "أكمل 3 امتحانات", 
-        icon: FileText, 
+      {
+        title: t('dashboard.next_goal.complete_exams', { count: 3 }),
+        icon: FileText,
         color: "bg-green-500",
         points: 60,
         current: completedExams,
@@ -236,14 +238,14 @@ const DashboardPage = () => {
         type: "exams"
       }
     ];
-    
+
     // اختيار هدف عشوائي غير مكتمل
     const incompleteGoals = goals.filter(goal => {
       if (goal.type === "score") return true;
       return goal.current < goal.target;
     });
-    
-    return incompleteGoals.length > 0 
+
+    return incompleteGoals.length > 0
       ? incompleteGoals[Math.floor(Math.random() * incompleteGoals.length)]
       : null;
   };
@@ -253,8 +255,8 @@ const DashboardPage = () => {
     const tasks = [
       {
         id: 1,
-        title: "شاهد درس واحد جديد",
-        description: "اكتشف معرفة جديدة اليوم",
+        title: t('dashboard.quick_actions.lessons.title'),
+        description: t('dashboard.quick_actions.lessons.desc'),
         icon: BookOpen,
         completed: false,
         points: 5,
@@ -262,8 +264,8 @@ const DashboardPage = () => {
       },
       {
         id: 2,
-        title: "راجع درس مكتمل",
-        description: "التكرار يعزز التعلم",
+        title: t('dashboard.quick_actions.review_lessons.title'),
+        description: t('dashboard.quick_actions.review_lessons.desc'),
         icon: RefreshCw,
         completed: completedLessons > 0,
         points: 3,
@@ -271,8 +273,8 @@ const DashboardPage = () => {
       },
       {
         id: 3,
-        title: "اختبر معلوماتك",
-        description: "قياس التقدم مهم",
+        title: t('dashboard.quick_actions.exams.title'),
+        description: t('dashboard.quick_actions.exams.desc'),
         icon: FileText,
         completed: false,
         points: 10,
@@ -280,82 +282,82 @@ const DashboardPage = () => {
       },
       {
         id: 4,
-        title: "حقق 50 نقطة اليوم",
-        description: "اجمع النقاط من الأنشطة",
+        title: t('dashboard.quick_actions.earn_points.title'),
+        description: t('dashboard.quick_actions.earn_points.desc'),
         icon: Zap,
         completed: false,
         points: 15,
         action: () => navigate('/lessons')
       }
     ];
-    
+
     return tasks;
   };
 
   // توليد الإنجازات
   const generateAchievements = (completedLessons, completedExams, averageScore, streakDays) => {
     const achievementList = [];
-    
+
     if (completedLessons >= 1) {
       achievementList.push({
         id: 1,
-        title: "المبتدئ",
-        description: "أكمل أول درس",
+        title: t('dashboard.achievements.first_lesson.title'),
+        description: t('dashboard.achievements.first_lesson.desc'),
         icon: BookOpen,
         unlocked: true,
-        date: new Date().toLocaleDateString('ar-EG'),
+        date: new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US'),
         color: "bg-blue-100 text-blue-800"
       });
     }
-    
+
     if (completedExams >= 1) {
       achievementList.push({
         id: 2,
-        title: "المختبر الأول",
-        description: "أكمل أول امتحان",
+        title: t('dashboard.achievements.first_exam.title'),
+        description: t('dashboard.achievements.first_exam.desc'),
         icon: FileText,
         unlocked: true,
-        date: new Date().toLocaleDateString('ar-EG'),
+        date: new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US'),
         color: "bg-green-100 text-green-800"
       });
     }
-    
+
     if (averageScore >= 70) {
       achievementList.push({
         id: 3,
-        title: "المتفوق",
-        description: "حقق 70% أو أكثر",
+        title: t('dashboard.achievements.high_achiever.title'),
+        description: t('dashboard.achievements.high_achiever.desc'),
         icon: Trophy,
         unlocked: true,
-        date: new Date().toLocaleDateString('ar-EG'),
+        date: new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US'),
         color: "bg-yellow-100 text-yellow-800"
       });
     }
-    
+
     if (streakDays >= 3) {
       achievementList.push({
         id: 4,
-        title: "المثابر",
-        description: "3 أيام نشاط متتالية",
+        title: t('dashboard.achievements.consistent_learner.title'),
+        description: t('dashboard.achievements.consistent_learner.desc'),
         icon: Flame,
         unlocked: true,
-        date: new Date().toLocaleDateString('ar-EG'),
+        date: new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US'),
         color: "bg-orange-100 text-orange-800"
       });
     }
-    
+
     if (completedLessons >= 5) {
       achievementList.push({
         id: 5,
-        title: "المتعلم النشط",
-        description: "أكمل 5 دروس",
+        title: t('dashboard.achievements.active_learner.title'),
+        description: t('dashboard.achievements.active_learner.desc'),
         icon: Medal,
         unlocked: completedLessons >= 5,
-        date: completedLessons >= 5 ? new Date().toLocaleDateString('ar-EG') : null,
+        date: completedLessons >= 5 ? new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US') : null,
         color: "bg-purple-100 text-purple-800"
       });
     }
-    
+
     return achievementList;
   };
 
@@ -363,26 +365,26 @@ const DashboardPage = () => {
   const updateStreak = () => {
     const today = new Date().toDateString();
     const lastActive = localStorage.getItem('lastActiveDate');
-    
+
     if (lastActive === today) {
       return parseInt(localStorage.getItem('streakDays') || '0');
     }
-    
+
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toDateString();
-    
+
     let currentStreak = parseInt(localStorage.getItem('streakDays') || '0');
-    
+
     if (lastActive === yesterdayStr) {
       currentStreak += 1;
     } else {
       currentStreak = 1;
     }
-    
+
     localStorage.setItem('lastActiveDate', today);
     localStorage.setItem('streakDays', currentStreak.toString());
-    
+
     return currentStreak;
   };
 
@@ -391,32 +393,32 @@ const DashboardPage = () => {
     if (exam.totalScore && exam.totalScore > 0) {
       return exam.totalScore;
     }
-    
+
     if (Array.isArray(exam.questions) && exam.questions.length > 0) {
       const totalFromQuestions = exam.questions.reduce((sum, question) => {
         return sum + (question.points || 1);
       }, 0);
-      
+
       if (totalFromQuestions > 0) {
         return totalFromQuestions;
       }
     }
-    
+
     if (exam.questions?.length > 0) {
       return exam.questions.length;
     }
-    
+
     return 100;
   };
 
   // دالة لجلب النتائج مثل صفحة النتائج
   const fetchScores = async (examsList) => {
     const results = {}
-    
+
     const promises = examsList.map(async (ex) => {
       try {
         const res = await examsAPI.getStudentScore(ex._id)
-        
+
         if (res === null) {
           return { examId: ex._id, score: null }
         } else {
@@ -441,16 +443,16 @@ const DashboardPage = () => {
 
   const fetchDashboardData = async () => {
     if (isSuperAdmin()) return
-    
+
     try {
       setIsLoading(true)
       setError(null)
       setShowProgressAnimation(false)
-      
+
       // جلب البيانات
       const [
-        lessonsResponse, 
-        purchasedResponse, 
+        lessonsResponse,
+        purchasedResponse,
         examsResponse,
       ] = await Promise.all([
         lessonsAPI.getAllLessons({ page: 1, limit: 100 }),
@@ -469,11 +471,11 @@ const DashboardPage = () => {
       } else if (lessonsResponse && lessonsResponse.data && lessonsResponse.data.lessons) {
         totalLessons = lessonsResponse.data.lessons.length;
       }
-      
-      const purchasedLessonsData = Array.isArray(purchasedResponse) 
-        ? purchasedResponse 
+
+      const purchasedLessonsData = Array.isArray(purchasedResponse)
+        ? purchasedResponse
         : (purchasedResponse?.lessons || purchasedResponse?.data || [])
-      
+
       const completedLessonsCount = purchasedLessonsData.filter(
         lesson => lesson.watched === true
       ).length
@@ -489,10 +491,10 @@ const DashboardPage = () => {
       } else if (examsResponse && examsResponse.data && Array.isArray(examsResponse.data.exams)) {
         allExams = examsResponse.data.exams;
       }
-      
+
       // جلب النتائج باستخدام نفس الدالة في صفحة النتائج
       const scores = await fetchScores(allExams)
-      
+
       let completedExamsCount = 0
       let totalPercentage = 0
       const examScores = []
@@ -500,17 +502,17 @@ const DashboardPage = () => {
       // حساب الامتحانات المكتملة والنتائج
       allExams.forEach((exam) => {
         const score = scores[exam._id]
-        
+
         if (typeof score === 'number') {
           completedExamsCount++
-          
+
           // حساب النسبة المئوية
           const totalScore = calculateExamTotalScore(exam)
           const percentage = totalScore > 0 ? Math.round((score / totalScore) * 100) : 0
           totalPercentage += percentage
-          
-          examScores.push({ 
-            examId: exam._id, 
+
+          examScores.push({
+            examId: exam._id,
             examTitle: exam.title || 'بدون عنوان',
             score: score,
             totalScore: totalScore,
@@ -536,63 +538,63 @@ const DashboardPage = () => {
 
       // توليد الرسالة التشجيعية
       const encouragement = generateEncouragementMessage(
-        averageScore, 
-        completedLessonsCount, 
-        completedExamsCount, 
+        averageScore,
+        completedLessonsCount,
+        completedExamsCount,
         progressPercentage
       );
       setEncouragementMessage(encouragement);
 
       // تحديد الهدف التالي
       const nextGoalData = determineNextGoal(
-        completedLessonsCount, 
-        completedExamsCount, 
-        totalLessons, 
+        completedLessonsCount,
+        completedExamsCount,
+        totalLessons,
         allExams.length
       );
       setNextGoal(nextGoalData);
 
       // توليد المهام اليومية
       const tasks = generateDailyTasks(
-        completedLessonsCount, 
-        completedExamsCount, 
-        totalLessons, 
+        completedLessonsCount,
+        completedExamsCount,
+        totalLessons,
         allExams.length
       );
       setDailyTasks(tasks);
 
       // توليد الإنجازات
       const achievementsList = generateAchievements(
-        completedLessonsCount, 
-        completedExamsCount, 
-        averageScore, 
+        completedLessonsCount,
+        completedExamsCount,
+        averageScore,
         currentStreak
       );
       setAchievements(achievementsList);
 
       // التحقق من الإنجازات الجديدة
       const previousAchievements = JSON.parse(localStorage.getItem('achievements') || '[]');
-      const newAchievements = achievementsList.filter(ach => 
+      const newAchievements = achievementsList.filter(ach =>
         ach.unlocked && !previousAchievements.some(prev => prev.id === ach.id)
       );
-      
+
       if (newAchievements.length > 0) {
         setShowConfetti(true);
         setShowCelebration(true);
         setTimeout(() => setShowConfetti(false), 5000);
         setTimeout(() => setShowCelebration(false), 3000);
       }
-      
+
       localStorage.setItem('achievements', JSON.stringify(achievementsList.map(a => a.id)));
 
       // التحقق من التقدم الملحوظ
       const previousStats = JSON.parse(localStorage.getItem('previousStats') || '{}');
-      if (previousStats.completedLessons < completedLessonsCount || 
-          previousStats.completedExams < completedExamsCount) {
+      if (previousStats.completedLessons < completedLessonsCount ||
+        previousStats.completedExams < completedExamsCount) {
         setShowProgressAnimation(true);
         setTimeout(() => setShowProgressAnimation(false), 2000);
       }
-      
+
       localStorage.setItem('previousStats', JSON.stringify({
         completedLessons: completedLessonsCount,
         completedExams: completedExamsCount,
@@ -613,22 +615,22 @@ const DashboardPage = () => {
       })
 
       setLastUpdated(new Date())
-      
+
     } catch (error) {
-      
-      let errorMessage = 'خطأ في تحميل البيانات'
+
+      let errorMessage = t('dashboard.error_load')
       if (error.message?.includes('Session expired') || error.status === 401) {
-        errorMessage = 'انتهت جلسة العمل. يرجى تسجيل الدخول مرة أخرى'
+        errorMessage = t('dashboard.error_session')
         localStorage.removeItem('token')
         navigate('/login')
       } else if (error.message?.includes('Network')) {
-        errorMessage = 'خطأ في الاتصال بالإنترنت'
+        errorMessage = t('dashboard.error_network')
       } else {
-        errorMessage = error.message || 'حدث خطأ غير معروف'
+        errorMessage = error.message || t('dashboard.error_unknown')
       }
-      
+
       setError(errorMessage)
-      
+
       // استخدام البيانات المخزنة مؤقتاً
       const cachedStats = JSON.parse(localStorage.getItem('cachedStats') || '{}');
       if (Object.keys(cachedStats).length > 0) {
@@ -648,7 +650,7 @@ const DashboardPage = () => {
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
-      
+
       // حفظ البيانات مؤقتاً
       localStorage.setItem('cachedStats', JSON.stringify(stats))
     }
@@ -657,13 +659,13 @@ const DashboardPage = () => {
   useEffect(() => {
     if (user && !isSuperAdmin()) {
       fetchDashboardData()
-      
+
       const interval = setInterval(() => {
         if (document.visibilityState === 'visible') {
           fetchDashboardData();
         }
       }, 5 * 60 * 1000);
-      
+
       return () => clearInterval(interval);
     }
   }, [user, isSuperAdmin])
@@ -674,12 +676,12 @@ const DashboardPage = () => {
   }
 
   const handleTaskComplete = (taskId) => {
-    setDailyTasks(tasks => 
-      tasks.map(task => 
+    setDailyTasks(tasks =>
+      tasks.map(task =>
         task.id === taskId ? { ...task, completed: !task.completed } : task
       )
     );
-    
+
     const task = dailyTasks.find(t => t.id === taskId);
     if (task && !task.completed) {
       setStats(prev => ({
@@ -703,32 +705,32 @@ const DashboardPage = () => {
 
   const quickActions = [
     {
-      title: 'تصفح الدروس',
-      description: 'استكشف المحتوى التعليمي',
+      title: t('dashboard.quick_actions.lessons.title'),
+      description: t('dashboard.quick_actions.lessons.desc'),
       icon: BookOpen,
       link: '/lessons',
       color: 'bg-blue-500',
       gradient: 'from-blue-500 to-blue-600'
     },
     {
-      title: 'الامتحانات',
-      description: 'اختبر معلوماتك',
+      title: t('dashboard.quick_actions.exams.title'),
+      description: t('dashboard.quick_actions.exams.desc'),
       icon: FileText,
       link: '/exams',
       color: 'bg-green-500',
       gradient: 'from-green-500 to-green-600'
     },
     {
-      title: 'النتائج',
-      description: 'شاهد أداءك',
+      title: t('dashboard.quick_actions.results.title'),
+      description: t('dashboard.quick_actions.results.desc'),
       icon: Award,
       link: '/results',
       color: 'bg-purple-500',
       gradient: 'from-purple-500 to-purple-600'
     },
     {
-      title: 'المسار التعليمي',
-      description: 'تابع تقدمك',
+      title: t('dashboard.quick_actions.progress.title'),
+      description: t('dashboard.quick_actions.progress.desc'),
       icon: BarChart3,
       link: '/progress',
       color: 'bg-orange-500',
@@ -743,7 +745,7 @@ const DashboardPage = () => {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600 dark:text-gray-300">جاري تحميل بيانات لوحة التحكم...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-300">{t('dashboard.loading')}</p>
           </div>
         </div>
       </div>
@@ -753,7 +755,7 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
       <Navbar />
-      
+
       {/* تأثير الكونفيتي البديل */}
       {showConfetti && (
         <div className="fixed inset-0 z-50 pointer-events-none">
@@ -767,7 +769,7 @@ const DashboardPage = () => {
                 top: '-10%'
               }}
               initial={{ y: 0, rotate: 0 }}
-              animate={{ 
+              animate={{
                 y: windowSize.height + 100,
                 rotate: 360,
                 x: Math.sin(i) * 100
@@ -781,7 +783,7 @@ const DashboardPage = () => {
           ))}
         </div>
       )}
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <motion.div
@@ -793,19 +795,19 @@ const DashboardPage = () => {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                مرحباً، {user?.fullName || 'الطالب'}
+                {t('dashboard.welcome', { name: user?.fullName || t('dashboard.student') })}
               </h1>
               <Badge className={`${encouragementMessage?.levelColor || 'bg-blue-500'}`}>
                 {performanceLevel}
               </Badge>
             </div>
             <p className="text-gray-600 dark:text-gray-300">
-              استمر في رحلتك التعليمية وحقق أهدافك الأكاديمية
+              {t('dashboard.footer.welcome_sub')}
             </p>
             {lastUpdated && (
               <p className="text-xs text-gray-500 mt-1">
-                آخر تحديث: {lastUpdated.toLocaleTimeString('ar-EG')} | 
-                سلسلة نشاط: {streakDays} يوم
+                {t('dashboard.last_updated', { time: lastUpdated.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US') })} |
+                {t('dashboard.streak_days', { days: streakDays })}
               </p>
             )}
           </div>
@@ -816,15 +818,15 @@ const DashboardPage = () => {
                 <AlertDescription className="text-xs">{error}</AlertDescription>
               </Alert>
             )}
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="flex items-center gap-2"
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              تحديث
+              {t('dashboard.refresh')}
             </Button>
           </div>
         </motion.div>
@@ -835,31 +837,30 @@ const DashboardPage = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className={`mb-6 p-4 rounded-xl border-2 shadow-lg ${
-              stats.averageScore >= 85 
-                ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 dark:from-yellow-900/20 dark:to-amber-900/20' 
-                : stats.averageScore >= 70
+            className={`mb-6 p-4 rounded-xl border-2 shadow-lg ${stats.averageScore >= 85
+              ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 dark:from-yellow-900/20 dark:to-amber-900/20'
+              : stats.averageScore >= 70
                 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-900/20 dark:to-emerald-900/20'
                 : stats.averageScore >= 50
-                ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 dark:from-blue-900/20 dark:to-cyan-900/20'
-                : 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200 dark:from-red-900/20 dark:to-pink-900/20'
-            }`}
+                  ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 dark:from-blue-900/20 dark:to-cyan-900/20'
+                  : 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200 dark:from-red-900/20 dark:to-pink-900/20'
+              }`}
           >
             <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${stats.averageScore >= 85 ? 'bg-yellow-100 dark:bg-yellow-900' : 
-                stats.averageScore >= 70 ? 'bg-green-100 dark:bg-green-900' : 
-                stats.averageScore >= 50 ? 'bg-blue-100 dark:bg-blue-900' : 'bg-red-100 dark:bg-red-900'}`}>
+              <div className={`p-2 rounded-lg ${stats.averageScore >= 85 ? 'bg-yellow-100 dark:bg-yellow-900' :
+                stats.averageScore >= 70 ? 'bg-green-100 dark:bg-green-900' :
+                  stats.averageScore >= 50 ? 'bg-blue-100 dark:bg-blue-900' : 'bg-red-100 dark:bg-red-900'}`}>
                 {encouragementMessage.icon && <encouragementMessage.icon className={`h-5 w-5 ${encouragementMessage.color || 'text-blue-500'}`} />}
               </div>
               <div className="flex-1">
                 <p className="font-bold text-lg mb-1">
-                  {stats.averageScore >= 85 
-                    ? '🎯 أداء استثنائي!' 
-                    : stats.averageScore >= 70 
-                    ? '💪 تقدم مذهل!' 
-                    : stats.averageScore >= 50
-                    ? '🌟 بداية واعدة!'
-                    : '🚀 يمكنك التحسن!'}
+                  {stats.averageScore >= 85
+                    ? t('dashboard.encouragement.excellent')
+                    : stats.averageScore >= 70
+                      ? t('dashboard.encouragement.good')
+                      : stats.averageScore >= 50
+                        ? t('dashboard.encouragement.average')
+                        : t('dashboard.encouragement.beginner')}
                 </p>
                 <p className="text-sm">{encouragementMessage.message}</p>
               </div>
@@ -878,10 +879,10 @@ const DashboardPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm">إجمالي الدروس</p>
+                  <p className="text-blue-100 text-sm">{t('dashboard.stats.total_lessons')}</p>
                   <p className="text-3xl font-bold">{stats.totalLessons}</p>
                   <p className="text-blue-200 text-xs mt-1">
-                    {stats.completedLessons} مكتمل
+                    {stats.completedLessons} {t('dashboard.progress_section.completed')}
                   </p>
                 </div>
                 <div className="relative">
@@ -893,9 +894,9 @@ const DashboardPage = () => {
                   )}
                 </div>
               </div>
-              <Progress 
-                value={stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0} 
-                className="h-1 mt-3 bg-blue-400" 
+              <Progress
+                value={stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0}
+                className="h-1 mt-3 bg-blue-400"
               />
             </CardContent>
           </Card>
@@ -904,10 +905,10 @@ const DashboardPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-100 text-sm">الدروس المكتملة</p>
+                  <p className="text-green-100 text-sm">{t('dashboard.stats.completed_lessons')}</p>
                   <p className="text-3xl font-bold">{stats.completedLessons}</p>
                   <p className="text-green-200 text-xs mt-1">
-                    {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}% إنجاز
+                    {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}% {t('dashboard.stats.progress')}
                   </p>
                 </div>
                 <div className="relative">
@@ -924,7 +925,7 @@ const DashboardPage = () => {
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <Badge variant="secondary" className="bg-green-400/20 text-green-100">
-                  +{stats.completedLessons * 5} نقطة
+                  +{stats.completedLessons * 5} {t('common.points')}
                 </Badge>
               </div>
             </CardContent>
@@ -934,10 +935,10 @@ const DashboardPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm">الامتحانات المكتملة</p>
+                  <p className="text-purple-100 text-sm">{t('dashboard.stats.completed_exams')}</p>
                   <p className="text-3xl font-bold">{stats.completedExams}</p>
                   <p className="text-purple-200 text-xs mt-1">
-                    {stats.totalExams > 0 ? Math.round((stats.completedExams / stats.totalExams) * 100) : 0}% إنجاز
+                    {stats.totalExams > 0 ? Math.round((stats.completedExams / stats.totalExams) * 100) : 0}% {t('dashboard.stats.progress')}
                   </p>
                 </div>
                 <div className="relative">
@@ -954,7 +955,7 @@ const DashboardPage = () => {
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <Badge variant="secondary" className="bg-purple-400/20 text-purple-100">
-                  +{stats.completedExams * 10} نقطة
+                  +{stats.completedExams * 10} {t('common.points')}
                 </Badge>
               </div>
             </CardContent>
@@ -964,10 +965,10 @@ const DashboardPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-100 text-sm">متوسط الدرجات</p>
+                  <p className="text-orange-100 text-sm">{t('dashboard.stats.average_score')}</p>
                   <p className="text-3xl font-bold">{stats.averageScore}%</p>
                   <p className="text-orange-200 text-xs mt-1">
-                    {stats.completedExams > 0 ? 'بناءً على ' + stats.completedExams + ' امتحان' : 'لا توجد نتائج'}
+                    {stats.completedExams > 0 ? t('dashboard.performance.completed') + ' ' + stats.completedExams : t('dashboard.performance.start_exam')}
                   </p>
                 </div>
                 <div className="relative">
@@ -982,13 +983,13 @@ const DashboardPage = () => {
               <div className="mt-3">
                 <div className="flex items-center gap-2">
                   {stats.averageScore >= 85 ? (
-                    <Badge className="bg-yellow-500">ممتاز</Badge>
+                    <Badge className="bg-yellow-500">{t('dashboard.encouragement.excellent')}</Badge>
                   ) : stats.averageScore >= 70 ? (
-                    <Badge className="bg-green-500">جيد جداً</Badge>
+                    <Badge className="bg-green-500">{t('dashboard.encouragement.good')}</Badge>
                   ) : stats.averageScore >= 50 ? (
-                    <Badge className="bg-blue-500">متوسط</Badge>
+                    <Badge className="bg-blue-500">{t('dashboard.encouragement.average')}</Badge>
                   ) : (
-                    <Badge className="bg-red-500">بحاجة لتحسين</Badge>
+                    <Badge className="bg-red-500">{t('dashboard.encouragement.beginner')}</Badge>
                   )}
                 </div>
               </div>
@@ -999,12 +1000,12 @@ const DashboardPage = () => {
         {/* Main Content Area */}
         <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
-            <TabsTrigger value="progress">التقدم</TabsTrigger>
-            <TabsTrigger value="achievements">الإنجازات</TabsTrigger>
-            <TabsTrigger value="tasks">المهام</TabsTrigger>
+            <TabsTrigger value="overview">{t('dashboard.tabs.overview')}</TabsTrigger>
+            <TabsTrigger value="progress">{t('dashboard.tabs.progress')}</TabsTrigger>
+            <TabsTrigger value="achievements">{t('dashboard.tabs.achievements')}</TabsTrigger>
+            <TabsTrigger value="tasks">{t('dashboard.tabs.tasks')}</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="overview" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left Column - Progress & Quick Actions */}
@@ -1014,10 +1015,10 @@ const DashboardPage = () => {
                   <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                     <CardTitle className="flex items-center text-xl">
                       <BarChart3 className="h-6 w-6 ml-2 text-blue-600" />
-                      تقدمك الأكاديمي الشامل
+                      {t('dashboard.progress_section.title')}
                     </CardTitle>
                     <CardDescription>
-                      تتبع إنجازاتك ومستوى تقدمك في المنهج التعليمي
+                      {t('dashboard.progress_section.desc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
@@ -1026,14 +1027,14 @@ const DashboardPage = () => {
                       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-5 rounded-xl">
                         <div className="flex justify-between items-center mb-4">
                           <div>
-                            <span className="text-sm font-medium">التقدم الشامل</span>
-                            <p className="text-xs text-gray-500">إنجازك في جميع المواد</p>
+                            <span className="text-sm font-medium">{t('dashboard.progress_section.overall')}</span>
+                            <p className="text-xs text-gray-500">{t('dashboard.progress_section.overall_desc')}</p>
                           </div>
                           <div className="text-right">
                             <span className="text-2xl font-bold text-gray-900 dark:text-white">
                               {stats.progressPercentage}%
                             </span>
-                            <p className="text-xs text-gray-500">من إجمالي المهام</p>
+                            <p className="text-xs text-gray-500">{t('dashboard.progress_section.total_tasks')}</p>
                           </div>
                         </div>
                         <div className="relative">
@@ -1048,15 +1049,15 @@ const DashboardPage = () => {
                         <div className="flex justify-between text-xs text-gray-500 mt-2">
                           <div className="flex items-center gap-1">
                             <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span>مكتمل: {stats.completedLessons + stats.completedExams}</span>
+                            <span>{t('dashboard.progress_section.completed')}: {stats.completedLessons + stats.completedExams}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3 text-gray-400" />
-                            <span>متبقي: {(stats.totalLessons + stats.totalExams) - (stats.completedLessons + stats.completedExams)}</span>
+                            <span>{t('dashboard.progress_section.remaining')}: {(stats.totalLessons + stats.totalExams) - (stats.completedLessons + stats.completedExams)}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Target className="h-3 w-3 text-blue-500" />
-                            <span>الإجمالي: {stats.totalLessons + stats.totalExams}</span>
+                            <span>{t('dashboard.progress_section.total')}: {stats.totalLessons + stats.totalExams}</span>
                           </div>
                         </div>
                       </div>
@@ -1071,25 +1072,25 @@ const DashboardPage = () => {
                                   <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <div>
-                                  <p className="font-medium">تقدم الدروس</p>
-                                  <p className="text-sm text-gray-500">المعرفة النظرية</p>
+                                  <p className="font-medium">{t('dashboard.progress_section.lessons_title')}</p>
+                                  <p className="text-sm text-gray-500">{t('dashboard.progress_section.lessons_desc')}</p>
                                 </div>
                               </div>
                               <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                                 {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}%
                               </Badge>
                             </div>
-                            <Progress 
-                              value={stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0} 
-                              className="h-2" 
+                            <Progress
+                              value={stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0}
+                              className="h-2"
                             />
                             <div className="flex justify-between text-xs text-gray-500 mt-2">
-                              <span>{stats.completedLessons} مكتمل</span>
-                              <span>{stats.totalLessons - stats.completedLessons} متبقي</span>
+                              <span>{stats.completedLessons} {t('dashboard.progress_section.completed')}</span>
+                              <span>{stats.totalLessons - stats.completedLessons} {t('dashboard.progress_section.remaining')}</span>
                             </div>
                             <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/30 rounded">
                               <div className="flex items-center justify-between">
-                                <span className="text-sm">النقاط المكتسبة</span>
+                                <span className="text-sm">{t('dashboard.progress_section.points_earned')}</span>
                                 <Badge variant="outline" className="bg-white dark:bg-gray-800">
                                   +{stats.completedLessons * 5}
                                 </Badge>
@@ -1106,25 +1107,25 @@ const DashboardPage = () => {
                                   <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
                                 </div>
                                 <div>
-                                  <p className="font-medium">تقدم الامتحانات</p>
-                                  <p className="text-sm text-gray-500">التطبيق العملي</p>
+                                  <p className="font-medium">{t('dashboard.progress_section.exams_title')}</p>
+                                  <p className="text-sm text-gray-500">{t('dashboard.progress_section.exams_desc')}</p>
                                 </div>
                               </div>
                               <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                 {stats.totalExams > 0 ? Math.round((stats.completedExams / stats.totalExams) * 100) : 0}%
                               </Badge>
                             </div>
-                            <Progress 
-                              value={stats.totalExams > 0 ? (stats.completedExams / stats.totalExams) * 100 : 0} 
-                              className="h-2" 
+                            <Progress
+                              value={stats.totalExams > 0 ? (stats.completedExams / stats.totalExams) * 100 : 0}
+                              className="h-2"
                             />
                             <div className="flex justify-between text-xs text-gray-500 mt-2">
-                              <span>{stats.completedExams} مكتمل</span>
-                              <span>{stats.totalExams - stats.completedExams} متبقي</span>
+                              <span>{stats.completedExams} {t('dashboard.progress_section.completed')}</span>
+                              <span>{stats.totalExams - stats.completedExams} {t('dashboard.progress_section.remaining')}</span>
                             </div>
                             <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/30 rounded">
                               <div className="flex items-center justify-between">
-                                <span className="text-sm">النقاط المكتسبة</span>
+                                <span className="text-sm">{t('dashboard.progress_section.points_earned')}</span>
                                 <Badge variant="outline" className="bg-white dark:bg-gray-800">
                                   +{stats.completedExams * 10}
                                 </Badge>
@@ -1139,12 +1140,12 @@ const DashboardPage = () => {
                         <CardContent className="p-5">
                           <div className="flex items-center justify-between mb-4">
                             <div>
-                              <h3 className="font-bold text-lg">النقاط والمكافآت</h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-300">اجمع النقاط وارتقِ بمستواك</p>
+                              <h3 className="font-bold text-lg">{t('dashboard.points_section.title')}</h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.points_section.desc')}</p>
                             </div>
                             <div className="text-right">
                               <p className="text-3xl font-bold text-purple-600">{stats.totalPoints}</p>
-                              <p className="text-sm text-purple-500">نقطة إجمالية</p>
+                              <p className="text-sm text-purple-500">{t('dashboard.points_section.total')}</p>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
@@ -1154,7 +1155,7 @@ const DashboardPage = () => {
                                   <BookOpen className="h-4 w-4 text-blue-600" />
                                 </div>
                                 <div>
-                                  <p className="text-xs text-gray-500">من الدروس</p>
+                                  <p className="text-xs text-gray-500">{t('dashboard.points_section.from_lessons')}</p>
                                   <p className="font-bold">+{stats.completedLessons * 5}</p>
                                 </div>
                               </div>
@@ -1165,7 +1166,7 @@ const DashboardPage = () => {
                                   <FileText className="h-4 w-4 text-green-600" />
                                 </div>
                                 <div>
-                                  <p className="text-xs text-gray-500">من الامتحانات</p>
+                                  <p className="text-xs text-gray-500">{t('dashboard.points_section.from_exams')}</p>
                                   <p className="font-bold">+{stats.completedExams * 10}</p>
                                 </div>
                               </div>
@@ -1180,9 +1181,9 @@ const DashboardPage = () => {
                 {/* Quick Actions */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>الإجراءات السريعة</CardTitle>
+                    <CardTitle>{t('dashboard.quick_actions_section.title')}</CardTitle>
                     <CardDescription>
-                      الوصول السريع للأقسام المهمة في المنصة
+                      {t('dashboard.quick_actions_section.desc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -1222,7 +1223,7 @@ const DashboardPage = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Target className="h-5 w-5 ml-2 text-blue-600" />
-                      هدفك القادم
+                      {t('dashboard.next_goal.title')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1234,25 +1235,25 @@ const DashboardPage = () => {
                         <h3 className="font-bold text-lg mb-2">{nextGoal.title}</h3>
                         <div className="mb-4">
                           <div className="flex justify-between text-sm mb-1">
-                            <span>التقدم</span>
+                            <span>{t('dashboard.next_goal.progress')}</span>
                             <span>{nextGoal.current}/{nextGoal.target}</span>
                           </div>
-                          <Progress 
-                            value={nextGoal.target > 0 ? (nextGoal.current / nextGoal.target) * 100 : 0} 
-                            className="h-2" 
+                          <Progress
+                            value={nextGoal.target > 0 ? (nextGoal.current / nextGoal.target) * 100 : 0}
+                            className="h-2"
                           />
                         </div>
                         <Badge className="bg-gradient-to-r from-blue-500 to-purple-500">
-                          +{nextGoal.points} نقطة مكافأة
+                          +{nextGoal.points} {t('dashboard.next_goal.bonus')}
                         </Badge>
                         <p className="text-xs text-gray-500 mt-2">
-                          اكمل هذا الهدف لتحصل على نقاط إضافية
+                          {t('dashboard.next_goal.desc')}
                         </p>
                       </div>
                     ) : (
                       <div className="text-center py-8">
                         <Target className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-500">لا توجد أهداف حالية</p>
+                        <p className="text-gray-500">{t('dashboard.next_goal.none')}</p>
                       </div>
                     )}
                   </CardContent>
@@ -1263,7 +1264,7 @@ const DashboardPage = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Flame className="h-5 w-5 ml-2 text-orange-600" />
-                      سلسلة النشاط
+                      {t('dashboard.streak.title')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1276,9 +1277,9 @@ const DashboardPage = () => {
                           <span className="text-white font-bold">{streakDays}</span>
                         </div>
                       </div>
-                      <h3 className="text-2xl font-bold mb-1">{streakDays} يوم</h3>
+                      <h3 className="text-2xl font-bold mb-1">{t('dashboard.streak.days', { days: streakDays })}</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                        نشاط متتالي على المنصة
+                        {t('dashboard.streak.desc')}
                       </p>
                       <div className="grid grid-cols-7 gap-1">
                         {[...Array(7)].map((_, i) => (
@@ -1289,11 +1290,11 @@ const DashboardPage = () => {
                         ))}
                       </div>
                       <p className="text-xs text-gray-500 mt-3">
-                        {streakDays >= 7 
-                          ? '🎉 مذهل! حافظ على سلسلتك!' 
-                          : streakDays >= 3 
-                          ? '🔥 استمر! أنت على الطريق الصحيح' 
-                          : '💪 ابدأ سلسلة نشاطك اليوم!'}
+                        {streakDays >= 7
+                          ? t('dashboard.streak.msg_7')
+                          : streakDays >= 3
+                            ? t('dashboard.streak.msg_3')
+                            : t('dashboard.streak.msg_0')}
                       </p>
                     </div>
                   </CardContent>
@@ -1304,7 +1305,7 @@ const DashboardPage = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <TrendingUp className="h-5 w-5 ml-2 text-green-600" />
-                      أداء الامتحانات
+                      {t('dashboard.performance.title')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1315,7 +1316,7 @@ const DashboardPage = () => {
                             <p className="text-3xl font-bold text-gray-900 dark:text-white">
                               {stats.averageScore}%
                             </p>
-                            <p className="text-xs text-gray-500">المتوسط</p>
+                            <p className="text-xs text-gray-500">{t('dashboard.performance.average')}</p>
                           </div>
                         </div>
                         {stats.averageScore >= 70 && (
@@ -1324,51 +1325,51 @@ const DashboardPage = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                           <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                            <p className="text-xs text-gray-500">أعلى درجة</p>
+                            <p className="text-xs text-gray-500">{t('dashboard.performance.highest')}</p>
                             <p className="font-bold text-lg">
-                              {stats.examScores.length > 0 
+                              {stats.examScores.length > 0
                                 ? Math.max(...stats.examScores.map(e => e.percentage || 0), 0)
                                 : 0}%
                             </p>
                           </div>
                           <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                            <p className="text-xs text-gray-500">أدنى درجة</p>
+                            <p className="text-xs text-gray-500">{t('dashboard.performance.lowest')}</p>
                             <p className="font-bold text-lg">
-                              {stats.examScores.length > 0 
+                              {stats.examScores.length > 0
                                 ? Math.min(...stats.examScores.map(e => e.percentage || 100), 100)
                                 : 0}%
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-3 rounded-lg">
                           <div className="flex justify-between text-sm">
-                            <span>امتحانات مكتملة</span>
+                            <span>{t('dashboard.performance.completed')}</span>
                             <span className="font-bold">{stats.completedExams}</span>
                           </div>
                           <div className="flex justify-between text-sm mt-1">
-                            <span>إجمالي الامتحانات</span>
+                            <span>{t('dashboard.performance.total')}</span>
                             <span className="font-bold">{stats.totalExams}</span>
                           </div>
                         </div>
                       </div>
-                      
+
                       {stats.completedExams === 0 ? (
-                        <Button 
-                          className="w-full mt-4" 
+                        <Button
+                          className="w-full mt-4"
                           onClick={() => navigate('/exams')}
                         >
-                          ابدأ أول امتحان
+                          {t('dashboard.performance.start_exam')}
                         </Button>
                       ) : stats.averageScore < 50 ? (
                         <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                          <p className="text-sm font-medium">نصيحة:</p>
+                          <p className="text-sm font-medium">{t('dashboard.performance.tip')}</p>
                           <p className="text-xs text-gray-600 dark:text-gray-300">
-                            راجع الدروس قبل الامتحانات القادمة
+                            {t('dashboard.performance.tip_desc')}
                           </p>
                         </div>
                       ) : null}
@@ -1378,12 +1379,12 @@ const DashboardPage = () => {
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="achievements" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">إنجازاتك</CardTitle>
-                <CardDescription>الشهادات والميداليات التي حصلت عليها</CardDescription>
+                <CardTitle className="text-xl">{t('dashboard.achievements.title')}</CardTitle>
+                <CardDescription>{t('dashboard.achievements.desc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 {achievements.length > 0 ? (
@@ -1408,7 +1409,7 @@ const DashboardPage = () => {
                               <div className="space-y-2">
                                 <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500">
                                   <Trophy className="h-3 w-3 mr-1" />
-                                  مكتسب
+                                  {t('dashboard.achievements.acquired')}
                                 </Badge>
                                 <p className="text-xs text-gray-500">
                                   {achievement.date}
@@ -1416,7 +1417,7 @@ const DashboardPage = () => {
                               </div>
                             ) : (
                               <Badge variant="outline" className="border-gray-300">
-                                قيد التقدم
+                                {t('dashboard.achievements.in_progress')}
                               </Badge>
                             )}
                           </CardContent>
@@ -1427,16 +1428,16 @@ const DashboardPage = () => {
                 ) : (
                   <div className="text-center py-12">
                     <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold mb-2">لا توجد إنجازات بعد</h3>
+                    <h3 className="text-xl font-bold mb-2">{t('dashboard.achievements.none_title')}</h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      ابدأ رحلة التعلم لاكتساب أول إنجاز لك
+                      {t('dashboard.achievements.none_desc')}
                     </p>
                     <Button onClick={() => navigate('/lessons')}>
-                      ابدأ التعلم الآن
+                      {t('dashboard.achievements.start_learning')}
                     </Button>
                   </div>
                 )}
-                
+
                 {showCelebration && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -1445,11 +1446,11 @@ const DashboardPage = () => {
                   >
                     <div className="flex items-center justify-center gap-3 mb-2">
                       <Sparkles className="h-6 w-6 text-yellow-600" />
-                      <h3 className="font-bold text-lg">🎉 تهانينا! إنجاز جديد 🎉</h3>
+                      <h3 className="font-bold text-lg">{t('dashboard.achievements.new_title')}</h3>
                       <Sparkles className="h-6 w-6 text-yellow-600" />
                     </div>
                     <p className="text-gray-700 dark:text-gray-300">
-                      لقد حصلت على إنجاز جديد! استمر في التقدم لاكتساب المزيد من الإنجازات.
+                      {t('dashboard.achievements.new_desc')}
                     </p>
                   </motion.div>
                 )}
@@ -1467,28 +1468,28 @@ const DashboardPage = () => {
         >
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h2 className="text-2xl font-bold mb-2">🚀 استعد للقفزة التالية!</h2>
+              <h2 className="text-2xl font-bold mb-2">{t('dashboard.footer.title')}</h2>
               <p className="text-gray-300">
-                {stats.completedLessons + stats.completedExams === 0 
-                  ? 'ابدأ رحلتك التعليمية اليوم واكتشف عالم المعرفة' 
-                  : `أنت على الطريق الصحيح! أكمل ${stats.totalLessons + stats.totalExams - (stats.completedLessons + stats.completedExams)} مهمة أخرى لتحقيق إنجاز كامل`}
+                {stats.completedLessons + stats.completedExams === 0
+                  ? t('dashboard.footer.desc_start')
+                  : t('dashboard.footer.desc_continue', { count: stats.totalLessons + stats.totalExams - (stats.completedLessons + stats.completedExams) })}
               </p>
             </div>
             <div className="flex gap-3">
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 className="bg-white text-gray-900 hover:bg-gray-100"
                 onClick={() => navigate('/lessons')}
               >
                 <BookOpen className="h-4 w-4 ml-2" />
-                ابدأ التعلم
+                {t('dashboard.footer.start_learning')}
               </Button>
-              <Button 
+              <Button
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 onClick={() => navigate('/exams')}
               >
                 <FileText className="h-4 w-4 ml-2" />
-                اختبر نفسك
+                {t('dashboard.footer.test_yourself')}
               </Button>
             </div>
           </div>

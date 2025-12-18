@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 import { questionsAPI, examsAPI } from '../../services/api'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Navbar from '../../components/Navbar'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const AdminQuestions = () => {
   const [questions, setQuestions] = useState([])
@@ -25,6 +26,7 @@ const AdminQuestions = () => {
   const [editingQuestion, setEditingQuestion] = useState(null)
   const [expandedQuestionId, setExpandedQuestionId] = useState(null)
   const { toast } = useToast()
+  const { t, lang } = useTranslation()
 
   // حالة النموذج
   const [formData, setFormData] = useState({
@@ -50,8 +52,8 @@ const AdminQuestions = () => {
       } catch (error) {
         console.error('Error fetching data:', error)
         toast({
-          title: 'خطأ في تحميل البيانات',
-          description: 'فشل في تحميل الأسئلة أو الامتحانات',
+          title: t('admin.questions.messages.error_load'),
+          description: t('admin.questions.messages.error_load_desc'),
           variant: 'destructive'
         })
       } finally {
@@ -64,24 +66,24 @@ const AdminQuestions = () => {
 
   useEffect(() => {
     let result = Array.isArray(questions) ? questions : []
-    
+
     // تطبيق فلتر البحث
     if (searchTerm) {
       result = result.filter(question =>
         question.text?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
-    
+
     // تطبيق فلتر الامتحان
     if (examFilter !== 'all') {
       result = result.filter(question => question.exam === examFilter)
     }
-    
+
     // تطبيق فلتر النوع
     if (typeFilter !== 'all') {
       result = result.filter(question => question.type === typeFilter)
     }
-    
+
     setFilteredQuestions(result)
   }, [searchTerm, examFilter, typeFilter, questions])
 
@@ -90,8 +92,8 @@ const AdminQuestions = () => {
     if (formData.type === 'true-false') {
       setFormData(prev => ({
         ...prev,
-        options: ['صحيح', 'خطأ'],
-        correctAnswer: prev.correctAnswer || 'صحيح'
+        options: [t('admin.questions.types.true'), t('admin.questions.types.false')],
+        correctAnswer: prev.correctAnswer || t('admin.questions.types.true')
       }))
     } else if (formData.type === 'multiple-choice' && formData.options.length === 0) {
       setFormData(prev => ({
@@ -123,20 +125,20 @@ const AdminQuestions = () => {
     if (question) {
       // وضع التعديل
       setEditingQuestion(question)
-     setFormData({
-  text: question.text || '',
-  type: question.type || 'multiple-choice',
-  options: question.options && Array.isArray(question.options)
-    ? [...question.options]
-    : question.type === 'true-false'
-      ? ['صحيح', 'خطأ']
-      : question.type === 'multiple-choice'
-        ? ['', '', '', '']
-        : [],
-  correctAnswer: question.correctAnswer || '',
-  exam: question.exam || 'no-exam',
-  points: question.points ?? 1
-})
+      setFormData({
+        text: question.text || '',
+        type: question.type || 'multiple-choice',
+        options: question.options && Array.isArray(question.options)
+          ? [...question.options]
+          : question.type === 'true-false'
+            ? [t('admin.questions.types.true'), t('admin.questions.types.false')]
+            : question.type === 'multiple-choice'
+              ? ['', '', '', '']
+              : [],
+        correctAnswer: question.correctAnswer || '',
+        exam: question.exam || 'no-exam',
+        points: question.points ?? 1
+      })
 
 
     } else {
@@ -172,109 +174,109 @@ const AdminQuestions = () => {
     setFormData(prev => ({ ...prev, options: newOptions }))
   }
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  try {
-    console.log('بدء عملية حفظ السؤال...')
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      console.log('بدء عملية حفظ السؤال...')
 
-    // التحققات الأولية
-    if (!formData.text || !formData.text.toString().trim()) {
-      throw new Error('يجب إدخال نص السؤال')
-    }
-
-    // عند الإنشاء: الباك‌اند يتحقق من وجود الامتحان
-    if (!editingQuestion && (!formData.exam || formData.exam === 'no-exam' || formData.exam === '')) {
-      throw new Error('يجب اختيار الامتحان قبل إنشاء السؤال')
-    }
-
-    // بناء payload أساسي
-    const basePayload = {
-      text: formData.text.toString().trim(),
-      type: formData.type,
-      points: parseInt(formData.points, 10) || 1
-    }
-
-    // إذا كان إنشاء جديد أضف exam (الخادم يتحقق منه في addQuestion)
-    if (!editingQuestion) {
-      basePayload.exam = formData.exam === 'no-exam' ? '' : formData.exam
-    }
-
-    // معالجة حسب النوع
-    if (formData.type === 'multiple-choice') {
-      const opts = (formData.options || [])
-        .map(o => (o === undefined || o === null) ? '' : o.toString().trim())
-        .filter(o => o)
-
-      if (opts.length < 2) {
-        throw new Error('يجب إضافة خيارين على الأقل للاختيار المتعدد')
+      // التحققات الأولية
+      if (!formData.text || !formData.text.toString().trim()) {
+        throw new Error(t('admin.questions.messages.required_text'))
       }
 
-      basePayload.options = opts
-      basePayload.correctAnswer = formData.correctAnswer ? formData.correctAnswer.toString().trim() : ''
-
-      // تحذير لو الإجابة الصحيحة لا تطابق أي خيار (غير قاطع)
-      if (basePayload.correctAnswer && !opts.includes(basePayload.correctAnswer)) {
-        console.warn('correctAnswer لا يطابق أي من الخيارات المرسلة — أُرسِل كما هو.')
+      // عند الإنشاء: الباك‌اند يتحقق من وجود الامتحان
+      if (!editingQuestion && (!formData.exam || formData.exam === 'no-exam' || formData.exam === '')) {
+        throw new Error(t('admin.questions.messages.required_exam'))
       }
-    } else if (formData.type === 'true-false') {
-      // لا نرسل options لأن الباك‌اند قد يرفضها؛ نرسل correctAnswer كقيمة منطقية أو نصية
-      const ca = formData.correctAnswer
-      if (ca === true || ca === false) {
-        basePayload.correctAnswer = ca
-      } else if (typeof ca === 'string') {
-        const norm = ca.toString().trim().toLowerCase()
-        if (['صحيح', 'true', 'true'].includes(norm)) basePayload.correctAnswer = true
-        else if (['خطأ', 'false', 'false'].includes(norm)) basePayload.correctAnswer = false
-        else basePayload.correctAnswer = ca
+
+      // بناء payload أساسي
+      const basePayload = {
+        text: formData.text.toString().trim(),
+        type: formData.type,
+        points: parseInt(formData.points, 10) || 1
+      }
+
+      // إذا كان إنشاء جديد أضف exam (الخادم يتحقق منه في addQuestion)
+      if (!editingQuestion) {
+        basePayload.exam = formData.exam === 'no-exam' ? '' : formData.exam
+      }
+
+      // معالجة حسب النوع
+      if (formData.type === 'multiple-choice') {
+        const opts = (formData.options || [])
+          .map(o => (o === undefined || o === null) ? '' : o.toString().trim())
+          .filter(o => o)
+
+        if (opts.length < 2) {
+          throw new Error(t('admin.questions.messages.required_options'))
+        }
+
+        basePayload.options = opts
+        basePayload.correctAnswer = formData.correctAnswer ? formData.correctAnswer.toString().trim() : ''
+
+        // تحذير لو الإجابة الصحيحة لا تطابق أي خيار (غير قاطع)
+        if (basePayload.correctAnswer && !opts.includes(basePayload.correctAnswer)) {
+          console.warn('correctAnswer لا يطابق أي من الخيارات المرسلة — أُرسِل كما هو.')
+        }
+      } else if (formData.type === 'true-false') {
+        // لا نرسل options لأن الباك‌اند قد يرفضها؛ نرسل correctAnswer كقيمة منطقية أو نصية
+        const ca = formData.correctAnswer
+        if (ca === true || ca === false) {
+          basePayload.correctAnswer = ca
+        } else if (typeof ca === 'string') {
+          const norm = ca.toString().trim().toLowerCase()
+          if (['صحيح', 'true', 'true'].includes(norm)) basePayload.correctAnswer = true
+          else if (['خطأ', 'false', 'false'].includes(norm)) basePayload.correctAnswer = false
+          else basePayload.correctAnswer = ca
+        } else {
+          basePayload.correctAnswer = ca
+        }
+      } else if (formData.type === 'short-answer') {
+        // إرسال الإجابة الصحيحة كنص فقط، دون options
+        basePayload.correctAnswer = formData.correctAnswer ? formData.correctAnswer.toString().trim() : ''
+      }
+
+      // أمان: لا نرسل المفتاح القديم choices
+      if (Object.prototype.hasOwnProperty.call(basePayload, 'choices')) {
+        delete basePayload.choices
+      }
+
+      console.log('Payload to send:', basePayload)
+
+      // إرسال الطلب للبك‌اند
+      let response
+      if (editingQuestion) {
+        response = await questionsAPI.updateQuestion(editingQuestion._id, basePayload)
+        toast({ title: t('admin.questions.messages.update_success'), description: t('admin.questions.messages.update_success_desc') })
       } else {
-        basePayload.correctAnswer = ca
+        response = await questionsAPI.createQuestion(basePayload)
+        toast({ title: t('admin.questions.messages.add_success'), description: t('admin.questions.messages.add_success_desc') })
       }
-    } else if (formData.type === 'short-answer') {
-      // إرسال الإجابة الصحيحة كنص فقط، دون options
-      basePayload.correctAnswer = formData.correctAnswer ? formData.correctAnswer.toString().trim() : ''
+
+      console.log('استجابة الخادم:', response)
+
+      // إعادة تحميل البيانات
+      const questionsData = await questionsAPI.getAllQuestions()
+      setQuestions(questionsData)
+      handleCloseDialog()
+    } catch (error) {
+      console.error('Error saving question:', error)
+      toast({
+        title: t('admin.questions.messages.error'),
+        description: error.message || t('admin.questions.messages.error_save'),
+        variant: 'destructive'
+      })
     }
-
-    // أمان: لا نرسل المفتاح القديم choices
-    if (Object.prototype.hasOwnProperty.call(basePayload, 'choices')) {
-      delete basePayload.choices
-    }
-
-    console.log('Payload to send:', basePayload)
-
-    // إرسال الطلب للبك‌اند
-    let response
-    if (editingQuestion) {
-      response = await questionsAPI.updateQuestion(editingQuestion._id, basePayload)
-      toast({ title: 'تم التحديث', description: 'تم تحديث السؤال بنجاح' })
-    } else {
-      response = await questionsAPI.createQuestion(basePayload)
-      toast({ title: 'تم الإضافة', description: 'تم إضافة السؤال بنجاح' })
-    }
-
-    console.log('استجابة الخادم:', response)
-
-    // إعادة تحميل البيانات
-    const questionsData = await questionsAPI.getAllQuestions()
-    setQuestions(questionsData)
-    handleCloseDialog()
-  } catch (error) {
-    console.error('Error saving question:', error)
-    toast({
-      title: 'خطأ',
-      description: error.message || 'فشل في حفظ السؤال',
-      variant: 'destructive'
-    })
   }
-}
 
   const handleDelete = async () => {
     try {
       await questionsAPI.deleteQuestion(editingQuestion._id)
       toast({
-        title: 'تم الحذف',
-        description: 'تم حذف السؤال بنجاح'
+        title: t('admin.questions.messages.delete_success'),
+        description: t('admin.questions.messages.delete_success_desc')
       })
-      
+
       // إعادة تحميل البيانات
       const questionsData = await questionsAPI.getAllQuestions()
       setQuestions(questionsData)
@@ -283,27 +285,27 @@ const handleSubmit = async (e) => {
     } catch (error) {
       console.error('Error deleting question:', error)
       toast({
-        title: 'خطأ',
-        description: 'فشل في حذف السؤال',
+        title: t('admin.questions.messages.error'),
+        description: t('admin.questions.messages.error_delete'),
         variant: 'destructive'
       })
     }
   }
 
   const getExamName = (examId) => {
-    if (!examId || examId === 'no-exam') return 'غير معين'
+    if (!examId || examId === 'no-exam') return t('common.unknown')
     const exam = (Array.isArray(exams) ? exams : []).find(e => e._id === examId)
-    return exam ? exam.title : 'غير معروف'
+    return exam ? exam.title : t('common.unknown')
   }
 
   const getTypeText = (type) => {
     switch (type) {
       case 'multiple-choice':
-        return 'اختيار متعدد'
+        return t('admin.questions.types.mcq')
       case 'true-false':
-        return 'صحيح/خطأ'
+        return t('admin.questions.types.true_false')
       case 'short-answer':
-        return 'إجابة قصيرة'
+        return t('admin.questions.types.short')
       default:
         return type
     }
@@ -331,7 +333,7 @@ const handleSubmit = async (e) => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -341,15 +343,15 @@ const handleSubmit = async (e) => {
         >
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              بنك الأسئلة
+              {t('admin.questions.title')}
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              إدارة الأسئلة وإضافتها إلى الامتحانات
+              {t('admin.questions.subtitle')}
             </p>
           </div>
           <Button onClick={() => handleOpenDialog()}>
             <Plus className="h-4 w-4 ml-2" />
-            إضافة سؤال جديد
+            {t('admin.questions.add_new')}
           </Button>
         </motion.div>
 
@@ -364,7 +366,7 @@ const handleSubmit = async (e) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm">إجمالي الأسئلة</p>
+                  <p className="text-blue-100 text-sm">{t('admin.questions.stats.total')}</p>
                   <p className="text-3xl font-bold">{questions.length}</p>
                 </div>
                 <FileText className="h-8 w-8 text-blue-200" />
@@ -376,7 +378,7 @@ const handleSubmit = async (e) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-100 text-sm">أسئلة الاختيار المتعدد</p>
+                  <p className="text-green-100 text-sm">{t('admin.questions.stats.mcq')}</p>
                   <p className="text-3xl font-bold">
                     {(Array.isArray(questions) ? questions : []).filter(q => q.type === 'multiple-choice').length}
                   </p>
@@ -390,7 +392,7 @@ const handleSubmit = async (e) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm">الامتحانات المستهدفة</p>
+                  <p className="text-purple-100 text-sm">{t('admin.questions.stats.target')}</p>
                   <p className="text-3xl font-bold">
                     {new Set((Array.isArray(questions) ? questions : []).filter(q => q.exam).map(q => q.exam)).size}
                   </p>
@@ -414,21 +416,21 @@ const handleSubmit = async (e) => {
                 <div className="relative flex-1">
                   <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="ابحث في نص السؤال..."
+                    placeholder={t('admin.questions.filter.search')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-gray-400" />
                   <Select value={examFilter} onValueChange={setExamFilter}>
                     <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="جميع الامتحانات" />
+                      <SelectValue placeholder={t('admin.questions.filter.exam_all')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">جميع الامتحانات</SelectItem>
+                      <SelectItem value="all">{t('admin.questions.filter.exam_all')}</SelectItem>
                       {(Array.isArray(exams) ? exams : []).map(exam => (
                         <SelectItem key={exam._id} value={exam._id}>
                           {exam.title}
@@ -442,26 +444,26 @@ const handleSubmit = async (e) => {
                   <Filter className="h-4 w-4 text-gray-400" />
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="جميع الأنواع" />
+                      <SelectValue placeholder={t('admin.questions.filter.type_all')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">جميع الأنواع</SelectItem>
-                      <SelectItem value="multiple-choice">اختيار متعدد</SelectItem>
-                      <SelectItem value="true-false">صحيح/خطأ</SelectItem>
-                      <SelectItem value="short-answer">إجابة قصيرة</SelectItem>
+                      <SelectItem value="all">{t('admin.questions.filter.type_all')}</SelectItem>
+                      <SelectItem value="multiple-choice">{t('admin.questions.types.mcq')}</SelectItem>
+                      <SelectItem value="true-false">{t('admin.questions.types.true_false')}</SelectItem>
+                      <SelectItem value="short-answer">{t('admin.questions.types.short')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <Button 
-                  variant="outline" 
+
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setSearchTerm('')
                     setExamFilter('all')
                     setTypeFilter('all')
                   }}
                 >
-                  إعادة الضبط
+                  {t('admin.questions.filter.reset')}
                 </Button>
               </div>
             </CardContent>
@@ -476,9 +478,9 @@ const handleSubmit = async (e) => {
         >
           <Card>
             <CardHeader>
-              <CardTitle>الأسئلة المتاحة</CardTitle>
+              <CardTitle>{t('admin.questions.list.title')}</CardTitle>
               <CardDescription>
-                {filteredQuestions.length} من أصل {questions.length} سؤال
+                {t('admin.questions.list.desc', { shown: filteredQuestions.length, total: questions.length })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -494,7 +496,7 @@ const handleSubmit = async (e) => {
                                 {getTypeText(question.type)}
                               </Badge>
                               <Badge variant="secondary">
-                                {question.points} نقطة
+                                {question.points} {t('admin.questions.form.points')}
                               </Badge>
                               {question.exam && (
                                 <Badge variant="outline">
@@ -547,23 +549,22 @@ const handleSubmit = async (e) => {
                               transition={{ duration: 0.2 }}
                               className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
                             >
-                              <h4 className="font-medium mb-2">الخيارات:</h4>
+                              <h4 className="font-medium mb-2">{t('admin.questions.list.options')}</h4>
                               <ul className="space-y-2">
-                          {(question.options || []).map((option, index) => (
+                                {(question.options || []).map((option, index) => (
 
-                                  <li 
-                                    key={index} 
-                                    className={`flex items-center p-2 rounded ${
-                                      option === question.correctAnswer
-                                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                                        : 'bg-gray-100 dark:bg-gray-700'
-                                    }`}
+                                  <li
+                                    key={index}
+                                    className={`flex items-center p-2 rounded ${option === question.correctAnswer
+                                      ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                      : 'bg-gray-100 dark:bg-gray-700'
+                                      }`}
                                   >
                                     <span className="ml-2 font-medium">{String.fromCharCode(65 + index)}.</span>
                                     <span>{option}</span>
                                     {option === question.correctAnswer && (
                                       <Badge variant="default" className="mr-2">
-                                        الإجابة الصحيحة
+                                        {t('admin.questions.list.correct')}
                                       </Badge>
                                     )}
                                   </li>
@@ -580,12 +581,12 @@ const handleSubmit = async (e) => {
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    لا يوجد أسئلة
+                    {t('admin.questions.list.empty')}
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400">
                     {searchTerm || examFilter !== 'all' || typeFilter !== 'all'
-                      ? 'لم يتم العثور على أسئلة مطابقة للبحث' 
-                      : 'لا يوجد أسئلة في النظام'
+                      ? t('admin.questions.list.empty_search')
+                      : t('admin.questions.list.empty_system')
                     }
                   </p>
                 </div>
@@ -599,44 +600,44 @@ const handleSubmit = async (e) => {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="question-form-description">
             <DialogHeader>
               <DialogTitle>
-                {editingQuestion ? 'تعديل السؤال' : 'إضافة سؤال جديد'}
+                {editingQuestion ? t('admin.questions.edit_title') : t('admin.questions.add_new')}
               </DialogTitle>
               <DialogDescription id="question-form-description">
-                {editingQuestion ? 'قم بتعديل بيانات السؤال' : 'أدخل بيانات السؤال الجديد'}
+                {editingQuestion ? t('admin.questions.form.edit_desc') : t('admin.questions.form.new_desc')}
               </DialogDescription>
             </DialogHeader>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">نص السؤال</label>
+                <label className="block text-sm font-medium mb-1">{t('admin.questions.form.text')}</label>
                 <Input
                   name="text"
                   value={formData.text}
                   onChange={handleInputChange}
-                  placeholder="أدخل نص السؤال..."
+                  placeholder={t('admin.questions.form.text_ph')}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">نوع السؤال</label>
-                  <Select 
-                    value={formData.type} 
+                  <label className="block text-sm font-medium mb-1">{t('admin.questions.form.type')}</label>
+                  <Select
+                    value={formData.type}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, type: value, correctAnswer: '' }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر نوع السؤال" />
+                      <SelectValue placeholder={t('admin.questions.form.type_ph')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="multiple-choice">اختيار متعدد</SelectItem>
-                      
+                      <SelectItem value="multiple-choice">{t('admin.questions.types.mcq')}</SelectItem>
+
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">عدد النقاط</label>
+                  <label className="block text-sm font-medium mb-1">{t('admin.questions.form.points')}</label>
                   <Input
                     name="points"
                     type="number"
@@ -649,16 +650,16 @@ const handleSubmit = async (e) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">الامتحان (اختياري)</label>
-                <Select 
-                  value={formData.exam} 
+                <label className="block text-sm font-medium mb-1">{t('admin.questions.form.exam')}</label>
+                <Select
+                  value={formData.exam}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, exam: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر الامتحان" />
+                    <SelectValue placeholder={t('admin.questions.form.exam_ph')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-exam">لا يوجد</SelectItem>
+                    <SelectItem value="no-exam">{t('admin.questions.form.no_exam')}</SelectItem>
                     {(Array.isArray(exams) ? exams : []).map(exam => (
                       <SelectItem key={exam._id} value={exam._id}>
                         {exam.title}
@@ -670,7 +671,7 @@ const handleSubmit = async (e) => {
 
               {formData.type === 'multiple-choice' && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">خيارات الإجابة</label>
+                  <label className="block text-sm font-medium mb-1">{t('admin.questions.form.options')}</label>
                   <div className="space-y-2">
                     {formData.options.map((option, index) => (
                       <div key={index} className="flex items-center gap-2">
@@ -678,7 +679,7 @@ const handleSubmit = async (e) => {
                         <Input
                           value={option}
                           onChange={(e) => handleOptionChange(index, e.target.value)}
-                          placeholder={`الخيار ${index + 1}`}
+                          placeholder={t('admin.questions.form.option_ph', { num: index + 1 })}
                         />
                         <Button
                           type="button"
@@ -695,12 +696,12 @@ const handleSubmit = async (e) => {
                           size="sm"
                           onClick={() => setFormData(prev => ({ ...prev, correctAnswer: option }))}
                         >
-                          صحيح
+                          {t('admin.questions.list.correct')}
                         </Button>
                       </div>
                     ))}
                     <Button type="button" variant="outline" onClick={addOption}>
-                      إضافة خيار
+                      {t('admin.questions.form.add_option')}
                     </Button>
                   </div>
                 </div>
@@ -708,33 +709,33 @@ const handleSubmit = async (e) => {
 
               {formData.type === 'true-false' && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">الإجابة الصحيحة</label>
-                  <Select 
-                    value={formData.correctAnswer} 
+                  <label className="block text-sm font-medium mb-1">{t('admin.questions.form.correct')}</label>
+                  <Select
+                    value={formData.correctAnswer}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, correctAnswer: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="اختر الإجابة الصحيحة" />
+                      <SelectValue placeholder={t('admin.questions.form.correct_select')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="صحيح">صحيح</SelectItem>
-                      <SelectItem value="خطأ">خطأ</SelectItem>
+                      <SelectItem value={t('admin.questions.types.true')}>{t('admin.questions.types.true')}</SelectItem>
+                      <SelectItem value={t('admin.questions.types.false')}>{t('admin.questions.types.false')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-sm text-gray-500 mt-1">
-                    سيتم تعيين الخيارات تلقائياً إلى "صحيح" و "خطأ"
+                    {t('admin.questions.form.auto_tf')}
                   </p>
                 </div>
               )}
 
               {formData.type === 'short-answer' && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">الإجابة الصحيحة</label>
+                  <label className="block text-sm font-medium mb-1">{t('admin.questions.form.correct')}</label>
                   <Input
                     name="correctAnswer"
                     value={formData.correctAnswer}
                     onChange={handleInputChange}
-                    placeholder="أدخل الإجابة الصحيحة..."
+                    placeholder={t('admin.questions.form.correct_ph')}
                     required
                   />
                 </div>
@@ -742,11 +743,11 @@ const handleSubmit = async (e) => {
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                  إلغاء
+                  {t('admin.questions.form.cancel')}
                 </Button>
                 <Button type="submit">
                   <Save className="h-4 w-4 ml-2" />
-                  {editingQuestion ? 'تحديث' : 'إضافة'}
+                  {editingQuestion ? t('admin.questions.form.update') : t('admin.questions.form.save')}
                 </Button>
               </DialogFooter>
             </form>
@@ -757,17 +758,17 @@ const handleSubmit = async (e) => {
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>تأكيد الحذف</DialogTitle>
+              <DialogTitle>{t('admin.questions.form.confirm_delete')}</DialogTitle>
               <DialogDescription>
-                هل أنت متأكد من أنك تريد حذف هذا السؤال؟ هذا الإجراء لا يمكن التراجع عنه.
+                {t('admin.questions.form.data_loss_warning')}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-                إلغاء
+                {t('admin.questions.form.cancel')}
               </Button>
               <Button variant="destructive" onClick={handleDelete}>
-                حذف
+                {t('admin.questions.form.yes_delete')}
               </Button>
             </DialogFooter>
           </DialogContent>

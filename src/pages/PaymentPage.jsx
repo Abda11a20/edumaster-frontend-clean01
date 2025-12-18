@@ -9,11 +9,13 @@ import { useToast } from '@/hooks/use-toast'
 import { lessonsAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
+import { useTranslation } from '../hooks/useTranslation'
 
 const PaymentPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { t } = useTranslation()
   const [lesson, setLesson] = useState(null)
   const [paymentUrl, setPaymentUrl] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -24,19 +26,19 @@ const PaymentPage = () => {
     const initPayment = async () => {
       try {
         setIsLoading(true)
-        
+
         // الحصول على تفاصيل الدرس
         const lessonData = await lessonsAPI.getLessonById(id)
         setLesson(lessonData)
-        
+
         // محاكاة عملية الدفع (في الواقع سيكون لديك API حقيقي)
         simulatePaymentProcess()
-        
+
       } catch (error) {
         console.error('Error initializing payment:', error)
         toast({
-          title: 'خطأ في تحميل بيانات الدفع',
-          description: 'فشل في تحميل معلومات الدفع، يرجى المحاولة مرة أخرى',
+          title: t('lessons.messages.purchase_error'),
+          description: t('common.error'),
           variant: 'destructive'
         })
         navigate('/lessons')
@@ -63,8 +65,8 @@ const PaymentPage = () => {
       // في الوضع التجريبي، نمنح الوصول فوراً
       setPaymentStatus('success')
       toast({
-        title: 'تم الدفع بنجاح',
-        description: 'تم شراء الدرس بنجاح في الوضع التجريبي، يمكنك الآن الوصول إليه',
+        title: t('payment.status.success'),
+        description: t('payment.status.success_desc'),
         variant: 'default'
       })
 
@@ -77,8 +79,8 @@ const PaymentPage = () => {
       console.error('Payment error:', error)
       setPaymentStatus('failed')
       toast({
-        title: 'فشل في عملية الدفع',
-        description: 'حدث خطأ أثناء عملية الدفع، يرجى المحاولة مرة أخرى',
+        title: t('payment.status.failed'),
+        description: t('payment.status.failed_desc'),
         variant: 'destructive'
       })
     } finally {
@@ -93,8 +95,8 @@ const PaymentPage = () => {
     // في الوضع التجريبي، نمنح الوصول فوراً
     setPaymentStatus('success')
     toast({
-      title: 'تم الدفع بنجاح',
-      description: 'تم شراء الدرس بنجاح في الوضع التجريبي، يمكنك الآن الوصول إليه',
+      title: t('payment.status.success'),
+      description: t('payment.status.success_desc'),
       variant: 'default'
     })
 
@@ -118,7 +120,7 @@ const PaymentPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -132,14 +134,14 @@ const PaymentPage = () => {
             className="flex items-center mb-4"
           >
             <ArrowLeft className="h-4 w-4 ml-2" />
-            العودة للخلف
+            {t('payment.back')}
           </Button>
-          
+
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            اكمال عملية الشراء
+            {t('payment.title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            أكمل عملية الدفع للوصول إلى الدرس
+            {t('payment.subtitle')}
           </p>
         </motion.div>
 
@@ -153,9 +155,9 @@ const PaymentPage = () => {
           >
             <Card>
               <CardHeader>
-                <CardTitle>تفاصيل الطلب</CardTitle>
+                <CardTitle>{t('payment.order_details.title')}</CardTitle>
                 <CardDescription>
-                  مراجعة معلومات الطلب قبل اكمال عملية الدفع
+                  {t('payment.order_details.subtitle')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -170,36 +172,36 @@ const PaymentPage = () => {
                           {lesson.title}
                         </h3>
                         <p className="text-gray-600 dark:text-gray-300">
-                          {lesson.description || 'لا يوجد وصف'}
+                          {lesson.description || t('exams.detail.no_desc')}
                         </p>
                         <div className="flex items-center mt-2">
                           <Badge variant="secondary" className="ml-2">
                             {lesson.classLevel}
                           </Badge>
                           <Badge variant="outline" className="ml-2">
-                            {lesson.duration} دقيقة
+                            {lesson.duration} {t('common.minutes')}
                           </Badge>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {lesson.price} ج.م
+                          {lesson.price} {t('common.price_currency')}
                         </p>
                       </div>
                     </div>
 
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                       <div className="flex justify-between items-center py-2">
-                        <span className="text-gray-600 dark:text-gray-300">سعر الدرس</span>
-                        <span className="font-medium">{lesson.price} ج.م</span>
+                        <span className="text-gray-600 dark:text-gray-300">{t('payment.order_details.price')}</span>
+                        <span className="font-medium">{lesson.price} {t('common.price_currency')}</span>
                       </div>
                       <div className="flex justify-between items-center py-2">
-                        <span className="text-gray-600 dark:text-gray-300">الضريبة</span>
-                        <span className="font-medium">0 ج.م</span>
+                        <span className="text-gray-600 dark:text-gray-300">{t('payment.order_details.tax')}</span>
+                        <span className="font-medium">0 {t('common.price_currency')}</span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-t border-gray-200 dark:border-gray-700">
-                        <span className="text-lg font-bold text-gray-900 dark:text-white">المجموع</span>
-                        <span className="text-lg font-bold text-gray-900 dark:text-white">{lesson.price} ج.م</span>
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">{t('payment.order_details.total')}</span>
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">{lesson.price} {t('common.price_currency')}</span>
                       </div>
                     </div>
                   </div>
@@ -212,7 +214,7 @@ const PaymentPage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Shield className="h-5 w-5 ml-2 text-green-600" />
-                  الدفع الآمن
+                  {t('payment.secure.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -220,11 +222,10 @@ const PaymentPage = () => {
                   <Lock className="h-6 w-6 text-green-600 mt-1" />
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white">
-                      معاملات آمنة ومشفرة
+                      {t('payment.secure.subtitle')}
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                      نستخدم تقنيات تشفير متقدمة لحماية معلوماتك وضمان معاملات آمنة. 
-                      جميع البيانات محمية ومشفرة وفقًا لأعلى معايير الأمان.
+                      {t('payment.secure.desc')}
                     </p>
                   </div>
                 </div>
@@ -240,49 +241,49 @@ const PaymentPage = () => {
           >
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle>اكمال الشراء</CardTitle>
+                <CardTitle>{t('payment.checkout.title')}</CardTitle>
                 <CardDescription>
-                  اختر طريقة الدفع المناسبة
+                  {t('payment.checkout.subtitle')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {paymentStatus === 'pending' ? (
                   <div className="space-y-4">
                     <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <h4 className="font-medium mb-2">الدفع عبر البطاقة</h4>
+                      <h4 className="font-medium mb-2">{t('payment.checkout.card.title')}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                        الدفع الآمن عبر البطاقات الائتمانية أو المدنية
+                        {t('payment.checkout.card.desc')}
                       </p>
-                      <Button 
-                        className="w-full" 
+                      <Button
+                        className="w-full"
                         onClick={handlePayment}
                         disabled={isProcessing}
                       >
                         {isProcessing ? (
                           <>
                             <Loader className="h-4 w-4 ml-2 animate-spin" />
-                            جاري المعالجة...
+                            {t('payment.checkout.card.processing')}
                           </>
                         ) : (
                           <>
                             <CreditCard className="h-4 w-4 ml-2" />
-                            الدفع الآن
+                            {t('payment.checkout.card.button')}
                           </>
                         )}
                       </Button>
                     </div>
 
                     <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <h4 className="font-medium mb-2">الدفع عبر Paymob</h4>
+                      <h4 className="font-medium mb-2">{t('payment.checkout.paymob.title')}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                        سيتم توجيهك إلى صفحة الدفع الخارجية
+                        {t('payment.checkout.paymob.desc')}
                       </p>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full"
                         onClick={handleExternalPayment}
                       >
-                        الدفع عبر Paymob
+                        {t('payment.checkout.paymob.button')}
                       </Button>
                     </div>
                   </div>
@@ -292,16 +293,16 @@ const PaymentPage = () => {
                       <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
                     </div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      تم الدفع بنجاح!
+                      {t('payment.status.success')}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      تمت عملية الدفع بنجاح، سيتم توجيهك إلى صفحة الدرس shortly.
+                      {t('payment.status.success_desc')}
                     </p>
-                    <Button 
+                    <Button
                       className="w-full"
                       onClick={() => navigate(`/lessons/${id}`)}
                     >
-                      الانتقال إلى الدرس
+                      {t('payment.status.go_to_lesson')}
                     </Button>
                   </div>
                 ) : (
@@ -310,16 +311,16 @@ const PaymentPage = () => {
                       <Lock className="h-8 w-8 text-red-600 dark:text-red-400" />
                     </div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      فشل في عملية الدفع
+                      {t('payment.status.failed')}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      حدث خطأ أثناء عملية الدفع، يرجى المحاولة مرة أخرى.
+                      {t('payment.status.failed_desc')}
                     </p>
-                    <Button 
+                    <Button
                       className="w-full"
                       onClick={() => setPaymentStatus('pending')}
                     >
-                      المحاولة مرة أخرى
+                      {t('payment.status.retry')}
                     </Button>
                   </div>
                 )}

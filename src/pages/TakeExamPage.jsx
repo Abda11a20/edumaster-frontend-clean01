@@ -12,9 +12,11 @@ import { examsAPI, questionsAPI } from '../services/api'
 import { timeService } from '../services/timeService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
+import { useTranslation } from '../hooks/useTranslation'
 
 const TakeExamPage = () => {
   const { id } = useParams()
+  const { t } = useTranslation()
   const [exam, setExam] = useState(null)
   const [questions, setQuestions] = useState([])
   const [remainingTime, setRemainingTime] = useState(null)
@@ -28,7 +30,7 @@ const TakeExamPage = () => {
   const [isResumed, setIsResumed] = useState(false)
   const storageKey = `exam_answers_${id}`
 
-  // دالة لجلب تفاصيل الأسئلة
+  // Function to fetch question details
   const fetchQuestionsDetails = async (questionIdsOrObjects) => {
     try {
       if (!questionIdsOrObjects || questionIdsOrObjects.length === 0) {
@@ -49,7 +51,7 @@ const TakeExamPage = () => {
           if (Array.isArray(opts) && opts.length > 0) return opts
           // If backend denotes true/false via type
           const v = (rawType || '').toString().toLowerCase()
-          if (v === 'true-false' || v === 'truefalse') return ['صحيح', 'خطأ']
+          if (v === 'true-false' || v === 'truefalse') return [t('common.true'), t('common.false')]
           // Reasonable fallback
           return []
         }
@@ -101,7 +103,7 @@ const TakeExamPage = () => {
         // Fallback to individual fetching
       }
 
-      const questionsPromises = ids.map(qid => 
+      const questionsPromises = ids.map(qid =>
         questionsAPI.getQuestionById(qid).catch(error => {
           console.error(`Error fetching question ${qid}:`, error)
           return null
@@ -256,8 +258,8 @@ const TakeExamPage = () => {
       } catch (error) {
         console.error('Error initializing exam:', error)
         toast({
-          title: 'خطأ في تحميل الامتحان',
-          description: error.message || 'لا يمكن تحميل تفاصيل الامتحان الآن',
+          title: t('dashboard.error_load'),
+          description: error.message || t('exams.messages.fetch_error'),
           variant: 'destructive'
         })
         navigate(`/exams/${id}`)
@@ -326,8 +328,8 @@ const TakeExamPage = () => {
     if (isSubmitting) return
 
     toast({
-      title: 'انتهى وقت الامتحان',
-      description: 'جاري إرسال إجاباتك تلقائياً...',
+      title: t('exams.take.time_up'),
+      description: t('exams.take.time_up_desc'),
       variant: 'default'
     })
 
@@ -340,7 +342,7 @@ const TakeExamPage = () => {
         ...prev,
         [questionId]: answer
       }
-      try { localStorage.setItem(storageKey, JSON.stringify(updated)) } catch (_) {}
+      try { localStorage.setItem(storageKey, JSON.stringify(updated)) } catch (_) { }
       return updated
     })
   }
@@ -351,7 +353,7 @@ const TakeExamPage = () => {
         ...prev,
         [questionId]: answer
       }
-      try { localStorage.setItem(storageKey, JSON.stringify(updated)) } catch (_) {}
+      try { localStorage.setItem(storageKey, JSON.stringify(updated)) } catch (_) { }
       return updated
     })
   }
@@ -359,8 +361,8 @@ const TakeExamPage = () => {
   const handleSubmitExam = async (isAutoSubmit = false) => {
     if (timeExpired && !isAutoSubmit) {
       toast({
-        title: 'انتهى وقت الامتحان',
-        description: 'لا يمكن إرسال الإجابات بعد انتهاء الوقت',
+        title: t('exams.take.time_up'),
+        description: t('exams.take.time_up_desc'),
         variant: 'destructive'
       })
       return
@@ -369,12 +371,12 @@ const TakeExamPage = () => {
     const unansweredRequiredQuestions = questions.filter(question => {
       const answer = answers[question._id]
       return (question.type === 'multipleChoice' && (answer === null || answer === '')) ||
-             (question.type === 'essay' && (answer === null || answer === ''))
+        (question.type === 'essay' && (answer === null || answer === ''))
     })
 
     if (unansweredRequiredQuestions.length > 0 && !isAutoSubmit) {
       const confirmSubmit = window.confirm(
-        `لديك ${unansweredRequiredQuestions.length} أسئلة لم تتم الإجابة عليها. هل تريد بالتأكيد إنهاء الامتحان؟`
+        t('exams.take.confirm_submit', { count: unansweredRequiredQuestions.length })
       )
 
       if (!confirmSubmit) {
@@ -440,18 +442,18 @@ const TakeExamPage = () => {
       }
 
       // Clear saved answers on successful submit
-      try { localStorage.removeItem(storageKey) } catch (_) {}
+      try { localStorage.removeItem(storageKey) } catch (_) { }
 
       toast({
-        title: 'تم إرسال الامتحان',
-        description: 'تم تقديم إجاباتك بنجاح'
+        title: t('exams.take.success_submit'),
+        description: t('exams.take.success_desc')
       })
 
       navigate(`/exams/${id}/result`)
     } catch (error) {
       console.error('Error submitting exam:', error)
 
-      let errorMessage = 'فشل في إرسال الإجابات';
+      let errorMessage = t('common.error_occurred');
 
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -460,7 +462,7 @@ const TakeExamPage = () => {
       }
 
       toast({
-        title: 'خطأ في إرسال الامتحان',
+        title: t('common.error'),
         description: errorMessage,
         variant: 'destructive'
       });
@@ -494,10 +496,10 @@ const TakeExamPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              الامتحان غير موجود
+              {t('exams.detail.not_found')}
             </h1>
             <Button onClick={() => navigate('/exams')}>
-              العودة إلى الامتحانات
+              {t('exams.detail.back')}
             </Button>
           </div>
         </div>
@@ -526,7 +528,7 @@ const TakeExamPage = () => {
               {formatTime(remainingTime ?? 0)}
             </span>
             {timeExpired && (
-              <span className="text-sm text-red-500 mr-2">(انتهى الوقت)</span>
+              <span className="text-sm text-red-500 mr-2">({t('exams.take.time_up')})</span>
             )}
           </div>
         </div>
@@ -536,9 +538,9 @@ const TakeExamPage = () => {
             <div className="flex items-start">
               <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 ml-2" />
               <div>
-                <h4 className="font-medium text-blue-800 dark:text-blue-200">تم استئناف الامتحان</h4>
+                <h4 className="font-medium text-blue-800 dark:text-blue-200">{t('exams.take.resumed')}</h4>
                 <p className="text-blue-700 dark:text-blue-300 text-sm mt-1">
-                  تُتابع امتحانك حيث توقفت. تم استئناف المؤقت تلقائيًا.
+                  {t('exams.take.resumed_desc')}
                 </p>
               </div>
             </div>
@@ -549,10 +551,10 @@ const TakeExamPage = () => {
           <div className="flex items-start">
             <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 ml-2" />
             <div>
-              <h4 className="font-medium text-yellow-800 dark:text-yellow-200">تنبيه هام</h4>
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-200">{t('exams.take.warning')}</h4>
               <p className="text-yellow-700 dark:text-yellow-300 text-sm mt-1">
-                لا تقم بتحديث الصفحة أو الخروج منها أثناء الامتحان، فقد يؤدي ذلك إلى فقدان تقدمك.
-                {timeExpired && ' انتهى وقت الامتحان، سيتم إرسال إجاباتك تلقائياً.'}
+                {t('exams.take.warning_desc')}
+                {timeExpired && ` ${t('exams.take.time_up_desc')}`}
               </p>
             </div>
           </div>
@@ -570,9 +572,9 @@ const TakeExamPage = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">
-                      السؤال {index + 1}: {question.text || 'بدون نص'}
+                      {t('exams.take.question')} {index + 1}: {question.text || t('common.untitled')}
                       {question.type === 'essay' && (
-                        <span className="text-sm text-blue-500 mr-2"> (سؤال مقالي)</span>
+                        <span className="text-sm text-blue-500 mr-2"> ({t('exams.take.essay')})</span>
                       )}
                     </CardTitle>
                   </CardHeader>
@@ -585,8 +587,8 @@ const TakeExamPage = () => {
                       >
                         {question.options && question.options.map((option, optIndex) => (
                           <div key={optIndex} className="flex items-center space-x-2 space-x-reverse mb-2">
-                            <RadioGroupItem 
-                              value={option} 
+                            <RadioGroupItem
+                              value={option}
                               id={`${question._id}-${optIndex}`}
                               disabled={timeExpired}
                             />
@@ -598,7 +600,7 @@ const TakeExamPage = () => {
                       </RadioGroup>
                     ) : (
                       <Textarea
-                        placeholder="اكتب إجابتك هنا..."
+                        placeholder={t('exams.take.essay_placeholder')}
                         value={answers[question._id] ?? ''}
                         onChange={(e) => handleEssayAnswerChange(question._id, e.target.value)}
                         disabled={timeExpired}
@@ -611,7 +613,7 @@ const TakeExamPage = () => {
             ))
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500">لا توجد أسئلة متاحة لهذا الامتحان</p>
+              <p className="text-gray-500">{t('exams.take.no_questions')}</p>
             </div>
           )}
         </div>
@@ -627,12 +629,12 @@ const TakeExamPage = () => {
               {isSubmitting ? (
                 <>
                   <LoadingSpinner size="sm" className="ml-2" />
-                  جاري الإرسال...
+                  {t('exams.take.submitting')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-5 w-5 ml-2" />
-                  إنهاء الامتحان
+                  {t('exams.take.submit')}
                 </>
               )}
             </Button>
@@ -642,7 +644,7 @@ const TakeExamPage = () => {
         {questions.length > 0 && (
           <div className="fixed bottom-4 left-4 bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              {answeredQuestions} / {totalQuestions} أسئلة تمت الإجابة عليها
+              {t('exams.take.answered_count', { answered: answeredQuestions, total: totalQuestions })}
             </p>
           </div>
         )}

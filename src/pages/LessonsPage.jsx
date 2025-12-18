@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  Search, 
-  Filter, 
-  Play, 
-  Clock, 
-  Star, 
+import {
+  Search,
+  Filter,
+  Play,
+  Clock,
+  Star,
   BookOpen,
   Grid,
   List,
@@ -34,6 +34,7 @@ import SearchService from '../services/searchService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
 import YouTubeSecurePlayer from '../components/YouTubeSecurePlayer'
+import { useTranslation } from '../hooks/useTranslation'
 
 // دالة مساعدة لاستخراج YouTube ID
 const extractYouTubeId = (url) => {
@@ -55,6 +56,7 @@ const extractYouTubeId = (url) => {
 }
 
 const LessonsPage = () => {
+  const { t, lang } = useTranslation()
   const [lessons, setLessons] = useState([])
   const [filteredLessons, setFilteredLessons] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -66,7 +68,7 @@ const LessonsPage = () => {
   const [processingLessonId, setProcessingLessonId] = useState(null)
   const [purchasedLessons, setPurchasedLessons] = useState(new Set())
   const [activeTab, setActiveTab] = useState('all')
-  
+
   // حالة إدارة تشغيل الفيديو
   const [activeVideoId, setActiveVideoId] = useState(null)
 
@@ -80,10 +82,10 @@ const LessonsPage = () => {
   const { toast } = useToast()
 
   const classLevels = [
-    { value: 'all', label: 'جميع المراحل' },
-    { value: 'Grade 1 Secondary', label: 'الصف الأول الثانوي' },
-    { value: 'Grade 2 Secondary', label: 'الصف الثاني الثانوي' },
-    { value: 'Grade 3 Secondary', label: 'الصف الثالث الثانوي' }
+    { value: 'all', label: t('class_levels.all') },
+    { value: 'Grade 1 Secondary', label: t('class_levels.grade1') },
+    { value: 'Grade 2 Secondary', label: t('class_levels.grade2') },
+    { value: 'Grade 3 Secondary', label: t('class_levels.grade3') }
   ]
 
   // دالة إدارة تشغيل الفيديو
@@ -171,8 +173,8 @@ const LessonsPage = () => {
     } catch (error) {
       console.error('Error fetching lessons:', error)
       toast({
-        title: 'خطأ في تحميل الدروس',
-        description: error.message || 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى',
+        title: t('lessons.messages.fetch_error'),
+        description: error.message || t('auth.login.error_connection_desc'),
         variant: 'destructive'
       })
     } finally {
@@ -190,8 +192,8 @@ const LessonsPage = () => {
     } catch (error) {
       console.error('Error fetching purchased lessons:', error)
       toast({
-        title: 'خطأ في تحميل الدروس المشتراة',
-        description: 'تعذر تحميل قائمة الدروس المشتراة',
+        title: t('lessons.messages.fetch_purchased_error'),
+        description: t('common.error'),
         variant: 'destructive'
       })
     }
@@ -265,9 +267,11 @@ const LessonsPage = () => {
     try {
       setProcessingLessonId(lessonId)
 
+      setProcessingLessonId(lessonId)
+
       toast({
-        title: 'جاري توجيهك إلى صفحة الدفع',
-        description: 'سيتم فتح صفحة الدفع في نافذة جديدة',
+        title: t('lessons.messages.purchase_redirect'),
+        description: t('lessons.card.payment_redirect'),
       })
 
       const response = await lessonsAPI.payForLesson(lessonId)
@@ -285,11 +289,11 @@ const LessonsPage = () => {
             ids.push(lessonId)
             localStorage.setItem('purchasedLessonIds', JSON.stringify(ids))
           }
-        } catch (e) {}
+        } catch (e) { }
 
         toast({
-          title: 'تم منح الوصول للدرس!',
-          description: `تم شراء الدرس "${lessonTitle}" بنجاح في الوضع التجريبي`,
+          title: t('lessons.messages.purchase_success'),
+          description: t('lessons.messages.purchase_success_desc', { title: lessonTitle }),
           variant: 'default',
           duration: 5000
         })
@@ -302,13 +306,13 @@ const LessonsPage = () => {
         }, 1000)
 
       } else {
-        throw new Error('فشل في الحصول على رابط الدفع')
+        throw new Error(t('common.error'))
       }
     } catch (error) {
       console.error('Purchase error:', error)
       toast({
-        title: 'خطأ في عملية الشراء',
-        description: error.message || 'حدث خطأ أثناء توجيهك إلى صفحة الدفع',
+        title: t('lessons.messages.purchase_error'),
+        description: error.message || t('common.error'),
         variant: 'destructive'
       })
     } finally {
@@ -328,7 +332,7 @@ const LessonsPage = () => {
     const isPurchased = purchasedLessons.has(lesson._id)
     const isProcessing = processingLessonId === lesson._id
     const isVideoPlaying = activeVideoId === lesson._id
-    
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -354,19 +358,19 @@ const LessonsPage = () => {
                 {isPurchased && (
                   <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs px-2 py-0 h-5">
                     <Check className="h-2.5 w-2.5 ml-0.5" />
-                    مشترى
+                    {t('lessons.card.purchased')}
                   </Badge>
                 )}
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent className="flex-1 flex flex-col">
             <div className="space-y-3 sm:space-y-4 flex-1">
               {lesson.video && (
                 <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-video border-2 border-gray-200 dark:border-gray-700">
                   {isPurchased ? (
-                    <YouTubeSecurePlayer 
+                    <YouTubeSecurePlayer
                       videoId={extractYouTubeId(lesson.video)}
                       title={lesson.title}
                       isPlaying={isVideoPlaying}
@@ -382,12 +386,12 @@ const LessonsPage = () => {
                       </div>
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                         <div className="bg-black/70 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm text-center">
-                          اضغط لشراء الدرس للمشاهدة
+                          {t('lessons.card.buy_to_watch')}
                         </div>
                       </div>
                       <div className="absolute bottom-2 right-2 bg-black/70 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs">
                         <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 inline mr-0.5 sm:mr-1" />
-                        45 دقيقة
+                        45 {t('common.minutes')}
                       </div>
                     </>
                   )}
@@ -402,14 +406,14 @@ const LessonsPage = () => {
                   </div>
                   <div className="flex items-center">
                     <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">120 طالب</span>
+                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">120 {t('common.students')}</span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center">
                   <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
                   <span className="text-base sm:text-lg font-bold text-green-600">{lesson.price}</span>
-                  <span className="text-xs sm:text-sm text-gray-500 mr-0.5 sm:mr-1">ج.م</span>
+                  <span className="text-xs sm:text-sm text-gray-500 mr-0.5 sm:mr-1">{t('common.price_currency')}</span>
                 </div>
               </div>
 
@@ -417,19 +421,19 @@ const LessonsPage = () => {
                 <Link to={`/lessons/${lesson._id}`} className="flex-1">
                   <Button variant="outline" className="w-full text-xs sm:text-sm h-8 sm:h-10">
                     <Eye className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
-                    <span className="hidden xs:inline">عرض التفاصيل</span>
-                    <span className="xs:hidden">التفاصيل</span>
+                    <span className="hidden xs:inline">{t('lessons.card.details')}</span>
+                    <span className="xs:hidden">{t('common.details')}</span>
                   </Button>
                 </Link>
-                
+
                 {isPurchased ? (
                   <Button className="flex-1 text-xs sm:text-sm h-8 sm:h-10" variant="outline" disabled>
                     <Check className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
-                    <span className="hidden xs:inline">تم الشراء</span>
-                    <span className="xs:hidden">مشترى</span>
+                    <span className="hidden xs:inline">{t('lessons.card.purchased')}</span>
+                    <span className="xs:hidden">{t('common.purchased')}</span>
                   </Button>
                 ) : (
-                  <Button 
+                  <Button
                     onClick={() => handlePurchaseLesson(lesson._id, lesson.title)}
                     className="flex-1 text-xs sm:text-sm h-8 sm:h-10"
                     disabled={isProcessing}
@@ -437,23 +441,23 @@ const LessonsPage = () => {
                     {isProcessing ? (
                       <>
                         <Loader className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 animate-spin" />
-                        <span>جاري...</span>
+                        <span>{t('lessons.card.processing')}</span>
                       </>
                     ) : (
                       <>
                         <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
-                        <span className="hidden xs:inline">شراء الدرس</span>
-                        <span className="xs:hidden">شراء</span>
+                        <span className="hidden xs:inline">{t('lessons.card.buy')}</span>
+                        <span className="xs:hidden">{t('common.buy')}</span>
                       </>
                     )}
                   </Button>
                 )}
               </div>
-              
+
               {isProcessing && (
                 <div className="text-center text-xs sm:text-sm text-blue-600 dark:text-blue-400">
                   <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 inline ml-0.5 sm:ml-1" />
-                  سيتم فتح صفحة الدفع في نافذة جديدة
+                  {t('lessons.card.payment_redirect')}
                 </div>
               )}
             </div>
@@ -467,7 +471,7 @@ const LessonsPage = () => {
     const isPurchased = purchasedLessons.has(lesson._id)
     const isProcessing = processingLessonId === lesson._id
     const isVideoPlaying = activeVideoId === lesson._id
-    
+
     return (
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -481,7 +485,7 @@ const LessonsPage = () => {
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
                   {isPurchased ? (
                     <div className="w-full h-full">
-                      <YouTubeSecurePlayer 
+                      <YouTubeSecurePlayer
                         videoId={extractYouTubeId(lesson.video)}
                         title={lesson.title}
                         isPlaying={isVideoPlaying}
@@ -493,14 +497,14 @@ const LessonsPage = () => {
                     <Play className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
                   )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold truncate">{lesson.title}</h3>
                     {isPurchased && (
                       <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs px-2 py-0 h-5">
                         <Check className="h-2.5 w-2.5 ml-0.5" />
-                        مشترى
+                        {t('lessons.card.purchased')}
                       </Badge>
                     )}
                   </div>
@@ -515,7 +519,7 @@ const LessonsPage = () => {
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">45 دقيقة</span>
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">45 {t('common.minutes')}</span>
                     </div>
                   </div>
                 </div>
@@ -526,26 +530,26 @@ const LessonsPage = () => {
                   <div className="flex items-center justify-end">
                     <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
                     <span className="text-lg sm:text-xl font-bold text-green-600">{lesson.price}</span>
-                    <span className="text-xs sm:text-sm text-gray-500 mr-0.5 sm:mr-1">ج.م</span>
+                    <span className="text-xs sm:text-sm text-gray-500 mr-0.5 sm:mr-1">{t('common.price_currency')}</span>
                   </div>
                 </div>
-                
+
                 <div className="flex space-x-1 sm:space-x-2">
                   <Link to={`/lessons/${lesson._id}`}>
                     <Button variant="outline" size="sm" className="h-8 text-xs sm:text-sm">
                       <Eye className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" />
-                      <span className="hidden sm:inline">التفاصيل</span>
-                      <span className="sm:hidden">عرض</span>
+                      <span className="hidden sm:inline">{t('common.details')}</span>
+                      <span className="sm:hidden">{t('common.view')}</span>
                     </Button>
                   </Link>
-                  
+
                   {isPurchased ? (
                     <Button size="sm" variant="outline" disabled className="h-8 text-xs sm:text-sm">
                       <Check className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">تم الشراء</span>
+                      <span className="hidden sm:inline">{t('lessons.card.purchased')}</span>
                     </Button>
                   ) : (
-                    <Button 
+                    <Button
                       size="sm"
                       onClick={() => handlePurchaseLesson(lesson._id, lesson.title)}
                       disabled={isProcessing}
@@ -556,8 +560,8 @@ const LessonsPage = () => {
                       ) : (
                         <>
                           <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" />
-                          <span className="hidden sm:inline">شراء</span>
-                          <span className="sm:hidden">شراء</span>
+                          <span className="hidden sm:inline">{t('common.buy')}</span>
+                          <span className="sm:hidden">{t('common.buy')}</span>
                         </>
                       )}
                     </Button>
@@ -565,11 +569,11 @@ const LessonsPage = () => {
                 </div>
               </div>
             </div>
-            
+
             {isProcessing && (
               <div className="mt-2 text-center text-xs sm:text-sm text-blue-600 dark:text-blue-400">
                 <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 inline ml-0.5 sm:ml-1" />
-                سيتم فتح صفحة الدفع في نافذة جديدة
+                {t('lessons.card.payment_redirect')}
               </div>
             )}
           </CardContent>
@@ -592,7 +596,7 @@ const LessonsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -601,10 +605,10 @@ const LessonsPage = () => {
           className="mb-4 sm:mb-6"
         >
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
-            الدروس التعليمية
+            {t('lessons.title')}
           </h1>
           <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-300">
-            اكتشف مجموعة واسعة من الدروس التفاعلية المصممة لمساعدتك في تحقيق أهدافك الأكاديمية
+            {t('lessons.subtitle')}
           </p>
         </motion.div>
 
@@ -619,11 +623,11 @@ const LessonsPage = () => {
             <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-4">
               <TabsTrigger value="all" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                 <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
-                جميع الدروس
+                {t('lessons.tabs.all')}
               </TabsTrigger>
               <TabsTrigger value="purchased" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                 <Check className="h-3 w-3 sm:h-4 sm:w-4" />
-                الدروس المشتراة
+                {t('lessons.tabs.purchased')}
                 {purchasedLessons.size > 0 && (
                   <Badge variant="secondary" className="h-4 sm:h-5 px-1 text-xs mr-1 sm:mr-2">
                     {purchasedLessons.size}
@@ -649,7 +653,7 @@ const LessonsPage = () => {
                   <div className="relative">
                     <Search className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                     <Input
-                      placeholder="البحث في الدروس..."
+                      placeholder={t('lessons.search_placeholder')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pr-8 sm:pr-10 pl-3 text-xs sm:text-sm"
@@ -663,7 +667,7 @@ const LessonsPage = () => {
                   <div className="col-span-2 md:w-40 lg:w-48">
                     <Select value={selectedClassLevel} onValueChange={setSelectedClassLevel}>
                       <SelectTrigger className="w-full text-xs sm:text-sm">
-                        <SelectValue placeholder="المرحلة الدراسية" />
+                        <SelectValue placeholder={t('lessons.filters.class_level')} />
                       </SelectTrigger>
                       <SelectContent>
                         {classLevels.map((level) => (
@@ -679,12 +683,12 @@ const LessonsPage = () => {
                   <div className="col-span-1 md:w-32">
                     <Select value={sortBy} onValueChange={setSortBy}>
                       <SelectTrigger className="w-full text-xs sm:text-sm">
-                        <SelectValue placeholder="ترتيب حسب" />
+                        <SelectValue placeholder={t('lessons.filters.sort_by')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="title" className="text-xs sm:text-sm">العنوان</SelectItem>
-                        <SelectItem value="price" className="text-xs sm:text-sm">السعر</SelectItem>
-                        <SelectItem value="classLevel" className="text-xs sm:text-sm">المرحلة</SelectItem>
+                        <SelectItem value="title" className="text-xs sm:text-sm">{t('lessons.filters.sort_title')}</SelectItem>
+                        <SelectItem value="price" className="text-xs sm:text-sm">{t('lessons.filters.sort_price')}</SelectItem>
+                        <SelectItem value="classLevel" className="text-xs sm:text-sm">{t('lessons.filters.sort_level')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -703,7 +707,7 @@ const LessonsPage = () => {
                         <SortDesc className="h-3 w-3 sm:h-4 sm:w-4" />
                       )}
                       <span className="mr-1 sm:mr-2">
-                        {sortOrder === 'asc' ? 'تصاعدي' : 'تنازلي'}
+                        {sortOrder === 'asc' ? t('lessons.filters.sort_asc') : t('lessons.filters.sort_desc')}
                       </span>
                     </Button>
                   </div>
@@ -718,7 +722,7 @@ const LessonsPage = () => {
                         className="rounded-l-none rounded-r-none flex-1 sm:flex-none text-xs sm:text-sm"
                       >
                         <Grid className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span className="mr-1 sm:mr-2 hidden sm:inline">شبكة</span>
+                        <span className="mr-1 sm:mr-2 hidden sm:inline">{t('lessons.filters.view_grid')}</span>
                       </Button>
                       <Button
                         variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -727,7 +731,7 @@ const LessonsPage = () => {
                         className="rounded-r-none rounded-l-none flex-1 sm:flex-none text-xs sm:text-sm"
                       >
                         <List className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span className="mr-1 sm:mr-2 hidden sm:inline">قائمة</span>
+                        <span className="mr-1 sm:mr-2 hidden sm:inline">{t('lessons.filters.view_list')}</span>
                       </Button>
                     </div>
                   </div>
@@ -741,7 +745,7 @@ const LessonsPage = () => {
                       className="w-full md:w-auto text-xs sm:text-sm h-9 sm:h-10"
                     >
                       <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
-                      إعادة تعيين
+                      {t('lessons.filters.reset')}
                     </Button>
                   </div>
                 </div>
@@ -759,18 +763,18 @@ const LessonsPage = () => {
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-              عرض {filteredLessons.length} من {total || lessons.length} درس
-              {activeTab === 'purchased' && ` (${purchasedLessons.size} مشترى)`}
+              {t('lessons.count_info', { count: filteredLessons.length, total: total || lessons.length })}
+              {activeTab === 'purchased' && ` (${purchasedLessons.size} ${t('common.purchased')})`}
             </p>
-            
+
             {activeTab === 'purchased' && purchasedLessons.size === 0 && (
-              <Button 
+              <Button
                 onClick={() => setActiveTab('all')}
                 variant="outline"
                 size="sm"
                 className="text-xs sm:text-sm h-8"
               >
-                تصفح جميع الدروس
+                {t('lessons.browse_all')}
               </Button>
             )}
           </div>
@@ -802,7 +806,7 @@ const LessonsPage = () => {
                   </Button>
                 ) : (
                   page < totalPages && (
-                    <Button 
+                    <Button
                       onClick={loadMore}
                       className="text-xs sm:text-sm"
                     >
@@ -826,13 +830,13 @@ const LessonsPage = () => {
               {activeTab === 'purchased' ? 'لا توجد دروس مشتراة' : 'لا توجد دروس متاحة'}
             </h3>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 max-w-md mx-auto">
-              {activeTab === 'purchased' 
+              {activeTab === 'purchased'
                 ? 'لم تشتري أي دروس بعد. ابدأ بتصفح الدروس المتاحة وشراء ما تحتاجه.'
                 : 'جرب تغيير معايير البحث أو الفلترة'
               }
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Button 
+              <Button
                 onClick={resetFilters}
                 size="sm"
                 className="text-xs sm:text-sm"
@@ -840,8 +844,8 @@ const LessonsPage = () => {
                 إعادة تعيين الفلاتر
               </Button>
               {activeTab === 'purchased' && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setActiveTab('all')}
                   size="sm"
                   className="text-xs sm:text-sm"

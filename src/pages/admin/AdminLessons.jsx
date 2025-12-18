@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 import { lessonsAPI } from '../../services/api'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Navbar from '../../components/Navbar'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const AdminLessons = () => {
   const [lessons, setLessons] = useState([])
@@ -28,11 +29,12 @@ const AdminLessons = () => {
     scheduledDate: ''
   })
   const { toast } = useToast()
+  const { t, lang } = useTranslation()
 
   const classLevels = [
-    { value: 'Grade 1 Secondary', label: 'الصف الأول الثانوي' },
-    { value: 'Grade 2 Secondary', label: 'الصف الثاني الثانوي' },
-    { value: 'Grade 3 Secondary', label: 'الصف الثالث الثانوي' }
+    { value: 'Grade 1 Secondary', label: t('class_levels.grade1') },
+    { value: 'Grade 2 Secondary', label: t('class_levels.grade2') },
+    { value: 'Grade 3 Secondary', label: t('class_levels.grade3') }
   ]
 
   // pagination states
@@ -117,8 +119,8 @@ const AdminLessons = () => {
     } catch (error) {
       console.error('Error fetching lessons:', error)
       toast({
-        title: 'خطأ في تحميل الدروس',
-        description: error.message || 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى',
+        title: t('admin.lessons.messages.error_load'),
+        description: error.message || t('admin.admins.error_load_desc'),
         variant: 'destructive'
       })
     } finally {
@@ -137,8 +139,8 @@ const AdminLessons = () => {
     try {
       if (!formData.title || !formData.description || !formData.classLevel) {
         toast({
-          title: 'خطأ',
-          description: 'يرجى ملء جميع الحقول المطلوبة',
+          title: t('admin.lessons.messages.error'),
+          description: t('admin.lessons.messages.fill_required'),
           variant: 'destructive'
         })
         return
@@ -157,15 +159,15 @@ const AdminLessons = () => {
       if (editingLesson) {
         await lessonsAPI.updateLesson(editingLesson._id, lessonData)
         toast({
-          title: 'تم التحديث',
-          description: 'تم تحديث الدرس بنجاح'
+          title: t('admin.lessons.messages.update_success'),
+          description: t('admin.lessons.messages.update_success_desc')
         })
       } else {
-           lessonData.scheduledDate = formData.scheduledDate || new Date().toISOString().split('T')[0]
+        lessonData.scheduledDate = formData.scheduledDate || new Date().toISOString().split('T')[0]
         await lessonsAPI.createLesson(lessonData)
         toast({
-          title: 'تم الإضافة',
-          description: 'تم إضافة الدرس بنجاح'
+          title: t('admin.lessons.messages.add_success'),
+          description: t('admin.lessons.messages.add_success_desc')
         })
       }
       setIsDialogOpen(false)
@@ -182,8 +184,8 @@ const AdminLessons = () => {
     } catch (error) {
       console.error('Error saving lesson:', error)
       toast({
-        title: 'خطأ',
-        description: error.message || 'فشل في حفظ الدرس',
+        title: t('admin.lessons.messages.error'),
+        description: error.message || t('admin.lessons.messages.error_save'),
         variant: 'destructive'
       })
     }
@@ -203,19 +205,19 @@ const AdminLessons = () => {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('هل أنت متأكد من حذف هذا الدرس؟')) return
-    
+    if (!confirm(t('admin.lessons.messages.delete_confirm'))) return
+
     try {
       await lessonsAPI.deleteLesson(id)
       toast({
-        title: 'تم الحذف',
-        description: 'تم حذف الدرس بنجاح'
+        title: t('admin.lessons.messages.delete_success'),
+        description: t('admin.lessons.messages.delete_success_desc')
       })
       fetchLessonsPage(1, false)
     } catch (error) {
       toast({
-        title: 'خطأ',
-        description: error.message || 'فشل في حذف الدرس',
+        title: t('admin.lessons.messages.error'),
+        description: error.message || t('admin.lessons.messages.error_delete'),
         variant: 'destructive'
       })
     }
@@ -245,15 +247,15 @@ const AdminLessons = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                إدارة الدروس
+                {t('admin.lessons.title')}
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                إضافة وتعديل وحذف الدروس التعليمية
+                {t('admin.lessons.subtitle')}
               </p>
             </div>
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 ml-2" />
-              إضافة درس جديد
+              {t('admin.lessons.add_new')}
             </Button>
           </div>
         </motion.div>
@@ -262,15 +264,15 @@ const AdminLessons = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle>قائمة الدروس</CardTitle>
+                <CardTitle>{t('admin.lessons.list.title')}</CardTitle>
                 <CardDescription>
-                  عرض {filteredLessons.length} من {total || lessons.length} درس
+                  {t('admin.lessons.list.desc', { shown: filteredLessons.length, total: total || lessons.length })}
                 </CardDescription>
               </div>
               <div className="relative">
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="بحث..."
+                  placeholder={t('admin.lessons.search_placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -279,49 +281,51 @@ const AdminLessons = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>العنوان</TableHead>
-                  <TableHead>المستوى</TableHead>
-                  <TableHead>السعر</TableHead>
-                  <TableHead>الموعد المحدد</TableHead>
-                  <TableHead>الوصف</TableHead>
-                  <TableHead>الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLessons.length > 0 ? (
-                  filteredLessons.map((lesson) => (
-                    <TableRow key={lesson._id}>
-                      <TableCell className="font-medium">{lesson.title}</TableCell>
-                      <TableCell>{lesson.classLevel}</TableCell>
-                      <TableCell>{lesson.price} جنيه</TableCell>
-                      <TableCell>
-                        {lesson.scheduledDate ? new Date(lesson.scheduledDate).toLocaleDateString('ar-EG') : 'غير محدد'}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">{lesson.description}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(lesson)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDelete(lesson._id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.lessons.table.title')}</TableHead>
+                    <TableHead>{t('admin.lessons.table.level')}</TableHead>
+                    <TableHead>{t('admin.lessons.table.price')}</TableHead>
+                    <TableHead>{t('admin.lessons.table.date')}</TableHead>
+                    <TableHead>{t('admin.lessons.table.desc')}</TableHead>
+                    <TableHead>{t('admin.lessons.table.actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLessons.length > 0 ? (
+                    filteredLessons.map((lesson) => (
+                      <TableRow key={lesson._id}>
+                        <TableCell className="font-medium">{lesson.title}</TableCell>
+                        <TableCell>{lesson.classLevel}</TableCell>
+                        <TableCell>{lesson.price} {t('common.price_currency')}</TableCell>
+                        <TableCell>
+                          {lesson.scheduledDate ? new Date(lesson.scheduledDate).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB') : t('admin.users.details.not_available')}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate">{lesson.description}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEdit(lesson)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => handleDelete(lesson._id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        {t('admin.lessons.list.empty')}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
-                      لا توجد دروس متاحة
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
 
             <div className="mt-6 flex justify-center items-center space-x-3">
               {isLoadingMore ? (
@@ -331,7 +335,7 @@ const AdminLessons = () => {
               ) : (
                 page < totalPages && (
                   <Button onClick={loadMore}>
-                    تحميل المزيد
+                    {t('common.more')}
                   </Button>
                 )
               )}
@@ -343,12 +347,12 @@ const AdminLessons = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <Card className="w-full max-w-md">
               <CardHeader>
-                <CardTitle>{editingLesson ? 'تعديل الدرس' : 'إضافة درس جديد'}</CardTitle>
+                <CardTitle>{editingLesson ? t('admin.lessons.edit_title') : t('admin.lessons.add_new')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">عنوان الدرس *</Label>
+                    <Label htmlFor="title">{t('admin.lessons.form.title')}</Label>
                     <Input
                       id="title"
                       value={formData.title}
@@ -357,7 +361,7 @@ const AdminLessons = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">الوصف *</Label>
+                    <Label htmlFor="description">{t('admin.lessons.form.desc')}</Label>
                     <Input
                       id="description"
                       value={formData.description}
@@ -366,7 +370,7 @@ const AdminLessons = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="video">رابط الفيديو</Label>
+                    <Label htmlFor="video">{t('admin.lessons.form.video')}</Label>
                     <Input
                       id="video"
                       type="url"
@@ -376,13 +380,13 @@ const AdminLessons = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="classLevel">المستوى الدراسي *</Label>
+                    <Label htmlFor="classLevel">{t('admin.lessons.form.level')}</Label>
                     <Select
                       value={formData.classLevel}
                       onValueChange={(value) => setFormData({ ...formData, classLevel: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر المستوى الدراسي" />
+                        <SelectValue placeholder={t('admin.lessons.filter.level_placeholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {classLevels.map((level) => (
@@ -394,7 +398,7 @@ const AdminLessons = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="price">السعر (جنيه)</Label>
+                    <Label htmlFor="price">{t('admin.lessons.form.price')}</Label>
                     <Input
                       id="price"
                       type="number"
@@ -403,7 +407,7 @@ const AdminLessons = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="scheduledDate">الموعد المحدد</Label>
+                    <Label htmlFor="scheduledDate">{t('admin.lessons.form.date')}</Label>
                     <div className="relative">
                       <Calendar className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
@@ -417,13 +421,13 @@ const AdminLessons = () => {
                   </div>
                   <div className="flex space-x-2 pt-4">
                     <Button type="submit">
-                      {editingLesson ? 'تحديث' : 'إضافة'}
+                      {editingLesson ? t('admin.lessons.form.update') : t('admin.lessons.form.save')}
                     </Button>
                     <Button variant="outline" onClick={() => {
                       setIsDialogOpen(false)
                       setEditingLesson(null)
                     }}>
-                      إلغاء
+                      {t('admin.lessons.form.cancel')}
                     </Button>
                   </div>
                 </form>
