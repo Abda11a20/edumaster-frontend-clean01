@@ -262,128 +262,12 @@ const Navbar = () => {
           </div>
 
           {/* Search Bar */}
-          <div className="hidden md:block flex-1 max-w-md mx-8">
+          <div className="hidden md:block flex-1 max-w-sm mx-4">
             <SearchBar />
           </div>
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguage}
-              className="font-bold text-sm"
-            >
-              {lang === 'ar' ? 'EN' : 'AR'}
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="p-2 relative overflow-hidden group"
-              aria-label={theme === 'light' ? t('common.theme.toggle_dark') : t('common.theme.toggle_light')}
-            >
-              <ThemeToggleIcon theme={theme} />
-
-              {/* تأثير إضافي عند التمرير */}
-              <motion.div
-                initial={false}
-                animate={{
-                  scale: theme === 'light' ? 0 : 1,
-                  opacity: theme === 'light' ? 0 : 0.1,
-                }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full"
-              />
-
-              {/* تأثير هالة عند التمرير فوق الزر */}
-              <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                whileHover={{ scale: 1.5, opacity: 0.1 }}
-                className="absolute inset-0 bg-current rounded-full"
-              />
-
-              {/* تلميح توضيحي */}
-              <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                {theme === 'light' ? t('common.theme.toggle_dark') : t('common.theme.toggle_light')}
-              </div>
-            </Button>
-
-            {/* Notifications */}
-            <div className="relative" ref={notificationsRef}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-2 relative"
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </Badge>
-                )}
-              </Button>
-
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
-                  <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h3 className="font-semibold">{t('common.notifications')}</h3>
-                    {unreadCount > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleMarkAllAsRead}
-                      >
-                        {t('common.mark_all_read')}
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                        {t('common.no_notifications')}
-                      </div>
-                    ) : (
-                      notifications.map(notification => (
-                        <div
-                          key={notification.id}
-                          className={`p-3 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                            }`}
-                          onClick={() => handleNotificationClick(notification.id)}
-                        >
-                          <div className="flex items-start">
-                            <div className="flex-shrink-0 mt-1">
-                              {getNotificationIcon(notification.type)}
-                            </div>
-                            <div className="ml-3 flex-1">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                {notification.title}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
-                                {notification.message}
-                              </p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                {new Date(notification.timestamp).toLocaleString('ar-EG')}
-                              </p>
-                            </div>
-                            {!notification.read && (
-                              <div className="flex-shrink-0">
-                                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* User Menu */}
             <DropdownMenu>
