@@ -3,3 +3,5 @@
 fix-*.js
 replace_*.py
 NOTIFICATION_SYSTEM_GUIDE.md
+node_modules/
+dist/
