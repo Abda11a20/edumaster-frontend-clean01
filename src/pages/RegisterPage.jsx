@@ -44,9 +44,9 @@ const RegisterPage = () => {
   }, [isAuthenticated, navigate])
 
   const classLevels = [
-    t('class_levels.grade1'),
-    t('class_levels.grade2'),
-    t('class_levels.grade3')
+    { value: 'Grade 1 Secondary', label: t('class_levels.grade1') },
+    { value: 'Grade 2 Secondary', label: t('class_levels.grade2') },
+    { value: 'Grade 3 Secondary', label: t('class_levels.grade3') }
   ]
 
   const handleChange = (e) => {
@@ -294,8 +294,8 @@ const RegisterPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {classLevels.map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {level}
+                        <SelectItem key={level.value} value={level.value}>
+                          {level.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
