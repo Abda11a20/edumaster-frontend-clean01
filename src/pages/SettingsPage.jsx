@@ -17,7 +17,7 @@ import {
     ListTodo
 } from 'lucide-react'
 import { DayPicker } from 'react-day-picker'
-import { format, isToday, parseISO, compareAsc, isPast } from 'date-fns'
+import { format, isToday, isTomorrow, parseISO, compareAsc, isPast } from 'date-fns'
 import { ar } from 'date-fns/locale'
 import { useTranslation } from '../hooks/useTranslation'
 import { useTheme } from '../contexts/ThemeContext'
@@ -79,13 +79,36 @@ const SettingsPage = () => {
         setTodos(todos.filter(todo => todo.id !== id))
     }
 
-    // Sort todos: Incomplete first (by date), then Completed (by date)
-    const sortedTodos = [...todos].sort((a, b) => {
-        // First by completion status
-        if (a.completed !== b.completed) return a.completed ? 1 : -1
+    // Grouping Logic
+    const groupedTodos = {
+        overdue: [],
+        today: [],
+        tomorrow: [],
+        upcoming: [],
+        completed: []
+    }
 
-        // Then by date
-        return compareAsc(parseISO(a.date), parseISO(b.date))
+    todos.forEach(todo => {
+        if (todo.completed) {
+            groupedTodos.completed.push(todo)
+            return
+        }
+
+        const date = parseISO(todo.date)
+        if (isPast(date) && !isToday(date)) {
+            groupedTodos.overdue.push(todo)
+        } else if (isToday(date)) {
+            groupedTodos.today.push(todo)
+        } else if (isTomorrow(date)) {
+            groupedTodos.tomorrow.push(todo)
+        } else {
+            groupedTodos.upcoming.push(todo)
+        }
+    })
+
+    // Sort each group by date
+    Object.keys(groupedTodos).forEach(key => {
+        groupedTodos[key].sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)))
     })
 
     // Animation variants
@@ -101,6 +124,84 @@ const SettingsPage = () => {
     const itemVariants = {
         hidden: { opacity: 0, x: -20 },
         visible: { opacity: 1, x: 0 }
+    }
+
+    const renderTodoGroup = (title, items, colorClass, icon) => {
+        if (items.length === 0) return null
+        return (
+            <div className="mb-6 last:mb-0">
+                <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 flex items-center gap-2 ${colorClass}`}>
+                    {icon}
+                    {title} <span className="text-xs opacity-70 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{items.length}</span>
+                </h3>
+                <div className="space-y-3">
+                    {items.map(todo => {
+                        const isDone = todo.completed
+                        const isOverdue = !isDone && isPast(parseISO(todo.date)) && !isToday(parseISO(todo.date))
+
+                        return (
+                            <motion.div
+                                layout
+                                key={todo.id}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className={`
+                                    group flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200
+                                    ${isDone
+                                        ? 'bg-gray-50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800/50 opacity-60'
+                                        : isOverdue
+                                            ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20 hover:shadow-md'
+                                            : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-emerald-200 dark:hover:border-emerald-900 hover:shadow-md'
+                                    }
+                                `}
+                            >
+                                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                                    <button
+                                        onClick={() => toggleTodo(todo.id)}
+                                        className={`
+                                            flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200
+                                            ${isDone
+                                                ? 'bg-emerald-500 border-emerald-500 text-white scale-100'
+                                                : 'border-gray-300 dark:border-gray-500 hover:border-emerald-500 active:scale-95'
+                                            }
+                                        `}
+                                    >
+                                        <Check className={`w-3.5 h-3.5 transition-transform ${isDone ? 'scale-100' : 'scale-0'}`} />
+                                    </button>
+
+                                    <div className="flex flex-col min-w-0 gap-0.5">
+                                        <span className={`text-sm font-medium truncate transition-colors ${isDone ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-white'}`}>
+                                            {todo.text}
+                                        </span>
+                                        <div className={`flex items-center gap-2 text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                                            <span className={`flex items-center gap-1 ${isToday(parseISO(todo.date)) && !isDone ? 'text-blue-600 dark:text-blue-400 font-bold' : ''}`}>
+                                                <CalendarIcon className="w-3 h-3" />
+                                                {format(parseISO(todo.date), 'EEE, d MMM', { locale: lang === 'ar' ? ar : undefined })}
+                                            </span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                {format(parseISO(todo.date), 'h:mm a', { locale: lang === 'ar' ? ar : undefined })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => deleteTodo(todo.id)}
+                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all h-8 w-8"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
+                            </motion.div>
+                        )
+                    })}
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -335,9 +436,9 @@ const SettingsPage = () => {
                                 </form>
 
                                 {/* Tasks List */}
-                                <div className="flex-1 overflow-y-auto space-y-3 max-h-[600px] pr-2 custom-scrollbar">
+                                <div className="flex-1 overflow-y-auto space-y-6 max-h-[600px] pr-2 custom-scrollbar">
                                     <AnimatePresence initial={false} mode="popLayout">
-                                        {sortedTodos.length === 0 ? (
+                                        {todos.length === 0 ? (
                                             <motion.div
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
@@ -349,71 +450,13 @@ const SettingsPage = () => {
                                                 <p>{t('common.settings_page.todo.empty')}</p>
                                             </motion.div>
                                         ) : (
-                                            sortedTodos.map((todo) => {
-                                                const isDone = todo.completed;
-                                                const isOverdue = !isDone && isPast(parseISO(todo.date)) && !isToday(parseISO(todo.date));
-
-                                                return (
-                                                    <motion.div
-                                                        layout
-                                                        key={todo.id}
-                                                        initial={{ opacity: 0, scale: 0.95 }}
-                                                        animate={{ opacity: 1, scale: 1 }}
-                                                        exit={{ opacity: 0, scale: 0.95 }}
-                                                        className={`
-                                                            group flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200
-                                                            ${isDone
-                                                                ? 'bg-gray-50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800/50 opacity-60'
-                                                                : isOverdue
-                                                                    ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20 hover:shadow-md'
-                                                                    : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-emerald-200 dark:hover:border-emerald-900 hover:shadow-md'
-                                                            }
-                                                        `}
-                                                    >
-                                                        <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                                                            <button
-                                                                onClick={() => toggleTodo(todo.id)}
-                                                                className={`
-                                                                    flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200
-                                                                    ${isDone
-                                                                        ? 'bg-emerald-500 border-emerald-500 text-white scale-100'
-                                                                        : 'border-gray-300 dark:border-gray-500 hover:border-emerald-500 active:scale-95'
-                                                                    }
-                                                                `}
-                                                            >
-                                                                <Check className={`w-3.5 h-3.5 transition-transform ${isDone ? 'scale-100' : 'scale-0'}`} />
-                                                            </button>
-
-                                                            <div className="flex flex-col min-w-0 gap-0.5">
-                                                                <span className={`text-sm font-medium truncate transition-colors ${isDone ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-white'}`}>
-                                                                    {todo.text}
-                                                                </span>
-                                                                <div className={`flex items-center gap-2 text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
-                                                                    <span className={`flex items-center gap-1 ${isToday(parseISO(todo.date)) && !isDone ? 'text-blue-600 dark:text-blue-400 font-bold' : ''}`}>
-                                                                        <CalendarIcon className="w-3 h-3" />
-                                                                        {format(parseISO(todo.date), 'dd/MM/yyyy')}
-                                                                    </span>
-                                                                    <span>•</span>
-                                                                    <span className="flex items-center gap-1">
-                                                                        <Clock className="w-3 h-3" />
-                                                                        {format(parseISO(todo.date), 'p', { locale: lang === 'ar' ? ar : undefined })}
-                                                                    </span>
-                                                                    {isOverdue && <span className="text-[10px] bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded text-red-600 dark:text-red-400">{lang === 'ar' ? 'متأخرة' : 'Overdue'}</span>}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => deleteTodo(todo.id)}
-                                                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all h-8 w-8"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    </motion.div>
-                                                )
-                                            })
+                                            <>
+                                                {renderTodoGroup(lang === 'ar' ? 'متأخرة' : 'Overdue', groupedTodos.overdue, 'text-red-600', <Clock className="w-4 h-4" />)}
+                                                {renderTodoGroup(lang === 'ar' ? 'اليوم' : 'Today', groupedTodos.today, 'text-blue-600', <CalendarIcon className="w-4 h-4" />)}
+                                                {renderTodoGroup(lang === 'ar' ? 'غداً' : 'Tomorrow', groupedTodos.tomorrow, 'text-purple-600', <CalendarIcon className="w-4 h-4" />)}
+                                                {renderTodoGroup(lang === 'ar' ? 'قادمة' : 'Upcoming', groupedTodos.upcoming, 'text-gray-600', <CalendarIcon className="w-4 h-4" />)}
+                                                {renderTodoGroup(lang === 'ar' ? 'مكتملة' : 'Completed', groupedTodos.completed, 'text-emerald-600', <CheckSquare className="w-4 h-4" />)}
+                                            </>
                                         )}
                                     </AnimatePresence>
                                 </div>
