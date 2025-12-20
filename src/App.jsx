@@ -29,6 +29,8 @@ import ExamDetailPage from './pages/ExamDetailPage'
 import TakeExamPage from './pages/TakeExamPage'
 import ExamResultPage from './pages/ExamResultPage'
 import ProfilePage from './pages/ProfilePage'
+import SettingsPage from './pages/SettingsPage'
+import TipsPage from './pages/TipsPage'
 import StudentResultsPage from './pages/StudentResultsPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminLessons from './pages/admin/AdminLessons'
@@ -113,6 +115,16 @@ function AppContent() {
             <Route path="/profile" element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/tips" element={
+              <ProtectedRoute>
+                <TipsPage />
               </ProtectedRoute>
             } />
 

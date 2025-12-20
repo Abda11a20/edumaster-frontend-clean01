@@ -12,6 +12,7 @@ export const translations = {
       view: 'عرض',
       back: 'عودة',
       search: 'بحث',
+      back_to_dashboard: 'العودة للرئيسية',
       filter: 'تصفية',
       reset: 'إعادة تعيين',
       confirm: 'تأكيد',
@@ -47,6 +48,33 @@ export const translations = {
         dark: 'الوضع الداكن',
         toggle_light: 'التبديل إلى الوضع الفاتح',
         toggle_dark: 'التبديل إلى الوضع الداكن'
+      },
+      settings_page: {
+        title: 'الإعدادات',
+        subtitle: 'تخصيص تجربتك في المنصة',
+        appearance: {
+          title: 'المظهر واللغة',
+          desc: 'تخصيص مظهر المنصة ولغة العرض',
+          theme_light: 'فاتح',
+          theme_dark: 'داكن',
+          lang_ar: 'العربية',
+          lang_en: 'English'
+        },
+        calendar: {
+          title: 'التقويم',
+          desc: 'تابع تواريخك المهمة',
+        },
+        todo: {
+          title: 'قائمة المهام',
+          desc: 'نظم مهامك ودراستك',
+          add_label: 'إضافة مهمة جديدة',
+          add_placeholder: 'أضف مهمة جديدة...',
+          add_date_placeholder: 'تاريخ المهمة',
+          add_time_placeholder: 'الوقت',
+          add_btn: 'إضافة',
+          empty: 'لا توجد مهام حالياً',
+          delete: 'حذف'
+        }
       }
     },
     auth: {
@@ -454,6 +482,7 @@ export const translations = {
         logout: 'تسجيل الخروج',
         change_password: 'تغيير كلمة المرور',
         notifications: 'إعدادات الإشعارات',
+        tips: 'نصائح وإرشادات',
         privacy: 'الخصوصية والأمان'
       },
       account_status: {
@@ -1323,6 +1352,7 @@ export const translations = {
       next: 'Next',
       previous: 'Previous',
       search: 'Search',
+      back_to_dashboard: 'Back to Dashboard',
       filter: 'Filter',
       close: 'Close',
       confirm: 'Confirm',
@@ -1358,6 +1388,33 @@ export const translations = {
         dark: 'Dark Mode',
         toggle_light: 'Switch to Light Mode',
         toggle_dark: 'Switch to Dark Mode'
+      },
+      settings_page: {
+        title: 'Settings',
+        subtitle: 'Customize your platform experience',
+        appearance: {
+          title: 'Appearance & Language',
+          desc: 'Customize platform look and language',
+          theme_light: 'Light',
+          theme_dark: 'Dark',
+          lang_ar: 'Arabic',
+          lang_en: 'English'
+        },
+        calendar: {
+          title: 'Calendar',
+          desc: 'Track important dates',
+        },
+        todo: {
+          title: 'To-Do List',
+          desc: 'Organize your tasks and studies',
+          add_label: 'Add New Task',
+          add_placeholder: 'Add new task...',
+          add_date_placeholder: 'Task Date',
+          add_time_placeholder: 'Time',
+          add_btn: 'Add',
+          empty: 'No tasks currently',
+          delete: 'Delete'
+        }
       }
     },
     auth: {
@@ -1765,6 +1822,7 @@ export const translations = {
         logout: 'Logout',
         change_password: 'Change Password',
         notifications: 'Notification Settings',
+        tips: 'Tips & Guidance',
         privacy: 'Privacy & Security'
       },
       account_status: {

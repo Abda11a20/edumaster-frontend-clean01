@@ -17,8 +17,11 @@ import {
   AlertCircle,
   Trash2,
   Key,
-  Clock
+  Clock,
+  Settings,
+  BookOpen
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +49,7 @@ import { useTranslation } from '../hooks/useTranslation';
 
 const ProfilePage = () => {
   const { t, lang } = useTranslation();
+  const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -436,19 +440,19 @@ const ProfilePage = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start hover:bg-purple-50 dark:hover:bg-purple-900/30"
-                      onClick={() => {/* Add notifications settings */ }}
+                      onClick={() => navigate('/settings')}
                     >
-                      <Bell className="h-4 w-4 ml-2 text-purple-600 dark:text-purple-400" />
-                      {t('profile.account_management.notifications')}
+                      <Settings className="h-4 w-4 ml-2 text-purple-600 dark:text-purple-400" />
+                      {t('common.settings')}
                     </Button>
 
                     <Button
                       variant="outline"
                       className="w-full justify-start hover:bg-green-50 dark:hover:bg-green-900/30"
-                      onClick={() => {/* Add privacy settings */ }}
+                      onClick={() => navigate('/tips')}
                     >
-                      <Shield className="h-4 w-4 ml-2 text-green-600 dark:text-green-400" />
-                      {t('profile.account_management.privacy')}
+                      <BookOpen className="h-4 w-4 ml-2 text-green-600 dark:text-green-400" />
+                      {t('profile.account_management.tips')}
                     </Button>
                   </div>
                 </CardContent>
