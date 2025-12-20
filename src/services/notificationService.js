@@ -41,7 +41,10 @@ export const showNotification = (message, options = {}) => {
         'exam fetched successfully',
         'question fetched successfully',
         'admin fetched successfully',
-        'fetched successfully'
+        'fetched successfully',
+        'student score',
+        'retrieved successfully',
+        'retived'
     ];
 
     // Determine notification type if not explicitly provided
