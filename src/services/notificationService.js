@@ -34,8 +34,26 @@ export const showNotification = (message, options = {}) => {
     // Translate the message
     const translatedMessage = getTranslatedMessage(message, lang);
 
+    // List of messages to ignore (not show as notifications)
+    const IGNORED_MESSAGES = [
+        'user fetched successfully',
+        'lesson fetched successfully',
+        'exam fetched successfully',
+        'question fetched successfully',
+        'admin fetched successfully',
+        'fetched successfully'
+    ];
+
     // Determine notification type if not explicitly provided
     const notificationType = type || getMessageType(message, statusCode);
+
+    // If it's a success message AND it's in the ignored list, return early
+    if (notificationType === 'success') {
+        const lowerMessage = message.toLowerCase();
+        if (IGNORED_MESSAGES.some(ignored => lowerMessage.includes(ignored))) {
+            return;
+        }
+    }
 
     // Show appropriate toast based on type
     switch (notificationType) {
