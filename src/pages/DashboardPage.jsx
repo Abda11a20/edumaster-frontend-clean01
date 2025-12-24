@@ -28,6 +28,7 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -70,6 +71,18 @@ const DashboardPage = () => {
   const [achievements, setAchievements] = useState([])
   const [showCelebration, setShowCelebration] = useState(false)
   const [showProgressAnimation, setShowProgressAnimation] = useState(false)
+  // State for todo list (shared with settings)
+  const [todoList, setTodoList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('todoList');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  })
+  const [newTask, setNewTask] = useState('')
+  const [newTaskDate, setNewTaskDate] = useState('')
+  const [newTaskTime, setNewTaskTime] = useState('')
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight
@@ -999,10 +1012,9 @@ const DashboardPage = () => {
 
         {/* Main Content Area */}
         <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">{t('dashboard.tabs.overview')}</TabsTrigger>
             <TabsTrigger value="progress">{t('dashboard.tabs.progress')}</TabsTrigger>
-            <TabsTrigger value="achievements">{t('dashboard.tabs.achievements')}</TabsTrigger>
             <TabsTrigger value="tasks">{t('dashboard.tabs.tasks')}</TabsTrigger>
           </TabsList>
 
@@ -1380,80 +1392,243 @@ const DashboardPage = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="achievements" className="mt-6">
+          <TabsContent value="progress" className="mt-6">
+            <Card className="border-2 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+                <CardTitle className="flex items-center text-xl">
+                  <BarChart3 className="h-6 w-6 ml-2 text-blue-600" />
+                  {t('dashboard.progress_section.title')}
+                </CardTitle>
+                <CardDescription>
+                  {t('dashboard.progress_section.desc')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-6">
+                  {/* Overall Progress */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-5 rounded-xl">
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <span className="text-sm font-medium">{t('dashboard.progress_section.overall')}</span>
+                        <p className="text-xs text-gray-500">{t('dashboard.progress_section.overall_desc')}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                          {stats.progressPercentage}%
+                        </span>
+                        <p className="text-xs text-gray-500">{t('dashboard.progress_section.total_tasks')}</p>
+                      </div>
+                    </div>
+                    <Progress value={stats.progressPercentage} className="h-4 rounded-full" />
+                    <div className="flex justify-between text-xs text-gray-500 mt-2">
+                      <div className="flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                        <span>{t('dashboard.progress_section.completed')}: {stats.completedLessons + stats.completedExams}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-gray-400" />
+                        <span>{t('dashboard.progress_section.remaining')}: {(stats.totalLessons + stats.totalExams) - (stats.completedLessons + stats.completedExams)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Target className="h-3 w-3 text-blue-500" />
+                        <span>{t('dashboard.progress_section.total')}: {stats.totalLessons + stats.totalExams}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detailed Progress */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="border border-blue-200 dark:border-blue-800">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3">
+                              <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{t('dashboard.progress_section.lessons_title')}</p>
+                              <p className="text-sm text-gray-500">{t('dashboard.progress_section.lessons_desc')}</p>
+                            </div>
+                          </div>
+                          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                            {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}%
+                          </Badge>
+                        </div>
+                        <Progress
+                          value={stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0}
+                          className="h-2"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-2">
+                          <span>{stats.completedLessons} {t('dashboard.progress_section.completed')}</span>
+                          <span>{stats.totalLessons - stats.completedLessons} {t('dashboard.progress_section.remaining')}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border border-green-200 dark:border-green-800">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                              <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{t('dashboard.progress_section.exams_title')}</p>
+                              <p className="text-sm text-gray-500">{t('dashboard.progress_section.exams_desc')}</p>
+                            </div>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                            {stats.totalExams > 0 ? Math.round((stats.completedExams / stats.totalExams) * 100) : 0}%
+                          </Badge>
+                        </div>
+                        <Progress
+                          value={stats.totalExams > 0 ? (stats.completedExams / stats.totalExams) * 100 : 0}
+                          className="h-2"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-2">
+                          <span>{stats.completedExams} {t('dashboard.progress_section.completed')}</span>
+                          <span>{stats.totalExams - stats.completedExams} {t('dashboard.progress_section.remaining')}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tasks" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">{t('dashboard.achievements.title')}</CardTitle>
-                <CardDescription>{t('dashboard.achievements.desc')}</CardDescription>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <CheckCircle className="h-6 w-6 text-blue-600" />
+                  {t('common.settings_page.todo.title')}
+                </CardTitle>
+                <CardDescription>{t('common.settings_page.todo.desc')}</CardDescription>
               </CardHeader>
               <CardContent>
-                {achievements.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {achievements.map((achievement, index) => (
-                      <motion.div
-                        key={achievement.id}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Card className={`h-full border-2 ${achievement.unlocked ? 'border-yellow-300' : 'border-gray-200'} overflow-hidden`}>
-                          <CardContent className="p-5 text-center">
-                            <div className={`w-16 h-16 ${achievement.color.split(' ')[0]} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                              <achievement.icon className="h-8 w-8 text-white" />
-                            </div>
-                            <h3 className="font-bold text-lg mb-1">{achievement.title}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                              {achievement.description}
-                            </p>
-                            {achievement.unlocked ? (
-                              <div className="space-y-2">
-                                <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500">
-                                  <Trophy className="h-3 w-3 mr-1" />
-                                  {t('dashboard.achievements.acquired')}
-                                </Badge>
-                                <p className="text-xs text-gray-500">
-                                  {achievement.date}
-                                </p>
-                              </div>
-                            ) : (
-                              <Badge variant="outline" className="border-gray-300">
-                                {t('dashboard.achievements.in_progress')}
-                              </Badge>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold mb-2">{t('dashboard.achievements.none_title')}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      {t('dashboard.achievements.none_desc')}
-                    </p>
-                    <Button onClick={() => navigate('/lessons')}>
-                      {t('dashboard.achievements.start_learning')}
+                <div className="space-y-6">
+                  {/* إضافة مهمة جديدة */}
+                  <div className="flex flex-wrap gap-2">
+                    <Input
+                      placeholder={t('common.settings_page.todo.add_placeholder')}
+                      value={newTask}
+                      onChange={(e) => setNewTask(e.target.value)}
+                      className="flex-1 min-w-[200px]"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && newTask.trim()) {
+                          const task = {
+                            id: Date.now(),
+                            text: newTask,
+                            date: newTaskDate,
+                            time: newTaskTime,
+                            completed: false
+                          };
+                          const newList = [...todoList, task];
+                          localStorage.setItem('todoList', JSON.stringify(newList));
+                          setTodoList(newList);
+                          setNewTask('');
+                          setNewTaskDate('');
+                          setNewTaskTime('');
+                        }
+                      }}
+                    />
+                    <Input
+                      type="date"
+                      value={newTaskDate}
+                      onChange={(e) => setNewTaskDate(e.target.value)}
+                      className="w-40"
+                    />
+                    <Input
+                      type="time"
+                      value={newTaskTime}
+                      onChange={(e) => setNewTaskTime(e.target.value)}
+                      className="w-32"
+                    />
+                    <Button onClick={() => {
+                      if (!newTask.trim()) return;
+                      const task = {
+                        id: Date.now(),
+                        text: newTask,
+                        date: newTaskDate,
+                        time: newTaskTime,
+                        completed: false
+                      };
+                      const newList = [...todoList, task];
+                      localStorage.setItem('todoList', JSON.stringify(newList));
+                      setTodoList(newList);
+                      setNewTask('');
+                      setNewTaskDate('');
+                      setNewTaskTime('');
+                    }}>
+                      {t('common.settings_page.todo.add_btn')}
                     </Button>
                   </div>
-                )}
 
-                {showCelebration && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl text-center"
-                  >
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                      <Sparkles className="h-6 w-6 text-yellow-600" />
-                      <h3 className="font-bold text-lg">{t('dashboard.achievements.new_title')}</h3>
-                      <Sparkles className="h-6 w-6 text-yellow-600" />
+                  {/* قائمة المهام */}
+                  {todoList.length > 0 ? (
+                    <div className="space-y-2">
+                      {todoList.map((task) => (
+                        <motion.div
+                          key={task.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${task.completed
+                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                            : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                            }`}
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            <button
+                              onClick={() => {
+                                const updated = todoList.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
+                                localStorage.setItem('todoList', JSON.stringify(updated));
+                                setTodoList(updated);
+                              }}
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${task.completed
+                                ? 'bg-green-500 border-green-500 text-white'
+                                : 'border-gray-400 hover:border-green-500'
+                                }`}
+                            >
+                              {task.completed && <CheckCircle className="h-4 w-4" />}
+                            </button>
+                            <div className="flex-1">
+                              <p className={`font-medium ${task.completed ? 'line-through text-gray-500' : ''}`}>
+                                {task.text}
+                              </p>
+                              {(task.date || task.time) && (
+                                <p className="text-sm text-gray-500 flex items-center gap-2">
+                                  <Clock className="h-3 w-3" />
+                                  {task.date} {task.time}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const filtered = todoList.filter(t => t.id !== task.id);
+                              localStorage.setItem('todoList', JSON.stringify(filtered));
+                              setTodoList(filtered);
+                            }}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            {t('common.settings_page.todo.delete')}
+                          </Button>
+                        </motion.div>
+                      ))}
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {t('dashboard.achievements.new_desc')}
-                    </p>
-                  </motion.div>
-                )}
+                  ) : (
+                    <div className="text-center py-12">
+                      <CheckCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold mb-2">{t('common.settings_page.todo.empty')}</h3>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        {t('dashboard.tasks.empty_desc')}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

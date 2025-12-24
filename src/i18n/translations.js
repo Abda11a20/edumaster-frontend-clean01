@@ -24,6 +24,7 @@ export const translations = {
       price_currency: 'ج.م',
       minutes: 'دقيقة',
       students: 'طالب',
+      points: 'نقطة',
       all: 'الكل',
       more: 'المزيد',
       less: 'أقل',
@@ -76,6 +77,19 @@ export const translations = {
           delete: 'حذف'
         }
       }
+    },
+    search: {
+      placeholder: 'ابحث عن دروس، امتحانات، صفحات...',
+      results: 'نتائج البحث',
+      no_results: 'لم يتم العثور على نتائج',
+      try_different: 'حاول استخدام كلمات بحث مختلفة',
+      recent: 'عمليات البحث الأخيرة',
+      quick_browse: 'تصفح سريع',
+      internal_search: 'بحث داخلي',
+      lessons: 'الدروس',
+      exams: 'الامتحانات',
+      results_link: 'النتائج',
+      progress: 'التقدم'
     },
     auth: {
       login: {
@@ -259,7 +273,11 @@ export const translations = {
         progress: 'التقدم',
         bonus: 'نقطة مكافأة',
         desc: 'اكمل هذا الهدف لتحصل على نقاط إضافية',
-        none: 'لا توجد أهداف حالية'
+        none: 'لا توجد أهداف حالية',
+        achieve_score: 'حقق معدل {score}% في الامتحانات',
+        complete_lessons: 'أكمل {count} درس',
+        complete_exams: 'أكمل {count} امتحان',
+        maintain_streak: 'حافظ على سلسلة نشاط لمدة 7 أيام'
       },
       streak: {
         title: 'سلسلة النشاط',
@@ -298,6 +316,9 @@ export const translations = {
         start_learning: 'ابدأ التعلم',
         test_yourself: 'اختبر نفسك',
         welcome_sub: 'استمر في رحلتك التعليمية وحقق أهدافك الأكاديمية'
+      },
+      tasks: {
+        empty_desc: 'أضف مهامك الدراسية لتنظيم وقتك ومتابعة تقدمك'
       },
       loading: 'جاري تحميل بيانات لوحة التحكم...',
       error_load: 'خطأ في تحميل البيانات',
@@ -442,7 +463,9 @@ export const translations = {
         duration_content: '{{duration}} دقيقة من المحتوى',
         lifetime_access: 'وصول دائم للدرس',
         subscribed_success: 'تم الاشتراك بنجاح',
-        subscribe_now: 'اشترك الآن'
+        subscribe_now: 'اشترك الآن',
+        no_video: 'لا يوجد فيديو لهذا الدرس',
+        video_content: 'محتوى فيديو تعليمي'
       }
     },
     class_levels: {
@@ -1366,6 +1389,7 @@ export const translations = {
       price_currency: 'EGP',
       minutes: 'min',
       students: 'students',
+      points: 'points',
       all: 'All',
       more: 'More',
       less: 'Less',
@@ -1416,6 +1440,19 @@ export const translations = {
           delete: 'Delete'
         }
       }
+    },
+    search: {
+      placeholder: 'Search for lessons, exams, pages...',
+      results: 'Search Results',
+      no_results: 'No results found',
+      try_different: 'Try using different search terms',
+      recent: 'Recent Searches',
+      quick_browse: 'Quick Browse',
+      internal_search: 'Internal Search',
+      lessons: 'Lessons',
+      exams: 'Exams',
+      results_link: 'Results',
+      progress: 'Progress'
     },
     auth: {
       login: {
@@ -1599,7 +1636,11 @@ export const translations = {
         progress: 'Progress',
         bonus: 'Bonus Points',
         desc: 'Complete this goal to earn extra points',
-        none: 'No current goals'
+        none: 'No current goals',
+        achieve_score: 'Achieve {score}% average in exams',
+        complete_lessons: 'Complete {count} lessons',
+        complete_exams: 'Complete {count} exams',
+        maintain_streak: 'Maintain a 7-day activity streak'
       },
       streak: {
         title: 'Activity Streak',
@@ -1638,6 +1679,9 @@ export const translations = {
         start_learning: 'Start Learning',
         test_yourself: 'Test Yourself',
         welcome_sub: 'Continue your educational journey and achieve your academic goals'
+      },
+      tasks: {
+        empty_desc: 'Add your study tasks to organize your time and track your progress'
       },
       loading: 'Loading dashboard data...',
       error_load: 'Error loading data',
@@ -1782,7 +1826,9 @@ export const translations = {
         duration_content: '{{duration}} minutes of content',
         lifetime_access: 'Lifetime Access',
         subscribed_success: 'Subscribed Successfully',
-        subscribe_now: 'Subscribe Now'
+        subscribe_now: 'Subscribe Now',
+        no_video: 'No video available for this lesson',
+        video_content: 'Educational video content'
       }
     },
     class_levels: {

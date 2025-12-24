@@ -85,6 +85,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('purchasedLessonIds') // مسح الدروس المشتراة عند تسجيل الخروج
     setToken(null)
     setUser(null)
   }

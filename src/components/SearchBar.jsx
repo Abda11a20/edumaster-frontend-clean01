@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from '../hooks/useTranslation';
 
 const SearchBar = () => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -253,7 +255,7 @@ const SearchBar = () => {
         </div>
         <input
           type="text"
-          placeholder="ابحث عن دروس، امتحانات، صفحات..."
+          placeholder={t('search.placeholder')}
           className="w-full pl-10 pr-10 py-2.5 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
           value={query}
           onChange={(e) => handleSearch(e.target.value)}

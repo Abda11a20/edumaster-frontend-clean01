@@ -90,12 +90,7 @@ const LessonsPage = () => {
 
   // دالة إدارة تشغيل الفيديو
   const handleVideoPlay = useCallback((lessonId) => {
-    setActiveVideoId(prevId => {
-      if (prevId === lessonId) {
-        return null; // إيقاف الفيديو الحالي إذا كان نفسه
-      }
-      return lessonId; // تشغيل الفيديو الجديد
-    });
+    setActiveVideoId(lessonId); // تشغيل الفيديو الجديد فقط، بدون تبديل
   }, []);
 
   // دالة تحميل صفحة من الدروس

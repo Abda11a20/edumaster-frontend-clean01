@@ -250,20 +250,41 @@ export const lessonsAPI = {
   },
 
   getPurchasedLessons: async () => {
-    const resp = await apiRequest('/lesson/');
-    let list = Array.isArray(resp) ? resp : (resp?.lessons || resp?.data || []);
     try {
-      const localRaw = localStorage.getItem('purchasedLessonIds');
-      const localIds = localRaw ? JSON.parse(localRaw) : [];
-      if (Array.isArray(localIds) && localIds.length > 0) {
-        const existing = new Set((Array.isArray(list) ? list : []).map(l => l?._id));
-        const extras = localIds
-          .filter(id => id && !existing.has(id))
-          .map(id => ({ _id: id, watched: false }));
-        list = Array.isArray(list) ? [...list, ...extras] : extras;
+      // جلب الدروس المشتراة من الباك إند
+      const response = await apiRequest('/lesson/my/purchased');
+      let lessons = [];
+
+      if (response && response.data) {
+        lessons = Array.isArray(response.data) ? response.data : [];
+      } else if (Array.isArray(response)) {
+        lessons = response;
       }
-    } catch (_) { }
-    return list;
+
+      // أيضاً تحقق من localStorage للحالات المحلية
+      try {
+        const localRaw = localStorage.getItem('purchasedLessonIds');
+        const localIds = localRaw ? JSON.parse(localRaw) : [];
+        if (Array.isArray(localIds) && localIds.length > 0) {
+          const existingIds = new Set(lessons.map(l => l?._id));
+          const extras = localIds
+            .filter(id => id && !existingIds.has(id))
+            .map(id => ({ _id: id }));
+          lessons = [...lessons, ...extras];
+        }
+      } catch (e) { }
+
+      return lessons;
+    } catch (error) {
+      // في حالة الخطأ، استخدم localStorage فقط
+      try {
+        const localRaw = localStorage.getItem('purchasedLessonIds');
+        const localIds = localRaw ? JSON.parse(localRaw) : [];
+        return Array.isArray(localIds) ? localIds.map(id => ({ _id: id })) : [];
+      } catch (e) {
+        return [];
+      }
+    }
   },
 
   getUserProgress: async () => {

@@ -816,7 +816,7 @@ const SuperAdminDashboard = () => {
           transition={{ duration: 0.6, type: "spring" }}
           className="mb-8"
         >
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 to-red-500 p-8 shadow-2xl">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-800 to-gray-900 p-8 shadow-2xl">
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-3xl" />
 
@@ -858,7 +858,7 @@ const SuperAdminDashboard = () => {
                 <div className="flex items-center gap-3">
                   <Button
                     onClick={fetchAllData}
-                    className="bg-white text-red-600 hover:bg-white/90 shadow-lg gap-2"
+                    className="bg-white text-gray-800 hover:bg-white/90 shadow-lg gap-2"
                     disabled={isRefreshing}
                   >
                     <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
