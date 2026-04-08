@@ -1,89 +1,59 @@
-# EduMaster Frontend
+# 🚀 EduMaster Frontend
 
-منصة تعليمية متطورة مبنية بـ React مع تصميم احترافي ومبتكر.
-
-## 🚀 المميزات
-
-- ✨ تصميم احترافي ومتجاوب
-- 🔐 نظام مصادقة متكامل
-- 📚 إدارة الدروس والامتحانات
-- 👨‍💼 لوحة تحكم للإدارة
-- 🌙 الوضع المظلم والفاتح
-- 📱 متوافق مع جميع الأجهزة
-
-## 🛠️ التقنيات المستخدمة
-
-- **React 18** - مكتبة واجهة المستخدم
-- **Vite** - أداة البناء السريعة
-- **Tailwind CSS** - إطار عمل CSS
-- **shadcn/ui** - مكونات UI
-- **Framer Motion** - الحركات والتأثيرات
-- **React Router** - التنقل
-- **Lucide React** - الأيقونات
-
-## 📦 التثبيت والتشغيل
-
-```bash
-# استنساخ المشروع
-git clone <repository-url>
-cd edumaster-frontend
-
-# تثبيت التبعيات
-npm install
-
-# تشغيل خادم التطوير
-npm run dev
-
-# بناء المشروع للإنتاج
-npm run build
-```
-
-## 🔧 الإعدادات
-
-إنشاء ملف `.env` في جذر المشروع:
-
-```env
-VITE_API_BASE_URL=https://edu-master-delta.vercel.app
-```
-
-## 📱 الصفحات المتاحة
-
-### الصفحات العامة
-- `/` - الصفحة الرئيسية
-- `/login` - تسجيل الدخول
-- `/register` - إنشاء حساب
-- `/forgot-password` - نسيان كلمة المرور
-- `/reset-password` - إعادة تعيين كلمة المرور
-
-### صفحات الطلاب
-- `/dashboard` - لوحة التحكم
-- `/lessons` - الدروس
-- `/exams` - الامتحانات
-- `/profile` - الملف الشخصي
-
-### صفحات الإدارة
-- `/admin` - لوحة تحكم الإدارة
-- `/admin/lessons` - إدارة الدروس
-- `/admin/exams` - إدارة الامتحانات
-- `/admin/users` - إدارة المستخدمين
-
-## 🎨 التخصيص
-
-يمكن تخصيص الألوان والثيمات من خلال ملف `tailwind.config.js`.
-
-## 📄 الترخيص
-
-هذا المشروع مرخص تحت رخصة MIT.
-
-## 🤝 المساهمة
-
-نرحب بالمساهمات! يرجى قراءة دليل المساهمة قبل البدء.
-
-## 📞 الدعم
-
-للحصول على الدعم، يرجى التواصل معنا عبر البريد الإلكتروني أو إنشاء issue في المستودع.
+EduMaster Frontend is a **modern and interactive educational platform** developed using React and Tailwind CSS. It provides a clean and responsive user interface for students, teachers, and administrators, offering a seamless educational experience.
 
 ---
 
-تم تطوير هذا المشروع بواسطة فريق EduMaster 💙
+## 📖 Project Overview
 
+EduMaster is designed to facilitate online learning with features like:
+- User authentication and registration
+- Lesson and exam management
+- Student dashboard
+- Admin content management
+- Dark/Light mode support
+- Smooth navigation and responsive design
+
+This repository contains the **frontend (React) part** of the EduMaster platform.
+
+---
+
+## ✨ Key Features
+
+- ✅ Responsive and modern design  
+- ✅ Authentication system with session management  
+- ✅ Student and admin dashboards  
+- ✅ Seamless navigation between pages  
+- ✅ Dark/Light mode support  
+- ✅ Enhanced user experience with animations  
+
+---
+
+## 🛠️ Tech Stack
+
+- **React 18** – Frontend framework  
+- **Vite** – Development environment  
+- **Tailwind CSS** – Styling and layout  
+- **shadcn/ui** – UI components  
+- **Framer Motion** – Animations  
+- **React Router** – Page routing  
+- **Lucide Icons** – Icons library  
+
+---
+
+## ⚡ Installation & Setup
+
+To run this project locally, follow these steps:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Abda11a20/edumaster-frontend-clean01.git
+
+# 2. Navigate to the project folder
+cd edumaster-frontend-clean01
+
+# 3. Install dependencies
+npm install
+
+# 4. Start the development server
+npm run dev
