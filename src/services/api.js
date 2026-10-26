@@ -212,7 +212,7 @@ export const authAPI = {
   },
 
   getProfile: async () => {
-    const response = await apiRequest('/user/');
+    const response = await apiRequest('/user');
     return response.data || response;
   },
 
@@ -231,7 +231,7 @@ export const authAPI = {
   },
 
   deleteAccount: async () => {
-    return apiRequest('/user/', {
+    return apiRequest('/user', {
       method: 'DELETE'
     });
   }
