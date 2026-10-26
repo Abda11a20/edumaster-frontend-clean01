@@ -18,12 +18,15 @@ const StudentResultsPage = () => {
   const [scores, setScores] = useState({})
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [loadError, setLoadError] = useState(null)
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState('submitted')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const { toast } = useToast()
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
+  const textDirection = lang === 'ar' ? 'rtl' : 'ltr'
+  const textAlignment = lang === 'ar' ? 'text-right' : 'text-left'
 
   const GRADE_SYSTEM = {
     FAILED: { min: 0, max: 49, label: t('exams.results.grades.failed'), color: 'text-red-600', bgColor: 'bg-red-100', borderColor: 'border-red-200', icon: XCircle },
@@ -69,35 +72,27 @@ const StudentResultsPage = () => {
     const results = {}
 
     const promises = examsList.map(async (ex) => {
-      try {
-        const res = await examsAPI.getStudentScore(ex._id)
+      const res = await examsAPI.getStudentScore(ex._id)
 
-        if (res === null) {
-          return { examId: ex._id, score: null }
-        } else {
-          const score = res?.score
-          return { examId: ex._id, score: typeof score === 'number' ? score : null }
-        }
-      } catch (e) {
+      if (res === null) {
         return { examId: ex._id, score: null }
       }
+      const score = res?.score
+      return { examId: ex._id, score: typeof score === 'number' ? score : null }
     })
 
-    try {
-      const resultsArray = await Promise.all(promises)
-      resultsArray.forEach(({ examId, score }) => {
-        results[examId] = score
-      })
-      setScores(results)
-    } catch (error) {
-      // لا نعرض خطأ
-    }
+    const resultsArray = await Promise.all(promises)
+    resultsArray.forEach(({ examId, score }) => {
+      results[examId] = score
+    })
+    setScores(results)
   }
 
   useEffect(() => {
     const init = async () => {
       try {
         setIsLoading(true)
+        setLoadError(null)
         const res = await examsAPI.getAllExams({ page: 1, limit: 100 })
         const list = res?.data || res || []
         const examsArray = Array.isArray(list) ? list : []
@@ -110,6 +105,7 @@ const StudentResultsPage = () => {
           await fetchScores(examsArray)
         }
       } catch (error) {
+        setLoadError(t('dashboard.error_load'))
         toast({
           title: t('dashboard.error_load'),
           description: t('dashboard.error_unknown'),
@@ -191,14 +187,14 @@ const StudentResultsPage = () => {
 
   const renderTable = (data, isSubmitted) => (
     <div className="overflow-x-auto">
-      <Table>
+      <Table dir={textDirection}>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('exams.results.table.exam')}</TableHead>
-            <TableHead>{t('exams.results.table.score')}</TableHead>
-            <TableHead>{t('exams.results.table.percentage')}</TableHead>
-            <TableHead>{t('exams.results.table.grade')}</TableHead>
-            <TableHead>{t('exams.results.table.actions')}</TableHead>
+            <TableHead dir={textDirection} className={textAlignment}>{t('exams.results.table.exam')}</TableHead>
+            <TableHead dir={textDirection} className={textAlignment}>{t('exams.results.table.score')}</TableHead>
+            <TableHead dir={textDirection} className={textAlignment}>{t('exams.results.table.percentage')}</TableHead>
+            <TableHead dir={textDirection} className={textAlignment}>{t('exams.results.table.grade')}</TableHead>
+            <TableHead dir={textDirection} className={textAlignment}>{t('exams.results.table.actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -211,19 +207,19 @@ const StudentResultsPage = () => {
 
             return (
               <TableRow key={ex._id}>
-                <TableCell className="font-medium">{ex.title}</TableCell>
+                <TableCell dir={textDirection} className={`font-medium ${textAlignment}`}>{ex.title}</TableCell>
                 <TableCell>
                   {isSubmitted ? (
                     <div className="flex flex-col">
                       <span className="font-bold">{score} / {total}</span>
-                      <span className="text-xs text-gray-500">
+                      <span dir={textDirection} className={`text-xs text-gray-500 ${textAlignment}`}>
                         {ex.questions?.length || '?'} {t('exams.card.questions')}
                       </span>
                     </div>
                   ) : (
                     <div className="flex flex-col">
                       <span>—</span>
-                      <span className="text-xs text-gray-500">
+                      <span dir={textDirection} className={`text-xs text-gray-500 ${textAlignment}`}>
                         {ex.questions?.length || '?'} {t('exams.card.questions')}
                       </span>
                     </div>
@@ -231,14 +227,14 @@ const StudentResultsPage = () => {
                 </TableCell>
                 <TableCell>
                   {isSubmitted ? (
-                    <div className="flex items-center gap-2">
+                    <div dir="ltr" className="flex items-center gap-2">
                       <div className="w-16 bg-gray-200 rounded-full h-2">
                         <div
                           className={`h-2 rounded-full ${gradeInfo?.bgColor.replace('bg-', 'bg-')}`}
                           style={{ width: `${Math.min(percentage, 100)}%` }}
                         ></div>
                       </div>
-                      <span className="font-mono text-sm font-bold">
+                      <span dir={textDirection} className={`font-mono text-sm font-bold ${textAlignment}`}>
                         {percentage}%
                       </span>
                     </div>
@@ -248,28 +244,28 @@ const StudentResultsPage = () => {
                 </TableCell>
                 <TableCell>
                   {isSubmitted ? (
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${gradeInfo?.bgColor} ${gradeInfo?.borderColor} border`}>
+                    <div dir="ltr" className={`flex items-center gap-2 px-3 py-1 rounded-full ${gradeInfo?.bgColor} ${gradeInfo?.borderColor} border`}>
                       <GradeIcon className={`h-4 w-4 ${gradeInfo?.color}`} />
-                      <span className={`text-sm font-medium ${gradeInfo?.color}`}>
+                      <span dir={textDirection} className={`text-sm font-medium ${gradeInfo?.color} ${textAlignment}`}>
                         {gradeInfo?.label}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-orange-500 font-medium">⌛ {t('exams.results.table.not_submitted')}</span>
+                    <span dir={textDirection} className={`text-orange-500 font-medium ${textAlignment}`}>⌛ {t('exams.results.table.not_submitted')}</span>
                   )}
                 </TableCell>
                 <TableCell>
                   {isSubmitted ? (
                     <Link to={`/exams/${ex._id}/result`}>
-                      <Button variant="outline" size="sm" className="bg-blue-50 hover:bg-blue-100 border-blue-200">
+                      <Button dir="ltr" variant="outline" size="sm" className="bg-blue-50 hover:bg-blue-100 border-blue-200">
                         <BarChart3 className="h-4 w-4 ml-2" />
-                        {t('exams.card.details')}
+                        <span dir={textDirection}>{t('exams.card.details')}</span>
                       </Button>
                     </Link>
                   ) : (
                     <Link to={`/exams/${ex._id}`}>
-                      <Button variant="outline" size="sm" className="bg-green-50 hover:bg-green-100 border-green-200">
-                        {t('exams.card.start')}
+                      <Button dir="ltr" variant="outline" size="sm" className="bg-green-50 hover:bg-green-100 border-green-200">
+                        <span dir={textDirection}>{t('exams.card.start')}</span>
                       </Button>
                     </Link>
                   )}
@@ -281,7 +277,7 @@ const StudentResultsPage = () => {
       </Table>
 
       {data.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <div dir={textDirection} className={`text-center py-8 text-gray-500 ${textAlignment}`}>
           {isSubmitted ? t('exams.results.messages.no_submitted') : t('exams.results.messages.no_available')}
         </div>
       )}
@@ -323,7 +319,7 @@ const StudentResultsPage = () => {
           disabled={currentPage === 1}
         >
           <ChevronRight className="h-4 w-4" />
-          {t('common.previous')}
+          <span dir={textDirection}>{t('common.previous')}</span>
         </Button>
 
         {pages}
@@ -334,7 +330,7 @@ const StudentResultsPage = () => {
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
-          {t('common.next')}
+          <span dir={textDirection}>{t('common.next')}</span>
           <ChevronLeft className="h-4 w-4" />
         </Button>
       </div>
@@ -349,20 +345,20 @@ const StudentResultsPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="h-6 w-6 text-purple-500" />
-              {t('exams.results.grading_system')}
+              <span dir={textDirection} className={textAlignment}>{t('exams.results.grading_system')}</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription dir={textDirection} className={textAlignment}>
               {t('exams.results.grading_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
               {Object.entries(GRADE_SYSTEM).map(([key, grade]) => {
                 const IconComponent = grade.icon
                 return (
-                  <div key={key} className={`flex items-center gap-2 p-3 rounded-lg ${grade.bgColor} ${grade.borderColor} border`}>
+                  <div key={key} className={`flex items-center gap-2 p-3 rounded-lg ${grade.bgColor} ${grade.borderColor} border ${key === 'EXCELLENT' ? 'col-span-2 lg:col-span-1' : ''}`}>
                     <IconComponent className={`h-5 w-5 ${grade.color}`} />
-                    <div>
+                    <div dir={textDirection} className={textAlignment}>
                       <div className={`font-medium ${grade.color}`}>{grade.label}</div>
                       <div className="text-xs text-gray-600">{grade.min}% - {grade.max}%</div>
                     </div>
@@ -378,20 +374,21 @@ const StudentResultsPage = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-6 w-6 text-blue-500" />
-                {t('exams.results.title')}
+                <span dir={textDirection} className={textAlignment}>{t('exams.results.title')}</span>
               </CardTitle>
-              <CardDescription>{t('exams.results.subtitle')}</CardDescription>
+              <CardDescription dir={textDirection} className={textAlignment}>{t('exams.results.subtitle')}</CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Input
                 placeholder={t('exams.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full sm:w-56"
+                dir={textDirection}
+                className={`w-full sm:w-56 ${textAlignment}`}
               />
               <Button onClick={handleRefresh} disabled={isRefreshing} className="w-full sm:w-auto">
                 <RefreshCw className={`h-4 w-4 ml-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-                {isRefreshing ? t('common.processing') : t('exams.refresh')}
+                <span dir={textDirection}>{isRefreshing ? t('common.processing') : t('exams.refresh')}</span>
               </Button>
             </div>
           </CardHeader>
@@ -400,19 +397,23 @@ const StudentResultsPage = () => {
               <div className="flex items-center justify-center h-40">
                 <LoadingSpinner size="lg" />
               </div>
+            ) : loadError ? (
+              <div role="alert" dir={textDirection} className={`rounded-md border border-red-200 bg-red-50 p-4 text-red-700 ${textAlignment}`}>
+                {loadError}
+              </div>
             ) : (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="submitted" className="flex items-center gap-2">
                     <FileCheck className="h-4 w-4" />
-                    {t('exams.results.tabs.submitted')}
+                    <span dir={textDirection}>{t('exams.results.tabs.submitted')}</span>
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                       {filteredSubmitted.length}
                     </span>
                   </TabsTrigger>
                   <TabsTrigger value="not-submitted" className="flex items-center gap-2">
                     <FileX className="h-4 w-4" />
-                    {t('exams.results.tabs.available')}
+                    <span dir={textDirection}>{t('exams.results.tabs.available')}</span>
                     <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
                       {filteredNotSubmitted.length}
                     </span>
@@ -423,9 +424,9 @@ const StudentResultsPage = () => {
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                     <div className="flex items-center gap-2 text-green-800">
                       <FileCheck className="h-5 w-5" />
-                      <span className="font-medium">{t('exams.results.messages.submitted_title')}</span>
+                      <span dir={textDirection} className={textAlignment + ' font-medium'}>{t('exams.results.messages.submitted_title')}</span>
                     </div>
-                    <p className="text-green-600 text-sm mt-1">
+                    <p dir={textDirection} className={`text-green-600 text-sm mt-1 ${textAlignment}`}>
                       {t('exams.results.messages.submitted_desc')}
                     </p>
                   </div>
@@ -438,9 +439,9 @@ const StudentResultsPage = () => {
                   <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
                     <div className="flex items-center gap-2 text-orange-800">
                       <FileX className="h-5 w-5" />
-                      <span className="font-medium">{t('exams.results.messages.available_title')}</span>
+                      <span dir={textDirection} className={textAlignment + ' font-medium'}>{t('exams.results.messages.available_title')}</span>
                     </div>
-                    <p className="text-orange-600 text-sm mt-1">
+                    <p dir={textDirection} className={`text-orange-600 text-sm mt-1 ${textAlignment}`}>
                       {t('exams.results.messages.available_desc')}
                     </p>
                   </div>
@@ -453,11 +454,11 @@ const StudentResultsPage = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
+                <div dir={textDirection} className={textAlignment}>
                   <p className="text-sm font-medium text-blue-800">{t('exams.results.stats.total')}</p>
                   <p className="text-2xl font-bold text-blue-900">{exams.length}</p>
                 </div>
@@ -469,7 +470,7 @@ const StudentResultsPage = () => {
           <Card className="bg-green-50 border-green-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
+                <div dir={textDirection} className={textAlignment}>
                   <p className="text-sm font-medium text-green-800">{t('exams.results.stats.submitted')}</p>
                   <p className="text-2xl font-bold text-green-900">{submittedExams.length}</p>
                 </div>
@@ -478,10 +479,10 @@ const StudentResultsPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-orange-50 border-orange-200">
+          <Card className="col-span-2 bg-orange-50 border-orange-200 lg:col-span-1">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
+                <div dir={textDirection} className={textAlignment}>
                   <p className="text-sm font-medium text-orange-800">{t('exams.results.stats.available')}</p>
                   <p className="text-2xl font-bold text-orange-900">{notSubmittedExams.length}</p>
                 </div>

@@ -288,16 +288,17 @@ const AdminDashboard = () => {
 
     return (
       <motion.div
+        className="h-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ scale: 1.02 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+        <Card className="h-full min-h-[220px] overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl lg:min-h-0">
           <div className="absolute top-0 right-0 w-24 h-24 opacity-5">
             <div className={`w-full h-full bg-gradient-to-br from-${color}-500 to-${color}-700`} />
           </div>
-          <CardContent className="p-6 relative">
+          <CardContent className="p-4 relative sm:p-6">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1 flex items-center gap-1">
@@ -916,7 +917,7 @@ const AdminDashboard = () => {
         )}
 
         {/* بطاقات الإحصائيات السريعة */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
           <QuickStatCard
             title={t('admin.dashboard.stats.users')}
             value={stats?.usersCount || 0}
@@ -953,7 +954,7 @@ const AdminDashboard = () => {
             change={stats?.growthRates?.questions || 0}
             icon={<HelpCircle className="h-5 w-5" />}
             color="orange"
-            subtitle={`${t('admin.common.average')} ${stats?.averages?.questionsPerExam?.toFixed(1) || 0} ${t('admin.dashboard.stats.per_exam')}`}
+            subtitle={`${t('common.average')} ${stats?.averages?.questionsPerExam?.toFixed(1) || 0} ${t('admin.dashboard.stats.per_exam')}`}
             tooltip={t('admin.dashboard.stats.questions_tooltip')}
           />
         </div>

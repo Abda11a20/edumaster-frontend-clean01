@@ -80,9 +80,6 @@ const AdminLessons = () => {
       } else if (response && response.data && Array.isArray(response.data.lessons)) {
         lessonsArray = response.data.lessons
         pagination = response.data.pagination ?? null
-      } else if (response && response.lessons && Array.isArray(response.lessons)) {
-        lessonsArray = response.lessons
-        pagination = response.pagination ?? null
       } else {
         lessonsArray = response?.lessons ?? response?.data ?? response?.items ?? []
         if (!Array.isArray(lessonsArray)) lessonsArray = []
@@ -146,12 +143,64 @@ const AdminLessons = () => {
         return
       }
 
+      if (formData.description.trim().length < 10) {
+        toast({
+          title: t('admin.lessons.messages.error'),
+          description: t('admin.lessons.messages.description_min_length'),
+          variant: 'destructive'
+        })
+        return
+      }
+
+      if (formData.description.length > 1000) {
+        toast({
+          title: t('admin.lessons.messages.error'),
+          description: t('admin.lessons.messages.description_max_length'),
+          variant: 'destructive'
+        })
+        return
+      }
+
+      if (!Number.isFinite(Number(formData.price)) || Number(formData.price) < 0) {
+        toast({
+          title: t('admin.lessons.messages.error'),
+          description: t('admin.lessons.messages.price_non_negative'),
+          variant: 'destructive'
+        })
+        return
+      }
+
+      if (!editingLesson) {
+        const youtubeUrlPattern = /^(https?:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/
+        if (!formData.video.trim() || !youtubeUrlPattern.test(formData.video.trim())) {
+          toast({
+            title: t('admin.lessons.messages.error'),
+            description: t('admin.lessons.messages.youtube_url_required'),
+            variant: 'destructive'
+          })
+          return
+        }
+
+        const scheduledDate = new Date(`${formData.scheduledDate}T00:00:00.000Z`)
+        if (!formData.scheduledDate || Number.isNaN(scheduledDate.getTime()) || scheduledDate <= new Date()) {
+          toast({
+            title: t('admin.lessons.messages.error'),
+            description: t('admin.lessons.messages.scheduled_date_future'),
+            variant: 'destructive'
+          })
+          return
+        }
+      }
+
+      const videoWasClearedDuringEdit = Boolean(editingLesson) && !formData.video.trim()
       const lessonData = {
         title: formData.title,
         description: formData.description,
-        video: formData.video,
         classLevel: formData.classLevel,
         price: parseInt(formData.price) || 0,
+      }
+      if (!editingLesson || !videoWasClearedDuringEdit) {
+        lessonData.video = formData.video
       }
 
       console.log('بيانات الدرس المرسلة:', lessonData)
@@ -160,10 +209,12 @@ const AdminLessons = () => {
         await lessonsAPI.updateLesson(editingLesson._id, lessonData)
         toast({
           title: t('admin.lessons.messages.update_success'),
-          description: t('admin.lessons.messages.update_success_desc')
+          description: t(videoWasClearedDuringEdit
+            ? 'admin.lessons.messages.video_url_preserved'
+            : 'admin.lessons.messages.update_success_desc')
         })
       } else {
-        lessonData.scheduledDate = formData.scheduledDate || new Date().toISOString().split('T')[0]
+        lessonData.scheduledDate = formData.scheduledDate
         await lessonsAPI.createLesson(lessonData)
         toast({
           title: t('admin.lessons.messages.add_success'),
@@ -344,13 +395,13 @@ const AdminLessons = () => {
         </Card>
 
         {isDialogOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
+            <Card className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto">
               <CardHeader>
                 <CardTitle>{editingLesson ? t('admin.lessons.edit_title') : t('admin.lessons.add_new')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 [&_input]:w-full [&_[data-slot=select-trigger]]:w-full">
                   <div className="space-y-2">
                     <Label htmlFor="title">{t('admin.lessons.form.title')}</Label>
                     <Input
@@ -376,8 +427,10 @@ const AdminLessons = () => {
                       type="url"
                       value={formData.video}
                       onChange={(e) => setFormData({ ...formData, video: e.target.value })}
-                      placeholder="https://example.com/video.mp4"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      required={!editingLesson}
                     />
+                    <p className="text-sm text-muted-foreground">{t('admin.lessons.form.video_help')}</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="classLevel">{t('admin.lessons.form.level')}</Label>
@@ -385,7 +438,7 @@ const AdminLessons = () => {
                       value={formData.classLevel}
                       onValueChange={(value) => setFormData({ ...formData, classLevel: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder={t('admin.lessons.filter.level_placeholder')} />
                       </SelectTrigger>
                       <SelectContent>
@@ -415,15 +468,20 @@ const AdminLessons = () => {
                         type="date"
                         value={formData.scheduledDate}
                         onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-                        className="pl-10"
+                        required={!editingLesson}
+                        disabled={Boolean(editingLesson)}
+                        className="w-full pl-10"
                       />
                     </div>
+                    {editingLesson && (
+                      <p className="text-sm text-muted-foreground">{t('admin.lessons.form.date_edit_unavailable')}</p>
+                    )}
                   </div>
-                  <div className="flex space-x-2 pt-4">
-                    <Button type="submit">
+                  <div className="grid grid-cols-2 gap-2 pt-4">
+                    <Button type="submit" className="w-full">
                       {editingLesson ? t('admin.lessons.form.update') : t('admin.lessons.form.save')}
                     </Button>
-                    <Button variant="outline" onClick={() => {
+                    <Button type="button" variant="outline" className="w-full" onClick={() => {
                       setIsDialogOpen(false)
                       setEditingLesson(null)
                     }}>

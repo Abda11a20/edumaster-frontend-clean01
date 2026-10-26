@@ -7,7 +7,6 @@ import { NotificationsProvider } from './contexts/NotificationsContext'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as SonnerToaster } from 'sonner'
 import { I18nProvider } from './i18n/I18nProvider'
-import { initializeInterceptor } from './services/apiInterceptor'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
@@ -40,7 +39,6 @@ import AdminAdmins from './pages/admin/AdminAdmins'
 import AdminQuestions from './pages/admin/AdminQuestions'
 import AdminExamResults from './pages/admin/AdminExamResults'
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
-import DebugPage from './pages/DebugPage'
 
 import './App.css'
 
@@ -128,12 +126,6 @@ function AppContent() {
               </ProtectedRoute>
             } />
 
-            {/* Debug Page */}
-            <Route path="/debug" element={
-              <ProtectedRoute>
-                <DebugPage />
-              </ProtectedRoute>
-            } />
 
             {/* Admin Routes */}
             <Route path="/super-admin" element={
@@ -261,12 +253,6 @@ function App() {
     }
   }, [toast])
 
-  // Initialize API interceptor with language getter
-  useEffect(() => {
-    // Get language from localStorage (same as I18nProvider)
-    const getLang = () => localStorage.getItem('language') || 'en';
-    initializeInterceptor(getLang);
-  }, []);
 
   return (
     <I18nProvider>

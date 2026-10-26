@@ -49,6 +49,8 @@ import { useTranslation } from '../hooks/useTranslation';
 
 const ProfilePage = () => {
   const { t, lang } = useTranslation();
+  const textDirection = lang === 'ar' ? 'rtl' : 'ltr';
+  const textAlignment = lang === 'ar' ? 'text-right' : 'text-left';
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -178,7 +180,7 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div dir={textDirection} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -187,16 +189,16 @@ const ProfilePage = () => {
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 dir={textDirection} className={`text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 ${textAlignment}`}>
                 {t('profile.title')}
               </h1>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+              <p dir={textDirection} className={`text-sm sm:text-base text-gray-600 dark:text-gray-300 ${textAlignment}`}>
                 {t('profile.subtitle')}
               </p>
             </div>
             <Badge variant="outline" className="mt-2 sm:mt-0 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               <User className="h-3 w-3 ml-1" />
-              {user?.role === 'admin' ? t('profile.role.admin') : t('profile.role.student')}
+              <span dir={textDirection}>{user?.role === 'admin' ? t('profile.role.admin') : t('profile.role.student')}</span>
             </Badge>
           </div>
         </motion.div>
@@ -217,9 +219,9 @@ const ProfilePage = () => {
                         <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                           <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <span>{t('profile.user_info.title')}</span>
+                        <span dir={textDirection} className={textAlignment}>{t('profile.user_info.title')}</span>
                       </CardTitle>
-                      <CardDescription className="mt-2">
+                      <CardDescription dir={textDirection} className={`mt-2 ${textAlignment}`}>
                         {t('profile.user_info.subtitle')}
                       </CardDescription>
                     </div>
@@ -230,7 +232,7 @@ const ProfilePage = () => {
                         className="border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                       >
                         <Edit className="h-4 w-4 ml-2" />
-                        {t('profile.user_info.edit')}
+                        <span dir={textDirection}>{t('profile.user_info.edit')}</span>
                       </Button>
                     ) : null}
                   </div>
@@ -243,7 +245,7 @@ const ProfilePage = () => {
                         <div className="space-y-2">
                           <Label htmlFor="fullName" className="flex items-center gap-2 text-sm font-medium">
                             <User className="h-4 w-4 text-gray-500" />
-                            {t('profile.user_info.full_name')}
+                            <span dir={textDirection}>{t('profile.user_info.full_name')}</span>
                           </Label>
                           <Input
                             id="fullName"
@@ -251,7 +253,8 @@ const ProfilePage = () => {
                             value={editForm.fullName}
                             onChange={handleInputChange}
                             required
-                            className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            dir={textDirection}
+                            className={`w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${textAlignment}`}
                             placeholder={t('profile.user_info.placeholder.name')}
                           />
                         </div>
@@ -259,7 +262,7 @@ const ProfilePage = () => {
                         <div className="space-y-2">
                           <Label htmlFor="email" className="flex items-center gap-2 text-sm font-medium">
                             <Mail className="h-4 w-4 text-gray-500" />
-                            {t('profile.user_info.email')}
+                            <span dir={textDirection}>{t('profile.user_info.email')}</span>
                           </Label>
                           <Input
                             id="email"
@@ -268,7 +271,8 @@ const ProfilePage = () => {
                             value={editForm.email}
                             onChange={handleInputChange}
                             required
-                            className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            dir={textDirection}
+                            className={`w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${textAlignment}`}
                             placeholder={t('profile.user_info.placeholder.email')}
                           />
                         </div>
@@ -276,14 +280,15 @@ const ProfilePage = () => {
                         <div className="space-y-2">
                           <Label htmlFor="phoneNumber" className="flex items-center gap-2 text-sm font-medium">
                             <Phone className="h-4 w-4 text-gray-500" />
-                            {t('profile.user_info.phone')}
+                            <span dir={textDirection}>{t('profile.user_info.phone')}</span>
                           </Label>
                           <Input
                             id="phoneNumber"
                             name="phoneNumber"
                             value={editForm.phoneNumber}
                             onChange={handleInputChange}
-                            className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            dir={textDirection}
+                            className={`w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${textAlignment}`}
                             placeholder={t('profile.user_info.placeholder.phone')}
                           />
                         </div>
@@ -291,14 +296,15 @@ const ProfilePage = () => {
                         <div className="space-y-2">
                           <Label htmlFor="classLevel" className="flex items-center gap-2 text-sm font-medium">
                             <GraduationCap className="h-4 w-4 text-gray-500" />
-                            {t('profile.user_info.class_level')}
+                            <span dir={textDirection}>{t('profile.user_info.class_level')}</span>
                           </Label>
                           <Input
                             id="classLevel"
                             name="classLevel"
                             value={editForm.classLevel}
                             onChange={handleInputChange}
-                            className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            dir={textDirection}
+                            className={`w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${textAlignment}`}
                             placeholder={t('profile.user_info.placeholder.class')}
                           />
                         </div>
@@ -307,7 +313,7 @@ const ProfilePage = () => {
                       <div className="flex gap-3 pt-4">
                         <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
                           <Save className="h-4 w-4 ml-2" />
-                          {t('profile.actions.save')}
+                          <span dir={textDirection}>{t('profile.actions.save')}</span>
                         </Button>
                         <Button
                           type="button"
@@ -316,7 +322,7 @@ const ProfilePage = () => {
                           className="flex-1"
                         >
                           <X className="h-4 w-4 ml-2" />
-                          {t('profile.actions.cancel')}
+                          <span dir={textDirection}>{t('profile.actions.cancel')}</span>
                         </Button>
                       </div>
                     </form>
@@ -328,8 +334,8 @@ const ProfilePage = () => {
                             <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('profile.user_info.full_name')}</p>
-                            <p className="font-semibold text-gray-900 dark:text-white mt-1">
+                            <p dir={textDirection} className={`text-sm font-medium text-gray-500 dark:text-gray-400 ${textAlignment}`}>{t('profile.user_info.full_name')}</p>
+                            <p dir={textDirection} className={`font-semibold text-gray-900 dark:text-white mt-1 ${textAlignment}`}>
                               {userData?.fullName || userData?.name || t('profile.user_info.unknown')}
                             </p>
                           </div>
@@ -340,8 +346,8 @@ const ProfilePage = () => {
                             <Mail className="h-5 w-5 text-green-600 dark:text-green-400" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('profile.user_info.email')}</p>
-                            <p className="font-semibold text-gray-900 dark:text-white mt-1">
+                            <p dir={textDirection} className={`text-sm font-medium text-gray-500 dark:text-gray-400 ${textAlignment}`}>{t('profile.user_info.email')}</p>
+                            <p dir={textDirection} className={`font-semibold text-gray-900 dark:text-white mt-1 ${textAlignment}`}>
                               {userData?.email || t('profile.user_info.unknown')}
                             </p>
                           </div>
@@ -352,8 +358,8 @@ const ProfilePage = () => {
                             <Phone className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('profile.user_info.phone')}</p>
-                            <p className="font-semibold text-gray-900 dark:text-white mt-1">
+                            <p dir={textDirection} className={`text-sm font-medium text-gray-500 dark:text-gray-400 ${textAlignment}`}>{t('profile.user_info.phone')}</p>
+                            <p dir={textDirection} className={`font-semibold text-gray-900 dark:text-white mt-1 ${textAlignment}`}>
                               {userData?.phoneNumber || t('profile.user_info.unknown')}
                             </p>
                           </div>
@@ -364,8 +370,8 @@ const ProfilePage = () => {
                             <GraduationCap className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('profile.user_info.class_level')}</p>
-                            <p className="font-semibold text-gray-900 dark:text-white mt-1">
+                            <p dir={textDirection} className={`text-sm font-medium text-gray-500 dark:text-gray-400 ${textAlignment}`}>{t('profile.user_info.class_level')}</p>
+                            <p dir={textDirection} className={`font-semibold text-gray-900 dark:text-white mt-1 ${textAlignment}`}>
                               {userData?.classLevel || t('profile.user_info.unknown')}
                             </p>
                           </div>
@@ -376,12 +382,12 @@ const ProfilePage = () => {
                             <Calendar className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('profile.user_info.join_date')}</p>
+                            <p dir={textDirection} className={`text-sm font-medium text-gray-500 dark:text-gray-400 ${textAlignment}`}>{t('profile.user_info.join_date')}</p>
                             <p className="font-semibold text-gray-900 dark:text-white mt-1 flex items-center gap-2">
-                              {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US') : t('profile.user_info.unknown')}
+                              <span dir={textDirection}>{userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US') : t('profile.user_info.unknown')}</span>
                               <Badge variant="outline" className="text-xs">
                                 <Clock className="h-3 w-3 ml-1" />
-                                {t('profile.user_info.days_since', { days: userData?.createdAt ? Math.floor((new Date() - new Date(userData.createdAt)) / (1000 * 60 * 60 * 24)) : 0 })}
+                                <span dir={textDirection}>{t('profile.user_info.days_since', { days: userData?.createdAt ? Math.floor((new Date() - new Date(userData.createdAt)) / (1000 * 60 * 60 * 24)) : 0 })}</span>
                               </Badge>
                             </p>
                           </div>
@@ -408,9 +414,9 @@ const ProfilePage = () => {
                     <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
                       <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     </div>
-                    {t('profile.account_management.title')}
+                    <span dir={textDirection} className={textAlignment}>{t('profile.account_management.title')}</span>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription dir={textDirection} className={textAlignment}>
                     {t('profile.account_management.subtitle')}
                   </CardDescription>
                 </CardHeader>
@@ -422,7 +428,7 @@ const ProfilePage = () => {
                     onClick={logout}
                   >
                     <LogOut className="h-4 w-4 ml-2 text-gray-600 dark:text-gray-400" />
-                    {t('profile.account_management.logout')}
+                    <span dir={textDirection}>{t('profile.account_management.logout')}</span>
                   </Button>
 
                   <Separator />
@@ -434,7 +440,7 @@ const ProfilePage = () => {
                       onClick={() => setIsChangePasswordOpen(true)}
                     >
                       <Key className="h-4 w-4 ml-2 text-blue-600 dark:text-blue-400" />
-                      {t('profile.account_management.change_password')}
+                      <span dir={textDirection}>{t('profile.account_management.change_password')}</span>
                     </Button>
 
                     <Button
@@ -443,7 +449,7 @@ const ProfilePage = () => {
                       onClick={() => navigate('/settings')}
                     >
                       <Settings className="h-4 w-4 ml-2 text-purple-600 dark:text-purple-400" />
-                      {t('common.settings')}
+                      <span dir={textDirection}>{t('common.settings')}</span>
                     </Button>
 
                     <Button
@@ -452,7 +458,7 @@ const ProfilePage = () => {
                       onClick={() => navigate('/tips')}
                     >
                       <BookOpen className="h-4 w-4 ml-2 text-green-600 dark:text-green-400" />
-                      {t('profile.account_management.tips')}
+                      <span dir={textDirection}>{t('profile.account_management.tips')}</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -471,41 +477,41 @@ const ProfilePage = () => {
                     <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                       <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
-                    {t('profile.account_status.title')}
+                    <span dir={textDirection} className={textAlignment}>{t('profile.account_status.title')}</span>
                   </CardTitle>
                 </CardHeader>
 
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{t('profile.user_info.email')}</span>
+                      <span dir={textDirection} className={`text-sm text-gray-600 dark:text-gray-400 ${textAlignment}`}>{t('profile.user_info.email')}</span>
                       <Badge variant="outline" className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                         <CheckCircle className="h-3 w-3 ml-1" />
-                        {t('profile.account_status.active')}
+                        <span dir={textDirection}>{t('profile.account_status.active')}</span>
                       </Badge>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{t('profile.user_info.phone')}</span>
+                      <span dir={textDirection} className={`text-sm text-gray-600 dark:text-gray-400 ${textAlignment}`}>{t('profile.user_info.phone')}</span>
                       <Badge variant="outline" className={userData?.phoneNumber ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400"}>
                         {userData?.phoneNumber ? (
                           <>
                             <CheckCircle className="h-3 w-3 ml-1" />
-                            {t('profile.account_status.active')}
+                            <span dir={textDirection}>{t('profile.account_status.active')}</span>
                           </>
                         ) : (
                           <>
                             <AlertCircle className="h-3 w-3 ml-1" />
-                            {t('profile.account_status.not_added')}
+                            <span dir={textDirection}>{t('profile.account_status.not_added')}</span>
                           </>
                         )}
                       </Badge>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{t('profile.account_status.type')}</span>
+                      <span dir={textDirection} className={`text-sm text-gray-600 dark:text-gray-400 ${textAlignment}`}>{t('profile.account_status.type')}</span>
                       <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-                        {user?.role === 'admin' ? t('profile.role.admin') : t('profile.role.student')}
+                        <span dir={textDirection}>{user?.role === 'admin' ? t('profile.role.admin') : t('profile.role.student')}</span>
                       </Badge>
                     </div>
                   </div>
@@ -525,9 +531,9 @@ const ProfilePage = () => {
                     <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
                       <Trash2 className="h-5 w-5" />
                     </div>
-                    {t('profile.danger_zone.title')}
+                    <span dir={textDirection} className={textAlignment}>{t('profile.danger_zone.title')}</span>
                   </CardTitle>
-                  <CardDescription className="text-red-500 dark:text-red-400">
+                  <CardDescription dir={textDirection} className={`text-red-500 dark:text-red-400 ${textAlignment}`}>
                     {t('profile.danger_zone.subtitle')}
                   </CardDescription>
                 </CardHeader>
@@ -541,16 +547,16 @@ const ProfilePage = () => {
                         disabled={isDeleting}
                       >
                         <Trash2 className="h-4 w-4 ml-2" />
-                        {isDeleting ? t('profile.danger_zone.deleting') : t('profile.danger_zone.delete_account')}
+                        <span dir={textDirection}>{isDeleting ? t('profile.danger_zone.deleting') : t('profile.danger_zone.delete_account')}</span>
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="border-red-200 dark:border-red-900">
                       <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
                           <AlertCircle className="h-5 w-5" />
-                          {t('profile.danger_zone.dialog.title')}
+                          <span dir={textDirection} className={textAlignment}>{t('profile.danger_zone.dialog.title')}</span>
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
+                        <AlertDialogDescription dir={textDirection} className={`text-gray-600 dark:text-gray-300 ${textAlignment}`}>
                           <div className="space-y-2 mt-2">
                             <p>{t('profile.danger_zone.dialog.description')}</p>
                             <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md border border-red-200 dark:border-red-800 mt-3">
@@ -566,14 +572,14 @@ const ProfilePage = () => {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel className="border-gray-300 dark:border-gray-600">
-                          {t('profile.danger_zone.dialog.cancel')}
+                          <span dir={textDirection}>{t('profile.danger_zone.dialog.cancel')}</span>
                         </AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDeleteAccount}
                           className="bg-red-600 hover:bg-red-700 text-white"
                           disabled={isDeleting}
                         >
-                          {isDeleting ? t('profile.danger_zone.deleting') : t('profile.danger_zone.dialog.confirm')}
+                          <span dir={textDirection}>{isDeleting ? t('profile.danger_zone.deleting') : t('profile.danger_zone.dialog.confirm')}</span>
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

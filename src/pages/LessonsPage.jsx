@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Search,
-  Filter,
   Play,
   Clock,
   Star,
@@ -24,7 +23,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -60,13 +59,14 @@ const LessonsPage = () => {
   const [lessons, setLessons] = useState([])
   const [filteredLessons, setFilteredLessons] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [lessonsError, setLessonsError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedClassLevel, setSelectedClassLevel] = useState('all')
   const [sortBy, setSortBy] = useState('title')
   const [sortOrder, setSortOrder] = useState('asc')
   const [viewMode, setViewMode] = useState('grid')
   const [processingLessonId, setProcessingLessonId] = useState(null)
   const [purchasedLessons, setPurchasedLessons] = useState(new Set())
+  const [purchasedLessonsError, setPurchasedLessonsError] = useState(null)
   const [activeTab, setActiveTab] = useState('all')
 
   // حالة إدارة تشغيل الفيديو
@@ -78,62 +78,81 @@ const LessonsPage = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const lessonRequestId = useRef(0)
 
   const { toast } = useToast()
-
-  const classLevels = [
-    { value: 'all', label: t('class_levels.all') },
-    { value: 'Grade 1 Secondary', label: t('class_levels.grade1') },
-    { value: 'Grade 2 Secondary', label: t('class_levels.grade2') },
-    { value: 'Grade 3 Secondary', label: t('class_levels.grade3') }
-  ]
 
   // دالة إدارة تشغيل الفيديو
   const handleVideoPlay = useCallback((lessonId) => {
     setActiveVideoId(lessonId); // تشغيل الفيديو الجديد فقط، بدون تبديل
   }, []);
 
-  // دالة تحميل صفحة من الدروس
-  const fetchLessonsPage = async (p = 1, append = false) => {
+  // Fetch all matching criteria server-side; purchased lessons come from their unpaginated endpoint.
+  const fetchLessonsPage = useCallback(async (p = 1, append = false) => {
+    const requestId = ++lessonRequestId.current
     try {
       if (append) setIsLoadingMore(true)
       else setIsLoading(true)
+      setLessonsError(null)
 
-      const response = await lessonsAPI.getAllLessons({ page: p, limit })
-
-      let lessonsData = []
-      let pagination = null
-
-      if (Array.isArray(response)) {
-        lessonsData = response
-        pagination = null
-      } else if (response?.lessons || response?.data?.lessons) {
-        lessonsData = response.lessons ?? response.data.lessons
-        pagination = response.pagination ?? response.data.pagination
-      } else if (response?.data && Array.isArray(response.data)) {
-        lessonsData = response.data
-      } else if (response?.data?.items) {
-        lessonsData = response.data.items
-        pagination = response.data.pagination ?? null
-      } else if (response?.data) {
-        if (Array.isArray(response.data)) {
-          lessonsData = response.data
-        } else if (response.data.lessons) {
-          lessonsData = response.data.lessons
-          pagination = response.data.pagination ?? null
-        } else {
-          lessonsData = response.lessons ?? response.items ?? []
-        }
+      let lessonsData
+      let pagination
+      if (activeTab === 'purchased') {
+        lessonsData = await lessonsAPI.getPurchasedLessons()
+        pagination = { total: lessonsData.length, totalPages: 1, page: 1 }
       } else {
-        lessonsData = response.lessons ?? response.items ?? []
+        const response = await lessonsAPI.getAllLessons({
+          page: p,
+          limit,
+          title: searchQuery.trim() || undefined,
+          classLevel: undefined,
+          sortBy,
+          sortOrder
+        })
+
+        if (Array.isArray(response?.data)) {
+          lessonsData = response.data
+          pagination = response.pagination ?? null
+        } else if (Array.isArray(response?.lessons)) {
+          lessonsData = response.lessons
+          pagination = response.pagination ?? null
+        } else if (Array.isArray(response?.data?.lessons)) {
+          lessonsData = response.data.lessons
+          pagination = response.pagination ?? response.data.pagination ?? null
+        } else if (Array.isArray(response?.data?.items)) {
+          lessonsData = response.data.items
+          pagination = response.pagination ?? response.data.pagination ?? null
+        } else if (Array.isArray(response)) {
+          lessonsData = response
+          pagination = null
+        } else {
+          const error = new Error('Unexpected lessons response')
+          error.code = 'INVALID_LESSONS_RESPONSE'
+          throw error
+        }
+      }
+
+      if (!Array.isArray(lessonsData) || !lessonsData.every(lesson =>
+        lesson && typeof lesson === 'object' && !Array.isArray(lesson) && typeof lesson._id === 'string'
+      )) {
+        const error = new Error('Unexpected lessons data')
+        error.code = 'INVALID_LESSONS_RESPONSE'
+        throw error
+      }
+
+      if (requestId !== lessonRequestId.current) return
+
+      if (activeTab === 'purchased') {
+        setPurchasedLessons(new Set(lessonsData.map(lesson => lesson._id)))
+        setPurchasedLessonsError(null)
       }
 
       if (append) {
         setLessons(prev => {
           const merged = [...prev]
-          const existingIds = new Set(prev.map(l => l._id))
-          lessonsData.forEach(l => {
-            if (!existingIds.has(l._id)) merged.push(l)
+          const existingIds = new Set(prev.map(lesson => lesson._id))
+          lessonsData.forEach(lesson => {
+            if (!existingIds.has(lesson._id)) merged.push(lesson)
           })
           return merged
         })
@@ -141,42 +160,44 @@ const LessonsPage = () => {
         setLessons(Array.isArray(lessonsData) ? lessonsData : [])
       }
 
-      // تحديث بيانات الدروس في خدمة البحث
-      if (Array.isArray(lessonsData)) {
-        SearchService.updateLessonsData(lessonsData);
-      }
+      SearchService.updateLessonsData(lessonsData)
 
       if (pagination) {
-        setTotal(pagination.total ?? (pagination.totalItems ?? 0))
-        setTotalPages(pagination.totalPages ?? Math.ceil((pagination.total ?? 0) / (pagination.limit ?? limit)))
+        setTotal(pagination.total ?? pagination.totalItems ?? lessonsData.length)
+        setTotalPages(pagination.totalPages ?? Math.ceil((pagination.total ?? lessonsData.length) / limit))
         setPage(pagination.page ?? p)
       } else {
-        const returnedCount = Array.isArray(lessonsData) ? lessonsData.length : 0
-        if (!append) {
-          setPage(p)
-        }
-        if (returnedCount === limit) {
-          setTotalPages(p + 1)
-        } else {
-          setTotalPages(p)
-        }
-        setTotal(prev => {
-          const currentCount = append ? prev + returnedCount : returnedCount
-          return currentCount
-        })
+        const returnedCount = lessonsData.length
+        if (!append) setPage(p)
+        setTotalPages(returnedCount === limit ? p + 1 : p)
+        setTotal(prev => append ? prev + returnedCount : returnedCount)
       }
     } catch (error) {
+      if (requestId !== lessonRequestId.current) return
       console.error('Error fetching lessons:', error)
+      const errorMessageKey = error.code === 'INVALID_LESSONS_RESPONSE'
+        ? 'lessons.messages.invalid_response'
+        : activeTab === 'purchased'
+          ? 'lessons.messages.fetch_purchased_error'
+          : 'lessons.messages.fetch_error'
+      setLessonsError({ messageKey: errorMessageKey, page: p, append })
+      if (!append) {
+        setLessons([])
+        setTotal(0)
+        setTotalPages(1)
+      }
       toast({
-        title: t('lessons.messages.fetch_error'),
+        title: t(errorMessageKey),
         description: error.message || t('auth.login.error_connection_desc'),
         variant: 'destructive'
       })
     } finally {
-      setIsLoading(false)
-      setIsLoadingMore(false)
+      if (requestId === lessonRequestId.current) {
+        setIsLoading(false)
+        setIsLoadingMore(false)
+      }
     }
-  }
+  }, [activeTab, limit, searchQuery, sortBy, sortOrder, toast, t])
 
   // دالة تحميل الدروس المشتراة
   const fetchPurchasedLessons = async () => {
@@ -184,8 +205,10 @@ const LessonsPage = () => {
       const purchased = await lessonsAPI.getPurchasedLessons()
       const purchasedIds = new Set(purchased.map(lesson => lesson._id))
       setPurchasedLessons(purchasedIds)
+      setPurchasedLessonsError(null)
     } catch (error) {
       console.error('Error fetching purchased lessons:', error)
+      setPurchasedLessonsError(t('lessons.messages.fetch_purchased_error'))
       toast({
         title: t('lessons.messages.fetch_purchased_error'),
         description: t('common.error'),
@@ -197,68 +220,67 @@ const LessonsPage = () => {
   // دالة إعادة تعيين الفلاتر
   const resetFilters = () => {
     setSearchQuery('')
-    setSelectedClassLevel('all')
     setSortBy('title')
     setSortOrder('asc')
   }
 
   useEffect(() => {
-    fetchLessonsPage(1, false)
     fetchPurchasedLessons()
   }, [])
 
   useEffect(() => {
+    setPage(1)
+    const timeoutId = setTimeout(() => fetchLessonsPage(1, false), 250)
+    return () => clearTimeout(timeoutId)
+  }, [fetchLessonsPage])
+
+  useEffect(() => {
     let filtered = Array.isArray(lessons) ? lessons.slice() : []
 
-    // تطبيق الفلتر حسب التبويب النشط
+    // Purchased lessons are fetched as a complete list, so their controls can safely filter locally.
     if (activeTab === 'purchased') {
       filtered = filtered.filter(lesson => purchasedLessons.has(lesson._id))
-    }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        filtered = filtered.filter(lesson =>
+          String(lesson.title || '').toLowerCase().includes(q) ||
+          String(lesson.description || '').toLowerCase().includes(q)
+        )
+      }
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(lesson =>
-        String(lesson.title || '').toLowerCase().includes(q) ||
-        String(lesson.description || '').toLowerCase().includes(q)
-      )
-    }
+      filtered.sort((a, b) => {
+        let aValue = a?.[sortBy]
+        let bValue = b?.[sortBy]
 
-    if (selectedClassLevel !== 'all') {
-      filtered = filtered.filter(lesson => lesson.classLevel === selectedClassLevel)
-    }
-
-    const safeToSort = Array.isArray(filtered) ? [...filtered] : []
-    const sorted = safeToSort.sort((a, b) => {
-      let aValue = a?.[sortBy]
-      let bValue = b?.[sortBy]
-
-      if (sortBy === 'price') {
-        aValue = parseFloat(aValue) || 0
-        bValue = parseFloat(bValue) || 0
-      } else {
-        aValue = aValue == null ? '' : String(aValue)
-        bValue = bValue == null ? '' : String(bValue)
-        const aIsDate = !isNaN(Date.parse(aValue))
-        const bIsDate = !isNaN(Date.parse(bValue))
-        if (aIsDate && bIsDate) {
-          const diff = new Date(aValue) - new Date(bValue)
-          return sortOrder === 'asc' ? diff : -diff
+        if (sortBy === 'price') {
+          aValue = parseFloat(aValue) || 0
+          bValue = parseFloat(bValue) || 0
+        } else {
+          aValue = aValue == null ? '' : String(aValue)
+          bValue = bValue == null ? '' : String(bValue)
+          const aIsDate = !isNaN(Date.parse(aValue))
+          const bIsDate = !isNaN(Date.parse(bValue))
+          if (aIsDate && bIsDate) {
+            const diff = new Date(aValue) - new Date(bValue)
+            return sortOrder === 'asc' ? diff : -diff
+          }
+          aValue = aValue.toLowerCase()
+          bValue = bValue.toLowerCase()
         }
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
-      }
 
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0
-      } else {
+        if (sortOrder === 'asc') {
+          return aValue > bValue ? 1 : aValue < bValue ? -1 : 0
+        }
         return aValue < bValue ? 1 : aValue > bValue ? -1 : 0
-      }
-    })
+      })
+    }
 
-    setFilteredLessons(sorted)
-  }, [lessons, searchQuery, selectedClassLevel, sortBy, sortOrder, activeTab, purchasedLessons])
+    setFilteredLessons(filtered)
+  }, [lessons, searchQuery, sortBy, sortOrder, activeTab, purchasedLessons])
 
-  const handlePurchaseLesson = async (lessonId, lessonTitle) => {
+  const handlePurchaseLesson = async (lessonId, lessonTitle, price) => {
+    if (price === 0) return
+
     try {
       setProcessingLessonId(lessonId)
 
@@ -325,6 +347,8 @@ const LessonsPage = () => {
 
   const LessonCard = ({ lesson, index }) => {
     const isPurchased = purchasedLessons.has(lesson._id)
+    const isFree = lesson.price === 0
+    const hasAccess = isPurchased || isFree
     const isProcessing = processingLessonId === lesson._id
     const isVideoPlaying = activeVideoId === lesson._id
 
@@ -335,23 +359,17 @@ const LessonsPage = () => {
         transition={{ duration: 0.6, delay: index * 0.1 }}
         className="h-full"
       >
-        <Card className="h-full hover:shadow-lg transition-all duration-300 group border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800 flex flex-col">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-base sm:text-lg mb-1 sm:mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">
+        <Card className="h-full gap-3 sm:gap-6 hover:shadow-lg transition-all duration-300 group border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-800 flex flex-col">
+          <CardHeader className="px-3 pb-3 sm:px-6">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-sm sm:text-lg mb-1 sm:mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 break-words">
                   {lesson.title}
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm line-clamp-2">
-                  {lesson.description}
-                </CardDescription>
               </div>
-              <div className="flex flex-col items-end gap-1 sm:gap-2">
-                <Badge variant="secondary" className="text-xs px-2 py-0 h-5">
-                  {lesson.classLevel}
-                </Badge>
+              <div className="flex max-w-full flex-wrap items-center gap-1 sm:flex-col sm:items-end sm:gap-2">
                 {isPurchased && (
-                  <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-xs px-2 py-0 h-5">
+                  <Badge variant="default" className="max-w-full truncate bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 h-5">
                     <Check className="h-2.5 w-2.5 ml-0.5" />
                     {t('lessons.card.purchased')}
                   </Badge>
@@ -360,11 +378,11 @@ const LessonsPage = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="flex-1 flex flex-col">
-            <div className="space-y-3 sm:space-y-4 flex-1">
+          <CardContent className="flex-1 flex flex-col px-3 sm:px-6">
+            <div className="flex flex-1 flex-col gap-3 sm:gap-4">
               {lesson.video && (
-                <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-video border-2 border-gray-200 dark:border-gray-700">
-                  {isPurchased ? (
+                <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden aspect-square lg:aspect-video border-2 border-gray-200 dark:border-gray-700">
+                  {hasAccess ? (
                     <YouTubeSecurePlayer
                       videoId={extractYouTubeId(lesson.video)}
                       title={lesson.title}
@@ -393,64 +411,63 @@ const LessonsPage = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2 sm:gap-4">
                   <div className="flex items-center">
                     <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-current" />
                     <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">4.8</span>
                   </div>
                   <div className="flex items-center">
                     <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">120 {t('common.students')}</span>
+                    <span className="whitespace-nowrap text-xs sm:text-sm text-gray-600 dark:text-gray-300">120 {t('common.students')}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center">
+                <div className="flex shrink-0 items-center">
                   <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
                   <span className="text-base sm:text-lg font-bold text-green-600">{lesson.price}</span>
                   <span className="text-xs sm:text-sm text-gray-500 mr-0.5 sm:mr-1">{t('common.price_currency')}</span>
                 </div>
               </div>
 
-              <div className="flex space-x-1 sm:space-x-2 mt-auto">
-                <Link to={`/lessons/${lesson._id}`} className="flex-1">
-                  <Button variant="outline" className="w-full text-xs sm:text-sm h-8 sm:h-10">
-                    <Eye className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
-                    <span className="hidden xs:inline">{t('lessons.card.details')}</span>
-                    <span className="xs:hidden">{t('common.details')}</span>
+              <div className="mt-auto grid grid-cols-2 gap-1 sm:flex sm:gap-0 sm:space-x-2">
+                <Link to={`/lessons/${lesson._id}`} state={{ lesson }} className={`min-w-0 sm:flex-1 ${isFree ? 'col-span-2 sm:col-span-1' : ''}`}>
+                  <Button variant="outline" className="h-8 w-full min-w-0 px-1 text-[11px] sm:h-10 sm:px-3 sm:text-sm">
+                    <span className="hidden truncate sm:inline">{t('lessons.card.details')}</span>
+                    <span className="truncate sm:hidden">{t('common.details')}</span>
                   </Button>
                 </Link>
 
                 {isPurchased ? (
-                  <Button className="flex-1 text-xs sm:text-sm h-8 sm:h-10" variant="outline" disabled>
-                    <Check className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
-                    <span className="hidden xs:inline">{t('lessons.card.purchased')}</span>
-                    <span className="xs:hidden">{t('common.purchased')}</span>
+                  <Button className="h-8 min-w-0 px-1 text-[11px] sm:h-10 sm:flex-1 sm:px-3 sm:text-sm" variant="outline" disabled>
+                    <Check className="h-3 w-3 shrink-0 sm:h-4 sm:w-4 sm:ml-2" />
+                    <span className="hidden truncate sm:inline">{t('lessons.card.purchased')}</span>
+                    <span className="truncate sm:hidden">{t('common.purchased')}</span>
                   </Button>
-                ) : (
+                ) : !isFree ? (
                   <Button
-                    onClick={() => handlePurchaseLesson(lesson._id, lesson.title)}
-                    className="flex-1 text-xs sm:text-sm h-8 sm:h-10"
+                    onClick={() => handlePurchaseLesson(lesson._id, lesson.title, lesson.price)}
+                    className="h-8 min-w-0 px-1 text-[11px] sm:h-10 sm:flex-1 sm:px-3 sm:text-sm"
                     disabled={isProcessing}
                   >
                     {isProcessing ? (
                       <>
-                        <Loader className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 animate-spin" />
-                        <span>{t('lessons.card.processing')}</span>
+                        <Loader className="h-3 w-3 shrink-0 animate-spin sm:h-4 sm:w-4 sm:ml-2" />
+                        <span className="hidden truncate sm:inline">{t('lessons.card.processing')}</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
-                        <span className="hidden xs:inline">{t('lessons.card.buy')}</span>
-                        <span className="xs:hidden">{t('common.buy')}</span>
+                        <ShoppingBag className="h-3 w-3 shrink-0 sm:h-4 sm:w-4 sm:ml-2" />
+                        <span className="hidden truncate sm:inline">{t('lessons.card.buy')}</span>
+                        <span className="truncate sm:hidden">{t('common.buy')}</span>
                       </>
                     )}
                   </Button>
-                )}
+                ) : null}
               </div>
 
               {isProcessing && (
-                <div className="text-center text-xs sm:text-sm text-blue-600 dark:text-blue-400">
+                <div className="break-words text-center text-[10px] sm:text-sm text-blue-600 dark:text-blue-400">
                   <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 inline ml-0.5 sm:ml-1" />
                   {t('lessons.card.payment_redirect')}
                 </div>
@@ -464,6 +481,8 @@ const LessonsPage = () => {
 
   const LessonListItem = ({ lesson, index }) => {
     const isPurchased = purchasedLessons.has(lesson._id)
+    const isFree = lesson.price === 0
+    const hasAccess = isPurchased || isFree
     const isProcessing = processingLessonId === lesson._id
     const isVideoPlaying = activeVideoId === lesson._id
 
@@ -478,7 +497,7 @@ const LessonsPage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                  {isPurchased ? (
+                  {hasAccess ? (
                     <div className="w-full h-full">
                       <YouTubeSecurePlayer
                         videoId={extractYouTubeId(lesson.video)}
@@ -507,7 +526,6 @@ const LessonsPage = () => {
                     {lesson.description}
                   </p>
                   <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-                    <Badge variant="secondary" className="text-xs px-2 py-0 h-5">{lesson.classLevel}</Badge>
                     <div className="flex items-center">
                       <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-current" />
                       <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">4.8</span>
@@ -530,7 +548,7 @@ const LessonsPage = () => {
                 </div>
 
                 <div className="flex space-x-1 sm:space-x-2">
-                  <Link to={`/lessons/${lesson._id}`}>
+                  <Link to={`/lessons/${lesson._id}`} state={{ lesson }}>
                     <Button variant="outline" size="sm" className="h-8 text-xs sm:text-sm">
                       <Eye className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" />
                       <span className="hidden sm:inline">{t('common.details')}</span>
@@ -543,10 +561,10 @@ const LessonsPage = () => {
                       <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">{t('lessons.card.purchased')}</span>
                     </Button>
-                  ) : (
+                  ) : !isFree ? (
                     <Button
                       size="sm"
-                      onClick={() => handlePurchaseLesson(lesson._id, lesson.title)}
+                      onClick={() => handlePurchaseLesson(lesson._id, lesson.title, lesson.price)}
                       disabled={isProcessing}
                       className="h-8 text-xs sm:text-sm"
                     >
@@ -560,7 +578,7 @@ const LessonsPage = () => {
                         </>
                       )}
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -631,6 +649,12 @@ const LessonsPage = () => {
               </TabsTrigger>
             </TabsList>
           </Tabs>
+          {purchasedLessonsError && activeTab === 'purchased' && (
+            <div role="alert" className="mt-3 flex items-center justify-between rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <span>{purchasedLessonsError}</span>
+              <Button variant="outline" size="sm" onClick={fetchPurchasedLessons}>{t('common.retry')}</Button>
+            </div>
+          )}
         </motion.div>
 
         {/* شريط البحث والفلترة */}
@@ -651,29 +675,13 @@ const LessonsPage = () => {
                       placeholder={t('lessons.search_placeholder')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pr-8 sm:pr-10 pl-3 text-xs sm:text-sm"
+                      className="w-full pr-8 sm:pr-10 pl-3 text-xs sm:text-sm"
                     />
                   </div>
                 </div>
 
                 {/* صف الفلاتر */}
                 <div className="grid grid-cols-2 md:flex md:flex-row gap-2 sm:gap-3">
-                  {/* المرحلة الدراسية */}
-                  <div className="col-span-2 md:w-40 lg:w-48">
-                    <Select value={selectedClassLevel} onValueChange={setSelectedClassLevel}>
-                      <SelectTrigger className="w-full text-xs sm:text-sm">
-                        <SelectValue placeholder={t('lessons.filters.class_level')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classLevels.map((level) => (
-                          <SelectItem key={level.value} value={level.value} className="text-xs sm:text-sm">
-                            {level.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   {/* الترتيب */}
                   <div className="col-span-1 md:w-32">
                     <Select value={sortBy} onValueChange={setSortBy}>
@@ -776,10 +784,23 @@ const LessonsPage = () => {
         </motion.div>
 
         {/* عرض الدروس */}
-        {filteredLessons.length > 0 ? (
+        {lessonsError && (
+          <div role="alert" className="mb-4 flex items-center justify-between rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <span>{t(lessonsError.messageKey)}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchLessonsPage(lessonsError.page, lessonsError.append)}
+            >
+              {t('common.retry')}
+            </Button>
+          </div>
+        )}
+
+        {lessonsError && !lessonsError.append ? null : filteredLessons.length > 0 ? (
           <div>
             {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {filteredLessons.map((lesson, index) => (
                   <LessonCard key={lesson._id} lesson={lesson} index={index} />
                 ))}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { BookOpen, Clock, User, CreditCard, Check, Loader, Download, FileText, Play, Shield, ArrowLeft, GraduationCap, Video, Infinity } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -35,13 +35,18 @@ const extractYouTubeId = (url) => {
 const LessonDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t, lang } = useTranslation()
   const [lesson, setLesson] = useState(null)
+  const [detailForbidden, setDetailForbidden] = useState(false)
   const [isPurchased, setIsPurchased] = useState(false)
+  const [purchaseStatusError, setPurchaseStatusError] = useState(null)
   const [isPurchasing, setIsPurchasing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('content')
   const { toast } = useToast()
+  const isFree = lesson?.price === 0
+  const hasAccess = (isPurchased || isFree) && !detailForbidden
 
   // دالة للتحقق من حالة الشراء من الباك إند و localStorage
   const checkPurchaseStatus = async () => {
@@ -50,8 +55,10 @@ const LessonDetailPage = () => {
       const purchasedLessons = await lessonsAPI.getPurchasedLessons()
       const purchased = purchasedLessons.some(l => l._id === id)
       setIsPurchased(purchased)
+      setPurchaseStatusError(null)
       return purchased
     } catch (e) {
+      setPurchaseStatusError(t('lessons.messages.fetch_purchased_error'))
       // في حالة الخطأ، تحقق من localStorage
       try {
         const raw = localStorage.getItem('purchasedLessonIds')
@@ -70,13 +77,25 @@ const LessonDetailPage = () => {
     const fetchLessonData = async () => {
       try {
         setIsLoading(true)
+        setLesson(null)
+        setDetailForbidden(false)
         const lessonData = await lessonsAPI.getLessonById(id)
         setLesson(lessonData.data || lessonData)
+        setDetailForbidden(false)
 
         // Check if user purchased the lesson
         await checkPurchaseStatus()
       } catch (error) {
         console.error('Error fetching lesson data:', error)
+        if (error.status === 403) {
+          const listLesson = location.state?.lesson
+          setDetailForbidden(true)
+          if (listLesson?._id != null && String(listLesson._id) === String(id)) {
+            setLesson(listLesson)
+            await checkPurchaseStatus()
+          }
+          return
+        }
         toast({
           title: t('dashboard.error_load'),
           description: t('lessons.messages.fetch_error'),
@@ -88,7 +107,7 @@ const LessonDetailPage = () => {
     }
 
     fetchLessonData()
-  }, [id, toast, t])
+  }, [id, location.state, toast, t])
 
   // استماع لتغييرات localStorage (للتحديث التلقائي عند الشراء من تبويب آخر)
   useEffect(() => {
@@ -112,6 +131,8 @@ const LessonDetailPage = () => {
   }, [id])
 
   const handlePurchase = async () => {
+    if (lesson?.price === 0) return
+
     try {
       setIsPurchasing(true)
 
@@ -120,6 +141,7 @@ const LessonDetailPage = () => {
       if (response.success && response.paymentUrl) {
         window.open(response.paymentUrl, '_blank', 'noopener,noreferrer')
         setIsPurchased(true)
+        setDetailForbidden(false)
         try {
           const raw = localStorage.getItem('purchasedLessonIds')
           const ids = raw ? JSON.parse(raw) : []
@@ -165,8 +187,13 @@ const LessonDetailPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="flex items-center justify-center h-96">
-          <p className="text-gray-600 dark:text-gray-300">{t('common.not_found')}</p>
+        <div className="flex flex-col items-center justify-center h-96 gap-4">
+          <p className="text-gray-600 dark:text-gray-300">
+            {detailForbidden ? t('lessons.messages.fetch_error') : t('common.not_found')}
+          </p>
+          <Button variant="outline" onClick={() => navigate('/lessons')}>
+            {t('common.back')}
+          </Button>
         </div>
       </div>
     )
@@ -177,6 +204,11 @@ const LessonDetailPage = () => {
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {purchaseStatusError && (
+          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {purchaseStatusError}
+          </div>
+        )}
         {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -233,7 +265,7 @@ const LessonDetailPage = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="lg:col-span-2 space-y-6"
           >
-            {isPurchased ? (
+            {hasAccess ? (
               // المحتوى مفتوح - عرض الفيديو
               <Card>
                 <CardHeader>
@@ -372,7 +404,7 @@ const LessonDetailPage = () => {
                 </div>
 
                 {/* Action Button */}
-                <Button
+                {!isFree && <Button
                   className={`w-full h-12 text-base font-semibold shadow-lg transition-all duration-300 ${isPurchased
                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
                     : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white'
@@ -396,7 +428,7 @@ const LessonDetailPage = () => {
                       {t('lessons.detail.subscribe_now')}
                     </>
                   )}
-                </Button>
+                </Button>}
               </CardContent>
             </Card>
           </motion.div>

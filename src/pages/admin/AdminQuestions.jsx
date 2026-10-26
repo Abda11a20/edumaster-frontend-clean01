@@ -21,6 +21,7 @@ const AdminQuestions = () => {
   const [examFilter, setExamFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState(null)
@@ -42,6 +43,7 @@ const AdminQuestions = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true)
+        setLoadError(null)
         const [questionsData, examsData] = await Promise.all([
           questionsAPI.getAllQuestions(),
           examsAPI.getAllExams()
@@ -51,6 +53,7 @@ const AdminQuestions = () => {
         setExams(examsData)
       } catch (error) {
         console.error('Error fetching data:', error)
+        setLoadError(t('admin.questions.messages.error_load_desc'))
         toast({
           title: t('admin.questions.messages.error_load'),
           description: t('admin.questions.messages.error_load_desc'),
@@ -298,19 +301,6 @@ const AdminQuestions = () => {
     return exam ? exam.title : t('common.unknown')
   }
 
-  const getTypeText = (type) => {
-    switch (type) {
-      case 'multiple-choice':
-        return t('admin.questions.types.mcq')
-      case 'true-false':
-        return t('admin.questions.types.true_false')
-      case 'short-answer':
-        return t('admin.questions.types.short')
-      default:
-        return type
-    }
-  }
-
   const toggleExpand = (questionId) => {
     if (expandedQuestionId === questionId) {
       setExpandedQuestionId(null)
@@ -360,10 +350,10 @@ const AdminQuestions = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-6"
         >
           <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm">{t('admin.questions.stats.total')}</p>
@@ -375,7 +365,7 @@ const AdminQuestions = () => {
           </Card>
 
           <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-100 text-sm">{t('admin.questions.stats.mcq')}</p>
@@ -388,8 +378,8 @@ const AdminQuestions = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
-            <CardContent className="p-6">
+          <Card className="col-span-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0 lg:col-span-1">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-100 text-sm">{t('admin.questions.stats.target')}</p>
@@ -411,9 +401,9 @@ const AdminQuestions = () => {
           className="mb-6"
         >
           <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative flex-1">
+            <CardContent className="p-3 sm:p-4">
+              <div className="grid grid-cols-2 items-center gap-3 lg:flex lg:flex-row lg:gap-4">
+                <div className="relative col-span-2 min-w-0 lg:flex-1">
                   <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder={t('admin.questions.filter.search')}
@@ -423,10 +413,10 @@ const AdminQuestions = () => {
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-gray-400" />
+                <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+                  <Filter className="hidden h-4 w-4 shrink-0 text-gray-400 sm:block" />
                   <Select value={examFilter} onValueChange={setExamFilter}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="h-9 w-full min-w-0 px-2 text-xs sm:w-[150px] sm:text-sm">
                       <SelectValue placeholder={t('admin.questions.filter.exam_all')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -440,10 +430,10 @@ const AdminQuestions = () => {
                   </Select>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-gray-400" />
+                <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+                  <Filter className="hidden h-4 w-4 shrink-0 text-gray-400 sm:block" />
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="h-9 w-full min-w-0 px-2 text-xs sm:w-[150px] sm:text-sm">
                       <SelectValue placeholder={t('admin.questions.filter.type_all')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -457,6 +447,7 @@ const AdminQuestions = () => {
 
                 <Button
                   variant="outline"
+                  className="col-span-2 h-9 justify-self-end px-3 lg:col-span-1 lg:justify-self-auto"
                   onClick={() => {
                     setSearchTerm('')
                     setExamFilter('all')
@@ -484,17 +475,16 @@ const AdminQuestions = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {filteredQuestions.length > 0 ? (
+              {loadError ? (
+                <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">{loadError}</div>
+              ) : filteredQuestions.length > 0 ? (
                 <div className="space-y-4">
                   {filteredQuestions.map((question) => (
                     <Card key={question._id} className="relative">
-                      <CardContent className="p-6">
+                      <CardContent className="min-w-0 p-4 sm:p-6">
                         <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="outline">
-                                {getTypeText(question.type)}
-                              </Badge>
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-2 flex flex-wrap items-center gap-2">
                               <Badge variant="secondary">
                                 {question.points} {t('admin.questions.form.points')}
                               </Badge>
@@ -504,14 +494,15 @@ const AdminQuestions = () => {
                                 </Badge>
                               )}
                             </div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                            <h3 className="mb-2 break-words font-semibold text-gray-900 dark:text-white">
                               {question.text}
                             </h3>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex shrink-0 items-center gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8 shrink-0"
                               onClick={() => handleOpenDialog(question)}
                             >
                               <Edit className="h-4 w-4" />
@@ -519,6 +510,7 @@ const AdminQuestions = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8 shrink-0"
                               onClick={() => {
                                 setEditingQuestion(question)
                                 setIsDeleteDialogOpen(true)
@@ -529,6 +521,7 @@ const AdminQuestions = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8 shrink-0"
                               onClick={() => toggleExpand(question._id)}
                             >
                               {expandedQuestionId === question._id ? (
@@ -597,7 +590,9 @@ const AdminQuestions = () => {
 
         {/* نافذة إضافة/تعديل السؤال */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="question-form-description">
+          <DialogContent className={editingQuestion
+            ? "!left-[50dvw] !top-[50dvh] !right-auto !bottom-auto !m-0 !translate-x-[-50%] !translate-y-[-50%] max-h-[calc(100dvh_-_3rem)] w-[calc(100dvw_-_3rem)] max-w-[calc(100dvw_-_3rem)] overflow-y-auto p-3 sm:w-full sm:max-w-xl sm:p-5"
+            : "!left-[50dvw] !top-[50dvh] !right-auto !bottom-auto !m-0 !translate-x-[-50%] !translate-y-[-50%] max-h-[calc(100dvh-2rem)] w-[calc(100dvw_-_2rem)] max-w-[calc(100dvw_-_2rem)] overflow-y-auto p-4 sm:max-w-2xl sm:p-6"} aria-describedby="question-form-description">
             <DialogHeader>
               <DialogTitle>
                 {editingQuestion ? t('admin.questions.edit_title') : t('admin.questions.add_new')}
@@ -607,7 +602,7 @@ const AdminQuestions = () => {
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="min-w-0 w-full space-y-4 [&_input]:w-full [&_[data-slot=select-trigger]]:w-full">
               <div>
                 <label className="block text-sm font-medium mb-1">{t('admin.questions.form.text')}</label>
                 <Input
@@ -619,14 +614,14 @@ const AdminQuestions = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium mb-1">{t('admin.questions.form.type')}</label>
                   <Select
                     value={formData.type}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, type: value, correctAnswer: '' }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder={t('admin.questions.form.type_ph')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -655,7 +650,7 @@ const AdminQuestions = () => {
                   value={formData.exam}
                   onValueChange={(value) => setFormData(prev => ({ ...prev, exam: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder={t('admin.questions.form.exam_ph')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -674,17 +669,19 @@ const AdminQuestions = () => {
                   <label className="block text-sm font-medium mb-1">{t('admin.questions.form.options')}</label>
                   <div className="space-y-2">
                     {formData.options.map((option, index) => (
-                      <div key={index} className="flex items-center gap-2">
+                      <div key={index} className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center">
                         <span className="font-medium">{String.fromCharCode(65 + index)}.</span>
                         <Input
                           value={option}
                           onChange={(e) => handleOptionChange(index, e.target.value)}
                           placeholder={t('admin.questions.form.option_ph', { num: index + 1 })}
+                          className="min-w-0 w-full"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
+                          className="shrink-0"
                           onClick={() => removeOption(index)}
                           disabled={formData.options.length <= 2}
                         >
@@ -694,6 +691,7 @@ const AdminQuestions = () => {
                           type="button"
                           variant={formData.correctAnswer === option ? "default" : "outline"}
                           size="sm"
+                          className="col-span-3 w-full sm:col-span-1 sm:w-auto"
                           onClick={() => setFormData(prev => ({ ...prev, correctAnswer: option }))}
                         >
                           {t('admin.questions.list.correct')}
@@ -714,7 +712,7 @@ const AdminQuestions = () => {
                     value={formData.correctAnswer}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, correctAnswer: value }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder={t('admin.questions.form.correct_select')} />
                     </SelectTrigger>
                     <SelectContent>

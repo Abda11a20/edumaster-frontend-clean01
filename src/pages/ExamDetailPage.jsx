@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Clock, Calendar, BarChart3, BookOpen, ArrowLeft, Play, Users, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { Clock, Calendar, BarChart3, BookOpen, ArrowLeft, Play, AlertCircle, CheckCircle, XCircle, Timer, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useToast } from '@/hooks/use-toast'
-import { examsAPI } from '../services/api'
+import { examsAPI, apiRequest } from '../services/api'
+import { ExamState, getExamAttemptState } from '../utils/examState'
 import { timeService } from '../services/timeService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Navbar from '../components/Navbar'
@@ -17,9 +18,10 @@ const ExamDetailPage = () => {
   const { id } = useParams()
   const { t, lang } = useTranslation()
   const [exam, setExam] = useState(null)
-  const [hasAttempt, setHasAttempt] = useState(false)
+  const [attemptState, setAttemptState] = useState(null) // ExamState enum value
   const [isLoading, setIsLoading] = useState(true)
   const [isStarting, setIsStarting] = useState(false)
+  const [isCheckingState, setIsCheckingState] = useState(false)
   const [error, setError] = useState(null)
   const { toast } = useToast()
   const navigate = useNavigate()
@@ -49,12 +51,13 @@ const ExamDetailPage = () => {
 
         setExam(examDetails)
 
-        // Check if user has attempted the exam before
+        // Check attempt state using the state machine
         try {
-          const attempt = await examsAPI.checkExamAttempt(id)
-          setHasAttempt(attempt)
+          const state = await getExamAttemptState(id, apiRequest)
+          setAttemptState(state.state)
         } catch (attemptError) {
-          console.log('Cannot check attempts:', attemptError)
+          console.log('Cannot check attempt state:', attemptError)
+          setAttemptState(ExamState.UNKNOWN)
         }
 
       } catch (error) {
@@ -107,7 +110,7 @@ const ExamDetailPage = () => {
 
       let errorMessage = t('dashboard.error_unknown')
       if (error.message?.includes('already submitted')) {
-        errorMessage = t('exams.detail.alerts.attempted')
+        errorMessage = t('exams.detail.alerts.submitted')
       } else if (error.message?.includes('already started')) {
         errorMessage = t('exams.detail.starting')
         navigate(`/exams/${id}/take`)
@@ -121,6 +124,23 @@ const ExamDetailPage = () => {
       })
     } finally {
       setIsStarting(false)
+    }
+  }
+
+  const handleContinueExam = () => {
+    // Navigate directly to exam — do NOT call startExam (causes duplicates)
+    navigate(`/exams/${id}/take`)
+  }
+
+  const handleRecheckState = async () => {
+    setIsCheckingState(true)
+    try {
+      const state = await getExamAttemptState(id, apiRequest)
+      setAttemptState(state.state)
+    } catch {
+      setAttemptState(ExamState.UNKNOWN)
+    } finally {
+      setIsCheckingState(false)
     }
   }
 
@@ -161,18 +181,174 @@ const ExamDetailPage = () => {
     )
   }
 
-  // Check exam status
+  // Check if exam period is still active (based on endDate)
   const isExamActive = () => {
     if (!exam.endDate) return true
     try {
       const endDate = new Date(exam.endDate)
       return endDate > new Date()
-    } catch (error) {
+    } catch {
       return true
     }
   }
 
   const isActive = isExamActive()
+
+  // ─── Determine the single primary action based on state ────────────────
+
+  const renderActionButtons = () => {
+    // Past endDate overrides everything except viewing results
+    if (!isActive) {
+      if (attemptState === ExamState.SUBMITTED) {
+        return (
+          <Button
+            className="bg-green-600 hover:bg-green-700"
+            onClick={handleViewResult}
+          >
+            <BarChart3 className="h-4 w-4 ml-2" />
+            {t('exams.detail.view_result')}
+          </Button>
+        )
+      }
+      // Past endDate, not submitted → no action possible
+      return (
+        <Button disabled className="opacity-50 cursor-not-allowed">
+          <XCircle className="h-4 w-4 ml-2" />
+          {t('exams.detail.expired_button')}
+        </Button>
+      )
+    }
+
+    switch (attemptState) {
+      case ExamState.NOT_STARTED:
+        return (
+          <Button
+            className="bg-green-600 hover:bg-green-700"
+            onClick={handleStartExam}
+            disabled={isStarting}
+          >
+            {isStarting ? (
+              <>
+                <LoadingSpinner size="sm" className="ml-2" />
+                {t('exams.detail.starting')}
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 ml-2" />
+                {t('exams.detail.start_button')}
+              </>
+            )}
+          </Button>
+        )
+
+      case ExamState.IN_PROGRESS:
+        return (
+          <Button
+            className="bg-yellow-600 hover:bg-yellow-700"
+            onClick={handleContinueExam}
+          >
+            <Timer className="h-4 w-4 ml-2" />
+            {t('exams.detail.continue_button')}
+          </Button>
+        )
+
+      case ExamState.SUBMITTED:
+        return (
+          <Button
+            className="bg-green-600 hover:bg-green-700"
+            onClick={handleViewResult}
+          >
+            <BarChart3 className="h-4 w-4 ml-2" />
+            {t('exams.detail.view_result')}
+          </Button>
+        )
+
+      case ExamState.EXPIRED_UNSUBMITTED:
+        // Time ran out but exam was never submitted. No action possible.
+        return (
+          <Button disabled className="opacity-50 cursor-not-allowed">
+            <XCircle className="h-4 w-4 ml-2" />
+            {t('exams.detail.expired_button')}
+          </Button>
+        )
+
+      case ExamState.UNKNOWN:
+        // Never offer Start here: it could create a duplicate attempt.
+        return (
+          <Button variant="outline" onClick={handleRecheckState} disabled={isCheckingState}>
+            {isCheckingState ? (
+              <LoadingSpinner size="sm" className="ml-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 ml-2" />
+            )}
+            {t('exams.detail.recheck_state')}
+          </Button>
+        )
+
+      default:
+        return null
+    }
+  }
+
+  // ─── Determine the alert message based on state ────────────────────────
+
+  const renderStateAlert = () => {
+    if (!isActive && attemptState !== ExamState.SUBMITTED) {
+      return (
+        <Alert variant="destructive" className="mt-4">
+          <XCircle className="h-5 w-5" />
+          <AlertDescription>
+            {t('exams.detail.past_end_date')}
+          </AlertDescription>
+        </Alert>
+      )
+    }
+
+    switch (attemptState) {
+      case ExamState.SUBMITTED:
+        return (
+          <Alert variant="success" className="mt-4 bg-green-50 text-green-800 border-green-200">
+            <CheckCircle className="h-5 w-5" />
+            <AlertDescription>
+              {t('exams.detail.alerts.submitted')}
+            </AlertDescription>
+          </Alert>
+        )
+
+      case ExamState.IN_PROGRESS:
+        return (
+          <Alert className="mt-4 bg-yellow-50 text-yellow-800 border-yellow-200">
+            <Timer className="h-5 w-5" />
+            <AlertDescription>
+              {t('exams.detail.alerts.in_progress')}
+            </AlertDescription>
+          </Alert>
+        )
+
+      case ExamState.EXPIRED_UNSUBMITTED:
+        return (
+          <Alert variant="destructive" className="mt-4 bg-orange-50 text-orange-800 border-orange-200">
+            <AlertCircle className="h-5 w-5" />
+            <AlertDescription>
+              {t('exams.detail.expired_unsubmitted')}
+            </AlertDescription>
+          </Alert>
+        )
+
+      case ExamState.UNKNOWN:
+        return (
+          <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-5 w-5" />
+            <AlertDescription>
+              {t('exams.detail.state_unknown')}
+            </AlertDescription>
+          </Alert>
+        )
+
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -221,60 +397,13 @@ const ExamDetailPage = () => {
             </div>
 
             <div className="mt-4 md:mt-0 flex flex-col gap-2">
-              {hasAttempt ? (
-                <>
-                  <Button
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={handleViewResult}
-                  >
-                    <BarChart3 className="h-4 w-4 ml-2" />
-                    {t('exams.detail.view_result')}
-                  </Button>
-                  {isActive && (
-                    <Button
-                      variant="outline"
-                      onClick={handleStartExam}
-                      disabled={!isActive || isStarting}
-                    >
-                      {isStarting ? (
-                        <>
-                          <LoadingSpinner size="sm" className="ml-2" />
-                          {t('exams.detail.starting')}
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 ml-2" />
-                          {t('exams.detail.retake')}
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <Button
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={handleStartExam}
-                  disabled={!isActive || isStarting}
-                >
-                  {isStarting ? (
-                    <>
-                      <LoadingSpinner size="sm" className="ml-2" />
-                      {t('exams.detail.starting')}
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 ml-2" />
-                      {isActive ? t('exams.detail.start_button') : t('exams.detail.expired_button')}
-                    </>
-                  )}
-                </Button>
-              )}
+              {renderActionButtons()}
             </div>
           </div>
         </motion.div>
 
         {/* Exam Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -333,8 +462,10 @@ const ExamDetailPage = () => {
         {/* Exam Instructions */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('exams.detail.instructions.title')}</CardTitle>
-            <CardDescription>
+            <CardTitle dir={lang === 'ar' ? 'rtl' : 'ltr'} className={lang === 'ar' ? 'text-right' : 'text-left'}>
+              {t('exams.detail.instructions.title')}
+            </CardTitle>
+            <CardDescription dir={lang === 'ar' ? 'rtl' : 'ltr'} className={lang === 'ar' ? 'text-right' : 'text-left'}>
               {t('exams.detail.instructions.subtitle')}
             </CardDescription>
           </CardHeader>
@@ -342,34 +473,21 @@ const ExamDetailPage = () => {
             <div className="space-y-4">
               <Alert>
                 <AlertCircle className="h-5 w-5" />
-                <AlertDescription>
+                <AlertDescription dir={lang === 'ar' ? 'rtl' : 'ltr'} className={lang === 'ar' ? 'text-right' : 'text-left'}>
                   <strong>{t('exams.detail.instructions.important')}</strong> {t('exams.detail.instructions.important_text')}
                 </AlertDescription>
               </Alert>
 
-              <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
+              <ul
+                dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                className={`list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300 ${lang === 'ar' ? 'text-right' : 'text-left'}`}
+              >
                 {(t('exams.detail.instructions.list', { returnObjects: true }) || []).map((instruction, idx) => (
                   <li key={idx}>{instruction}</li>
                 ))}
               </ul>
 
-              {hasAttempt && (
-                <Alert variant="success" className="mt-4 bg-green-50 text-green-800 border-green-200">
-                  <CheckCircle className="h-5 w-5" />
-                  <AlertDescription>
-                    {t('exams.detail.alerts.attempted')}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {!isActive && (
-                <Alert variant="destructive" className="mt-4">
-                  <XCircle className="h-5 w-5" />
-                  <AlertDescription>
-                    {t('exams.detail.alerts.expired')}
-                  </AlertDescription>
-                </Alert>
-              )}
+              {renderStateAlert()}
             </div>
           </CardContent>
         </Card>

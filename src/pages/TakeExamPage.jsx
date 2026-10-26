@@ -103,12 +103,7 @@ const TakeExamPage = () => {
         // Fallback to individual fetching
       }
 
-      const questionsPromises = ids.map(qid =>
-        questionsAPI.getQuestionById(qid).catch(error => {
-          console.error(`Error fetching question ${qid}:`, error)
-          return null
-        })
-      )
+      const questionsPromises = ids.map(qid => questionsAPI.getQuestionById(qid))
 
       const questionsResponses = await Promise.all(questionsPromises)
 
@@ -130,7 +125,7 @@ const TakeExamPage = () => {
         })
     } catch (error) {
       console.error('Error fetching questions details:', error)
-      return []
+      throw error
     }
   }
 
@@ -154,18 +149,14 @@ const TakeExamPage = () => {
           questionsDetails = await fetchQuestionsDetails(questionList)
         } else {
           // Fallback: exam may not embed questions. Fetch and filter by exam id.
-          try {
-            const allQ = await questionsAPI.getAllQuestions({ page: 1, limit: 1000 })
-            const filtered = (allQ?.data || allQ || []).filter(q => {
-              const ex = q?.exam
-              if (!ex) return false
-              if (typeof ex === 'string') return ex === id
-              return ex?._id === id
-            })
-            questionsDetails = await fetchQuestionsDetails(filtered)
-          } catch (e) {
-            // ignore, will remain empty
-          }
+          const allQ = await questionsAPI.getAllQuestions({ page: 1, limit: 1000 })
+          const filtered = (allQ?.data || allQ || []).filter(q => {
+            const ex = q?.exam
+            if (!ex) return false
+            if (typeof ex === 'string') return ex === id
+            return ex?._id === id
+          })
+          questionsDetails = await fetchQuestionsDetails(filtered)
         }
         setQuestions(questionsDetails)
 
@@ -285,15 +276,39 @@ const TakeExamPage = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [timeExpired, isSubmitting, questions.length])
 
-  useEffect(() => {
-    // Skip timer logic while loading or until we have a valid remainingTime
-    if (isLoading) return
-    if (remainingTime === null) return
+  const handleAutoSubmit = async () => {
+    if (isSubmitting) return
 
-    if (remainingTime <= 0 || timeExpired) {
-      if (remainingTime <= 0 && !timeExpired) {
-        setTimeExpired(true)
-        handleAutoSubmit()
+    toast({
+      title: t('exams.take.time_up'),
+      description: t('exams.take.time_up_desc'),
+      variant: 'default'
+    })
+
+    await handleSubmitExam(true)
+  }
+
+  const autoSubmitRef = useRef(handleAutoSubmit)
+  useEffect(() => {
+    autoSubmitRef.current = handleAutoSubmit
+  })
+
+  // Auto-submit when remaining time reaches the safety buffer (5s before deadline to prevent backend 400 rejection)
+  useEffect(() => {
+    if (!isLoading && remainingTime !== null && remainingTime <= 5 && !timeExpired) {
+      setTimeExpired(true)
+      autoSubmitRef.current?.()
+    }
+  }, [remainingTime, timeExpired, isLoading])
+
+  const hasRemainingTime = remainingTime !== null
+
+  // Countdown interval timer
+  useEffect(() => {
+    if (isLoading || !hasRemainingTime || timeExpired || remainingTime <= 0) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
       }
       return
     }
@@ -306,10 +321,10 @@ const TakeExamPage = () => {
     timerRef.current = setInterval(() => {
       setRemainingTime(prev => {
         if (prev <= 5) {
-          clearInterval(timerRef.current)
-          timerRef.current = null
-          setTimeExpired(true)
-          handleAutoSubmit()
+          if (timerRef.current) {
+            clearInterval(timerRef.current)
+            timerRef.current = null
+          }
           return 0
         }
         return prev - 1
@@ -322,19 +337,8 @@ const TakeExamPage = () => {
         timerRef.current = null
       }
     }
-  }, [remainingTime, timeExpired, isLoading])
-
-  const handleAutoSubmit = async () => {
-    if (isSubmitting) return
-
-    toast({
-      title: t('exams.take.time_up'),
-      description: t('exams.take.time_up_desc'),
-      variant: 'default'
-    })
-
-    await handleSubmitExam(true)
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, timeExpired, hasRemainingTime])
 
   const handleAnswerChange = (questionId, answer) => {
     setAnswers(prev => {
@@ -476,7 +480,7 @@ const TakeExamPage = () => {
   }
 
   const answeredQuestions = Object.values(answers).filter(answer => answer !== null && answer !== '').length
-  const totalQuestions = questions.length
+  const totalQuestions = Math.max(questions.length, Array.isArray(exam?.questions) ? exam.questions.length : 0)
 
   if (isLoading) {
     return (

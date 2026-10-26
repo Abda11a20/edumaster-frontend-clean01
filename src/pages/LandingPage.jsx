@@ -221,7 +221,7 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+              <h1 className="text-4xl leading-[1.45] md:text-6xl md:leading-[1.3] font-bold text-gray-900 dark:text-white mb-6">
                 {t('landing.hero.title_start')}
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                   {t('landing.hero.title_end')}
@@ -280,8 +280,10 @@ const LandingPage = () => {
       <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {t('landing.features.title')}
+            <h2 dir={lang === 'ar' ? 'rtl' : 'ltr'} className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              {lang === 'ar' ? (
+                <>{t('landing.features.title')} <bdi dir="ltr">EduMaster</bdi>؟</>
+              ) : t('landing.features.title')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               {t('landing.features.subtitle')}

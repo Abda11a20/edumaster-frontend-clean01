@@ -16,7 +16,9 @@ const AdminExamResults = () => {
   const [selectedExam, setSelectedExam] = useState('')
   const [scores, setScores] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [examsLoadError, setExamsLoadError] = useState(null)
   const [isFetching, setIsFetching] = useState(false)
+  const [scoresLoadError, setScoresLoadError] = useState(null)
   const [studentName, setStudentName] = useState('')
   const { toast } = useToast()
   const { t, lang } = useTranslation()
@@ -54,10 +56,12 @@ const AdminExamResults = () => {
     const init = async () => {
       try {
         setIsLoading(true)
+        setExamsLoadError(null)
         const res = await examsAPI.getAllExams({ page: 1, limit: 100 })
         const list = res?.data || res || []
         setExams(Array.isArray(list) ? list : [])
       } catch (error) {
+        setExamsLoadError(t('admin.exam_results.messages.error_load_exams'))
         toast({ title: t('common.error'), description: t('admin.exam_results.messages.error_load_exams'), variant: 'destructive' })
       } finally {
         setIsLoading(false)
@@ -74,6 +78,7 @@ const AdminExamResults = () => {
 
     try {
       setIsFetching(true)
+      setScoresLoadError(null)
       const res = await examsAPI.getAdminExamScores(examId, nameFilter)
       console.log('نتائج الامتحانات:', res) // للتصحيح
 
@@ -98,6 +103,7 @@ const AdminExamResults = () => {
       }
     } catch (error) {
       console.error('خطأ في جلب النتائج:', error)
+      setScoresLoadError(t('admin.exam_results.messages.error_fetch'))
       toast({
         title: t('admin.exam_results.messages.error_fetch'),
         description: error.message || t('common.retry'),
@@ -151,6 +157,16 @@ const AdminExamResults = () => {
               </div>
             ) : (
               <div className="space-y-6">
+                {examsLoadError && (
+                  <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
+                    {examsLoadError}
+                  </div>
+                )}
+                {scoresLoadError && (
+                  <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
+                    {scoresLoadError}
+                  </div>
+                )}
                 <div className="flex flex-col md:flex-row gap-3 items-center">
                   <div className="flex items-center gap-2 w-full md:w-72">
                     <Select value={selectedExam} onValueChange={setSelectedExam}>
@@ -218,7 +234,7 @@ const AdminExamResults = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {scores.length === 0 ? (
+                    {scoresLoadError ? null : scores.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-gray-500 py-8">
                             {selectedExam ? t('admin.exam_results.list.empty') : t('admin.exam_results.list.select_prompt')}

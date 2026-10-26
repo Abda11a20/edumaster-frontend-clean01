@@ -1,6 +1,14 @@
 export const translations = {
   ar: {
     common: {
+      app_name: 'EduMaster',
+      remembered: 'تذكرت كلمة المرور؟',
+      questions: 'الأسئلة',
+      marks: 'الدرجات',
+      untitled: 'بدون عنوان',
+      no_desc: 'لا يوجد وصف متاح',
+      not_found: 'غير موجود',
+      error_occurred: 'حدث خطأ غير متوقع',
       loading: 'جاري التحميل...',
       add: 'إضافة',
       error: 'حدث خطأ',
@@ -117,7 +125,9 @@ export const translations = {
         error_user_not_found: 'البريد الإلكتروني أو رقم الهاتف غير صحيح',
         error_session: 'انتهت جلسة العمل، يرجى تسجيل الدخول مرة أخرى',
         error_connection: 'خطأ في الاتصال',
-        error_connection_desc: 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى'
+        error_connection_desc: 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى',
+        required: 'تسجيل الدخول مطلوب',
+        required_desc: 'يرجى تسجيل الدخول للوصول إلى هذا الاختبار'
       },
       register: {
         title: 'إنشاء حساب جديد',
@@ -128,6 +138,7 @@ export const translations = {
         fullname_placeholder: 'أدخل اسمك الكامل',
         email: 'البريد الإلكتروني',
         email_placeholder: 'أدخل بريدك الإلكتروني',
+        email_spam_notice: 'قد تصل رسالة تأكيد الحساب إلى مجلد الرسائل غير المرغوب فيها. يرجى تفقده إذا لم تجد الرسالة في صندوق الوارد.',
         phone: 'رقم الهاتف',
         phone_placeholder: 'أدخل رقم هاتفك',
         class_level: 'المرحلة الدراسية',
@@ -162,6 +173,7 @@ export const translations = {
         title: 'نسيت كلمة المرور؟',
         subtitle: 'أدخل بريدك الإلكتروني وسنرسل لك رمز إعادة تعيين كلمة المرور',
         back_login: 'العودة لتسجيل الدخول',
+        email: 'البريد الإلكتروني',
         email_placeholder: 'أدخل بريدك الإلكتروني',
         submit: 'إرسال رمز التحقق',
         submitting: 'جاري الإرسال...',
@@ -178,6 +190,8 @@ export const translations = {
         subtitle: 'أدخل رمز التحقق وكلمة المرور الجديدة',
         form_title: 'تعيين كلمة مرور جديدة',
         form_subtitle: 'املأ البيانات التالية لإعادة تعيين كلمة المرور',
+        email: 'البريد الإلكتروني',
+        email_placeholder: 'أدخل بريدك الإلكتروني',
         otp: 'رمز التحقق',
         otp_placeholder: 'أدخل رمز التحقق المرسل إليك',
         new_password: 'كلمة المرور الجديدة',
@@ -352,7 +366,7 @@ export const translations = {
         watch_demo: 'شاهد العرض التوضيحي'
       },
       features: {
-        title: 'لماذا تختار EduMaster?',
+        title: 'لماذا تختار',
         subtitle: 'نوفر لك أحدث التقنيات التعليمية لضمان تجربة تعلم فريدة ومثمرة',
         interactive_lessons: 'دروس تفاعلية',
         interactive_desc: 'محتوى تعليمي غني بالفيديوهات والتمارين التفاعلية',
@@ -432,7 +446,8 @@ export const translations = {
         purchase_error: 'خطأ في عملية الشراء',
         purchase_redirect: 'جاري توجيهك إلى صفحة الدفع',
         fetch_error: 'خطأ في تحميل الدروس',
-        fetch_purchased_error: 'خطأ في تحميل الدروس المشتراة'
+        fetch_purchased_error: 'خطأ في تحميل الدروس المشتراة',
+        invalid_response: 'تعذر عرض الدروس لأن البيانات المستلمة غير صالحة.'
       },
       count_info: 'عرض {count} من {total} درس',
       browse_all: 'تصفح جميع الدروس',
@@ -465,7 +480,8 @@ export const translations = {
         subscribed_success: 'تم الاشتراك بنجاح',
         subscribe_now: 'اشترك الآن',
         no_video: 'لا يوجد فيديو لهذا الدرس',
-        video_content: 'محتوى فيديو تعليمي'
+        video_content: 'محتوى فيديو تعليمي',
+        no_desc: 'لا يوجد وصف متاح لهذا الدرس'
       }
     },
     class_levels: {
@@ -515,7 +531,7 @@ export const translations = {
         type: 'نوع الحساب'
       },
       danger_zone: {
-        title: 'منطقة الخطر',
+        title: 'حذف الحساب',
         subtitle: 'إجراءات غير قابلة للاسترجاع',
         delete_account: 'حذف الحساب نهائيًا',
         deleting: 'جارٍ الحذف...',
@@ -585,7 +601,12 @@ export const translations = {
         retake: 'إعادة الامتحان',
         starting: 'جاري البدء...',
         start_button: 'بدء الامتحان',
+        continue_button: 'متابعة الامتحان',
         expired_button: 'الامتحان منتهي',
+        expired_unsubmitted: 'انتهى وقت المحاولة دون تسليم',
+        past_end_date: 'انتهت فترة الامتحان ولا يمكن البدء',
+        state_unknown: 'تعذّر التحقق من حالة محاولتك. تأكد من الاتصال وحاول مرة أخرى.',
+        recheck_state: 'إعادة التحقق',
         duration: 'المدة',
         questions_count: 'عدد الأسئلة',
         total_score: 'الدرجة النهائية',
@@ -607,8 +628,13 @@ export const translations = {
         },
         alerts: {
           attempted: 'لقد قدمت هذا الامتحان من قبل. يمكنك إعادة الامتحان لتحسين نتيجتك.',
+          submitted: 'تم تسليم هذا الامتحان.',
+          in_progress: 'لديك محاولة جارية لهذا الامتحان.',
           expired: 'هذا الامتحان منتهي الصلاحية. لم يعد بالإمكان تقديمه.'
         }
+      },
+      messages: {
+        fetch_error: 'فشل في تحميل بيانات الاختبار'
       },
       take: {
         time_up: 'انتهى الوقت',
@@ -1082,9 +1108,11 @@ export const translations = {
           title: 'عنوان الدرس *',
           desc: 'الوصف *',
           video: 'رابط الفيديو',
+          video_help: 'أدخل رابط فيديو من YouTube.',
           level: 'المستوى الدراسي *',
           price: 'السعر (جنيه)',
           date: 'الموعد المحدد',
+          date_edit_unavailable: 'لا يمكن تعديل موعد الدرس من هذا النموذج حاليًا.',
           save: 'إضافة',
           update: 'تحديث',
           cancel: 'إلغاء'
@@ -1101,6 +1129,12 @@ export const translations = {
           error_save: 'فشل في حفظ الدرس',
           error_delete: 'فشل في حذف الدرس',
           fill_required: 'يرجى ملء جميع الحقول المطلوبة',
+          description_min_length: 'يجب أن يحتوي الوصف على 10 أحرف على الأقل.',
+          description_max_length: 'يجب ألا يتجاوز وصف الدرس 1000 حرف.',
+          price_non_negative: 'لا يمكن أن يكون سعر الدرس سالبًا.',
+          video_url_preserved: 'لم يتم تغيير رابط الفيديو لأن الباك لا يسمح بمسحه. تم حفظ بقية التعديلات.',
+          youtube_url_required: 'أدخل رابطًا صالحًا لفيديو على YouTube.',
+          scheduled_date_future: 'اختر موعدًا صالحًا في المستقبل.',
           error_load: 'خطأ في تحميل الدروس'
         }
       },
@@ -1148,6 +1182,12 @@ export const translations = {
           error_save: 'فشل في حفظ الامتحان',
           error_delete: 'فشل في حذف الامتحان',
           fill_required: 'يرجى ملء جميع الحقول المطلوبة',
+          title_min_length: 'يجب أن يحتوي عنوان الامتحان على 5 أحرف على الأقل.',
+          duration_min: 'يجب أن تكون مدة الامتحان 10 دقائق على الأقل.',
+          invalid_class_level: 'اختر مستوى دراسيًا صالحًا.',
+          dates_required: 'يرجى إدخال تاريخي بداية الامتحان ونهايته.',
+          invalid_dates: 'أدخل تاريخي بداية ونهاية صالحين.',
+          end_after_start: 'يجب أن يكون تاريخ نهاية الامتحان بعد تاريخ بدايته.',
           error_load: 'خطأ في تحميل الامتحانات'
         }
       },
@@ -1205,6 +1245,7 @@ export const translations = {
           confirm_delete: 'تأكيد الحذف',
           data_loss_warning: 'هل أنت متأكد من أنك تريد حذف هذا السؤال؟ هذا الإجراء لا يمكن التراجع عنه.',
           yes_delete: 'حذف',
+          update: 'تحديث',
           save: 'حفظ',
           cancel: 'إلغاء'
         },
@@ -1362,6 +1403,13 @@ export const translations = {
   en: {
     common: {
       app_name: 'EduMaster',
+      remembered: 'Remembered your password?',
+      questions: 'Questions',
+      marks: 'Marks',
+      untitled: 'Untitled',
+      no_desc: 'No description available',
+      not_found: 'Not Found',
+      error_occurred: 'An unexpected error occurred',
       loading: 'Loading...',
       add: 'Add',
       error: 'An error occurred',
@@ -1480,7 +1528,9 @@ export const translations = {
         error_user_not_found: 'Incorrect email or phone number',
         error_session: 'Session expired, please login again',
         error_connection: 'Connection Error',
-        error_connection_desc: 'Check your internet connection and try again'
+        error_connection_desc: 'Check your internet connection and try again',
+        required: 'Login Required',
+        required_desc: 'Please login to access this exam'
       },
       register: {
         title: 'Create New Account',
@@ -1491,6 +1541,7 @@ export const translations = {
         fullname_placeholder: 'Enter your full name',
         email: 'Email Address',
         email_placeholder: 'Enter your email address',
+        email_spam_notice: 'The account confirmation email may land in your spam folder. Please check it if you do not see the message in your inbox.',
         phone: 'Phone Number',
         phone_placeholder: 'Enter your phone number',
         class_level: 'Class Level',
@@ -1525,6 +1576,7 @@ export const translations = {
         title: 'Forgot Password?',
         subtitle: 'Enter your email and we will send you a password reset code',
         back_login: 'Back to Login',
+        email: 'Email',
         email_placeholder: 'Enter your email',
         submit: 'Send Verification Code',
         submitting: 'Sending...',
@@ -1541,6 +1593,8 @@ export const translations = {
         subtitle: 'Enter verification code and new password',
         form_title: 'Set New Password',
         form_subtitle: 'Fill in the details to reset your password',
+        email: 'Email',
+        email_placeholder: 'Enter your email',
         otp: 'Verification Code',
         otp_placeholder: 'Enter the code sent to you',
         new_password: 'New Password',
@@ -1795,7 +1849,8 @@ export const translations = {
         purchase_error: 'Purchase Error',
         purchase_redirect: 'Redirecting to payment page',
         fetch_error: 'Error fetching lessons',
-        fetch_purchased_error: 'Error fetching purchased lessons'
+        fetch_purchased_error: 'Error fetching purchased lessons',
+        invalid_response: 'Lessons could not be displayed because the response data is invalid.'
       },
       count_info: 'Showing {count} of {total} lessons',
       browse_all: 'Browse all lessons',
@@ -1828,7 +1883,8 @@ export const translations = {
         subscribed_success: 'Subscribed Successfully',
         subscribe_now: 'Subscribe Now',
         no_video: 'No video available for this lesson',
-        video_content: 'Educational video content'
+        video_content: 'Educational video content',
+        no_desc: 'No description available for this lesson'
       }
     },
     class_levels: {
@@ -1948,7 +2004,12 @@ export const translations = {
         retake: 'Retake Exam',
         starting: 'Starting...',
         start_button: 'Start Exam',
+        continue_button: 'Continue Exam',
         expired_button: 'Exam Expired',
+        expired_unsubmitted: 'Time expired without submission',
+        past_end_date: 'Exam period has ended, cannot start',
+        state_unknown: 'Could not check your attempt status. Check your connection and try again.',
+        recheck_state: 'Check again',
         duration: 'Duration',
         questions_count: 'Questions Count',
         total_score: 'Total Score',
@@ -1970,8 +2031,13 @@ export const translations = {
         },
         alerts: {
           attempted: 'You have taken this exam before. You can retake it to improve your score.',
+          submitted: 'This exam has been submitted.',
+          in_progress: 'You have an active attempt for this exam.',
           expired: 'This exam has expired. It can no longer be taken.'
         }
+      },
+      messages: {
+        fetch_error: 'Failed to load exam data'
       },
       take: {
         time_up: 'Time is up',
@@ -2272,8 +2338,6 @@ export const translations = {
     'الاسم الكامل *': 'Full Name *',
     'أحمد محمد': 'Ahmed Mohamed',
     'البريد الإلكتروني *': 'Email *',
-    'ahmed@example.com': 'ahmed@example.com',
-    '01012345678': '01012345678',
     'كلمة المرور *': 'Password *',
     'تأكيد كلمة المرور *': 'Confirm Password *',
     'إلغاء': 'Cancel',
@@ -2541,9 +2605,11 @@ export const translations = {
           title: 'Lesson Title *',
           desc: 'Description *',
           video: 'Video URL',
+          video_help: 'Enter a YouTube video URL.',
           level: 'Class Level *',
           price: 'Price (EGP)',
           date: 'Scheduled Date',
+          date_edit_unavailable: 'The scheduled date cannot currently be changed from this form.',
           save: 'Add',
           update: 'Update',
           cancel: 'Cancel'
@@ -2560,6 +2626,12 @@ export const translations = {
           error_save: 'Failed to save lesson',
           error_delete: 'Failed to delete lesson',
           fill_required: 'Please fill all required fields',
+          description_min_length: 'The description must contain at least 10 characters.',
+          description_max_length: 'The lesson description must not exceed 1000 characters.',
+          price_non_negative: 'The lesson price cannot be negative.',
+          video_url_preserved: 'The video URL was left unchanged because the backend does not allow clearing it. The other changes were saved.',
+          youtube_url_required: 'Enter a valid YouTube video URL.',
+          scheduled_date_future: 'Choose a valid future date.',
           error_load: 'Error loading lessons'
         }
       },
@@ -2607,6 +2679,12 @@ export const translations = {
           error_save: 'Failed to save exam',
           error_delete: 'Failed to delete exam',
           fill_required: 'Please fill all required fields',
+          title_min_length: 'The exam title must contain at least 5 characters.',
+          duration_min: 'The exam duration must be at least 10 minutes.',
+          invalid_class_level: 'Select a valid class level.',
+          dates_required: 'Enter both the exam start and end dates.',
+          invalid_dates: 'Enter valid exam start and end dates.',
+          end_after_start: 'The exam end date must be after its start date.',
           error_load: 'Error loading exams'
         }
       },
@@ -2664,6 +2742,7 @@ export const translations = {
           confirm_delete: 'Confirm Deletion',
           data_loss_warning: 'Are you sure you want to delete this question? This action cannot be undone.',
           yes_delete: 'Delete',
+          update: 'Update',
           save: 'Save',
           cancel: 'Cancel'
         },

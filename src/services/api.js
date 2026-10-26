@@ -4,18 +4,14 @@
  */
 import { showNotification } from './notificationService';
 
-const API_BASE_URL = 'https://edu-master-delta.vercel.app';
+// Use empty string so requests go through Vite proxy (local) or Vercel rewrites (production)
+const API_BASE_URL = '';
 
 // Security configuration
 const SECURITY_CONFIG = {
   MAX_RETRIES: 3,
   RATE_LIMIT_DELAY: 1000,
   CSRF_HEADER: 'X-CSRF-Token',
-  CONTENT_SECURITY_POLICY: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
-  STRICT_TRANSPORT_SECURITY: 'max-age=31536000; includeSubDomains',
-  X_CONTENT_TYPE_OPTIONS: 'nosniff',
-  X_FRAME_OPTIONS: 'DENY',
-  X_XSS_PROTECTION: '1; mode=block',
 };
 
 const secureStorage = {
@@ -46,15 +42,12 @@ const secureStorage = {
 
 const getAuthHeaders = () => {
   const token = secureStorage.get('token');
+  // Only include headers that are allowed in CORS requests.
+  // Browser-security headers (X-Frame-Options, CSP, HSTS, …) must NOT be sent
+  // as request headers — browsers block the preflight when they are present.
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
-    'X-Content-Type-Options': SECURITY_CONFIG.X_CONTENT_TYPE_OPTIONS,
-    'X-Frame-Options': SECURITY_CONFIG.X_FRAME_OPTIONS,
-    'X-XSS-Protection': SECURITY_CONFIG.X_XSS_PROTECTION,
-    'Content-Security-Policy': SECURITY_CONFIG.CONTENT_SECURITY_POLICY,
-    'Strict-Transport-Security': SECURITY_CONFIG.STRICT_TRANSPORT_SECURITY,
   };
 
   if (token) {
@@ -69,7 +62,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-const handleResponse = async (response) => {
+const handleResponse = async (response, { silent = false } = {}) => {
   if (response.status === 404) {
     return null;
   }
@@ -106,9 +99,11 @@ const handleResponse = async (response) => {
 
     const errorMessage = errorData.message || errorData.error || `Connection error: ${response.status}`;
 
-    // Show error notification
-    const lang = localStorage.getItem('language') || 'en';
-    showNotification(errorMessage, { lang, type: 'error', statusCode: response.status });
+    // Show error notification (skipped for silent probes where non-OK is an expected answer)
+    if (!silent) {
+      const lang = localStorage.getItem('language') || 'en';
+      showNotification(errorMessage, { lang, type: 'error', statusCode: response.status });
+    }
 
     const error = new Error(errorMessage);
     error.status = response.status;
@@ -124,7 +119,7 @@ const handleResponse = async (response) => {
   }
 
   // Show success notification if message exists
-  if (data && (data.message || data.msg)) {
+  if (!silent && data && (data.message || data.msg)) {
     const successMessage = data.message || data.msg;
     if (typeof successMessage === 'string' && successMessage.trim()) {
       const lang = localStorage.getItem('language') || 'en';
@@ -135,20 +130,21 @@ const handleResponse = async (response) => {
   return data;
 };
 
-const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
+export const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
   if (!endpoint || typeof endpoint !== 'string') {
     throw new Error('Invalid endpoint');
   }
 
-  const sanitizedEndpoint = endpoint.replace(/[^a-zA-Z0-9-_?=&\/]/g, '');
-  const url = `${API_BASE_URL}${sanitizedEndpoint}`;
+  const url = `${API_BASE_URL}${endpoint}`;
 
+  const { silent = false, ...fetchOptions } = options;
   const headers = getAuthHeaders();
   const config = {
-    method: options.method || 'GET',
-    headers: { ...headers, ...options.headers },
-    credentials: 'same-origin',
-    ...options
+    method: fetchOptions.method || 'GET',
+    headers: { ...headers, ...fetchOptions.headers },
+    // 'omit' avoids the origin:'*' + credentials:true conflict in the backend CORS config
+    credentials: 'omit',
+    ...fetchOptions
   };
 
   if (options.body) {
@@ -165,7 +161,7 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
     }
 
     const response = await fetch(url, config);
-    return await handleResponse(response);
+    return await handleResponse(response, { silent });
 
   } catch (error) {
     if (error.message.includes('Session expired') || error.status === 401) {
@@ -176,7 +172,8 @@ const apiRequest = async (endpoint, options = {}, retryCount = 0) => {
       }
     }
 
-    if (retryCount < SECURITY_CONFIG.MAX_RETRIES &&
+    const isIdempotent = !options.method || options.method.toUpperCase() === 'GET' || options.method.toUpperCase() === 'HEAD';
+    if (isIdempotent && retryCount < SECURITY_CONFIG.MAX_RETRIES &&
       (!error.status || (error.status >= 500 && error.status < 600))) {
       return apiRequest(endpoint, options, retryCount + 1);
     }
@@ -241,8 +238,19 @@ export const authAPI = {
 };
 
 export const lessonsAPI = {
-  getAllLessons: async ({ page = 1, limit = 10 } = {}) => {
-    return apiRequest(`/lesson?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
+  getAllLessons: async ({ page = 1, limit = 10, title, classLevel, sortBy, sortOrder } = {}) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (title) params.set('title', title);
+    if (classLevel) params.set('classLevel', classLevel);
+    if (sortBy) params.set('sortBy', sortBy);
+    if (sortOrder) params.set('sortOrder', sortOrder);
+    const response = await apiRequest(`/lesson?${params.toString()}`);
+    if (response === null) {
+      const error = new Error('Lesson list request failed');
+      error.code = 'LESSONS_FETCH_FAILED';
+      throw error;
+    }
+    return response;
   },
 
   getLessonById: async (id) => {
@@ -250,41 +258,21 @@ export const lessonsAPI = {
   },
 
   getPurchasedLessons: async () => {
-    try {
-      // جلب الدروس المشتراة من الباك إند
-      const response = await apiRequest('/lesson/my/purchased');
-      let lessons = [];
-
-      if (response && response.data) {
-        lessons = Array.isArray(response.data) ? response.data : [];
-      } else if (Array.isArray(response)) {
-        lessons = response;
-      }
-
-      // أيضاً تحقق من localStorage للحالات المحلية
-      try {
-        const localRaw = localStorage.getItem('purchasedLessonIds');
-        const localIds = localRaw ? JSON.parse(localRaw) : [];
-        if (Array.isArray(localIds) && localIds.length > 0) {
-          const existingIds = new Set(lessons.map(l => l?._id));
-          const extras = localIds
-            .filter(id => id && !existingIds.has(id))
-            .map(id => ({ _id: id }));
-          lessons = [...lessons, ...extras];
-        }
-      } catch (e) { }
-
-      return lessons;
-    } catch (error) {
-      // في حالة الخطأ، استخدم localStorage فقط
-      try {
-        const localRaw = localStorage.getItem('purchasedLessonIds');
-        const localIds = localRaw ? JSON.parse(localRaw) : [];
-        return Array.isArray(localIds) ? localIds.map(id => ({ _id: id })) : [];
-      } catch (e) {
-        return [];
-      }
+    const response = await apiRequest('/lesson/my/purchased');
+    if (response === null) {
+      throw new Error('Failed to fetch purchased lessons');
     }
+    const lessons = Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response)
+        ? response
+        : null;
+    if (!lessons) {
+      throw new Error('Unexpected purchased lessons response');
+    }
+    return lessons.filter(lesson =>
+      lesson && typeof lesson === 'object' && !Array.isArray(lesson) && typeof lesson._id === 'string'
+    );
   },
 
   getUserProgress: async () => {
@@ -320,57 +308,49 @@ export const lessonsAPI = {
 
 export const examsAPI = {
   getAllExams: async ({ page = 1, limit = 10 } = {}) => {
-    try {
-      const response = await apiRequest(`/exam?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
+    const response = await apiRequest(`/exam?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
 
-      if (response === null) {
-        return [];
-      }
-
-      if (Array.isArray(response)) {
-        return response;
-      } else if (response && Array.isArray(response.data)) {
-        return response.data;
-      } else if (response && Array.isArray(response.exams)) {
-        return response.exams;
-      } else if (response && response.data && response.data.exams) {
-        return response.data.exams;
-      }
-
-      if (response && typeof response === 'object') {
-        const keys = Object.keys(response);
-        for (const key of keys) {
-          if (Array.isArray(response[key])) {
-            return response[key];
-          }
-        }
-        return [response];
-      }
-
-      return [];
-    } catch (error) {
-      return [];
+    if (response === null) {
+      throw new Error('Failed to fetch exams');
     }
+
+    if (Array.isArray(response)) {
+      return response;
+    } else if (response && Array.isArray(response.data)) {
+      return response.data;
+    } else if (response && Array.isArray(response.exams)) {
+      return response.exams;
+    } else if (response && response.data && response.data.exams) {
+      return response.data.exams;
+    }
+
+    if (response && typeof response === 'object') {
+      const keys = Object.keys(response);
+      for (const key of keys) {
+        if (Array.isArray(response[key])) {
+          return response[key];
+        }
+      }
+      return [response];
+    }
+
+    throw new Error('Unexpected exams response');
   },
 
   getExamById: async (id) => {
-    try {
-      const response = await apiRequest(`/exam/get/${id}`);
+    const response = await apiRequest(`/exam/get/${id}`);
 
-      if (response === null) {
-        throw new Error('Exam not found');
-      }
-
-      if (response.exam) {
-        return { ...response, ...response.exam };
-      } else if (response.data) {
-        return response.data.exam || response.data;
-      }
-
-      return response;
-    } catch (error) {
-      throw error;
+    if (response === null) {
+      throw new Error('Exam not found');
     }
+
+    if (response.exam) {
+      return { ...response, ...response.exam };
+    } else if (response.data) {
+      return response.data.exam || response.data;
+    }
+
+    return response;
   },
 
   getUserProgress: async () => {
@@ -425,34 +405,30 @@ export const examsAPI = {
   },
 
   getExamResult: async (examId) => {
-    try {
-      return await apiRequest(`/studentExam/exams/${examId}`);
-    } catch (error) {
-      throw error;
-    }
+    return apiRequest(`/studentExam/exams/${examId}`);
   },
 
   getAdminExamScores: async (examId, studentName) => {
+    const query = studentName ? `?${new URLSearchParams({ studentName }).toString()}` : '';
+    let response;
     try {
-      const query = studentName ? `?${new URLSearchParams({ studentName }).toString()}` : '';
-      const response = await apiRequest(`/studentExam/exams/${examId}${query}`);
-
-      if (response === null) {
-        return [];
-      }
-
-      if (Array.isArray(response)) {
-        return response;
-      } else if (response && Array.isArray(response.data)) {
-        return response.data;
-      } else if (response && response.scores) {
-        return response.scores;
-      }
-
-      return [];
+      response = await apiRequest(`/studentExam/exams/${examId}${query}`);
     } catch (error) {
-      return [];
+      if (error.status === 404) return [];
+      throw error;
     }
+
+    if (response === null) return [];
+
+    if (Array.isArray(response)) {
+      return response;
+    } else if (response && Array.isArray(response.data)) {
+      return response.data;
+    } else if (response && response.scores) {
+      return response.scores;
+    }
+
+    throw new Error('Unexpected exam scores response');
   },
 
   checkExamAttempt: async (examId) => {
@@ -487,29 +463,25 @@ export const examsAPI = {
 
 export const questionsAPI = {
   getAllQuestions: async ({ page = 1, limit = 10 } = {}) => {
-    try {
-      const response = await apiRequest(`/question?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
-      if (response === null) {
-        return [];
-      }
-      if (Array.isArray(response)) return response;
-      if (Array.isArray(response?.data)) return response.data;
-      if (Array.isArray(response?.questions)) return response.questions;
-      if (Array.isArray(response?.items)) return response.items;
-      if (Array.isArray(response?.data?.questions)) return response.data.questions;
-      if (Array.isArray(response?.data?.items)) return response.data.items;
-      if (response && typeof response === 'object') {
-        const keys = Object.keys(response);
-        for (const key of keys) {
-          if (Array.isArray(response[key])) {
-            return response[key];
-          }
+    const response = await apiRequest(`/question?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`);
+    if (response === null) {
+      throw new Error('Failed to fetch questions');
+    }
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.questions)) return response.questions;
+    if (Array.isArray(response?.items)) return response.items;
+    if (Array.isArray(response?.data?.questions)) return response.data.questions;
+    if (Array.isArray(response?.data?.items)) return response.data.items;
+    if (response && typeof response === 'object') {
+      const keys = Object.keys(response);
+      for (const key of keys) {
+        if (Array.isArray(response[key])) {
+          return response[key];
         }
       }
-      return [];
-    } catch (error) {
-      return [];
     }
+    throw new Error('Unexpected questions response');
   },
 
   getQuestionById: async (id) => {
@@ -562,9 +534,10 @@ export const adminAPI = {
       if (Array.isArray(response.data)) return response.data;
       if (Array.isArray(response.admins)) return response.admins;
 
-      return [];
+      throw new Error('Unexpected admins response');
     } catch (error) {
-      return [];
+      if (error.status === 404) return [];
+      throw error;
     }
   },
 
@@ -578,9 +551,10 @@ export const adminAPI = {
       if (Array.isArray(response.data)) return response.data;
       if (Array.isArray(response.users)) return response.users;
 
-      return [];
+      throw new Error('Unexpected users response');
     } catch (error) {
-      return [];
+      if (error.status === 404) return [];
+      throw error;
     }
   },
 

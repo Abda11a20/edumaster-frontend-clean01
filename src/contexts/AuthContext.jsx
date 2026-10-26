@@ -84,8 +84,14 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('purchasedLessonIds') // مسح الدروس المشتراة عند تسجيل الخروج
+    const savedLang = localStorage.getItem('language')
+    const savedTheme = localStorage.getItem('theme')
+
+    localStorage.clear()
+
+    if (savedLang) localStorage.setItem('language', savedLang)
+    if (savedTheme) localStorage.setItem('theme', savedTheme)
+
     setToken(null)
     setUser(null)
   }

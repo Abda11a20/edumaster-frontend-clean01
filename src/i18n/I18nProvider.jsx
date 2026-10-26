@@ -34,7 +34,10 @@ export const I18nProvider = ({ children }) => {
         }
 
         if (typeof value === 'string') {
-            return value.replace(/\{(\w+)\}/g, (_, k) => params[k] !== undefined ? params[k] : `{${k}}`);
+            return value.replace(/\{\{(\w+)\}\}|\{(\w+)\}/g, (_, k1, k2) => {
+                const k = k1 || k2;
+                return params[k] !== undefined ? params[k] : `{${k}}`;
+            });
         }
 
         return value;

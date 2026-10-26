@@ -1,8 +1,0 @@
-module.exports = {
-  presets: ['@babel/preset-react'],
-  env: {
-    production: {
-      plugins: ['transform-remove-console']
-    }
-  }
-};

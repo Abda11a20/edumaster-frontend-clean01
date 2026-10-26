@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, BarChart3, BookOpen, Search, Filter, CheckCircle, XCircle, Users, AlertCircle } from 'lucide-react'
+import { BookOpen, Search, Filter, CheckCircle, XCircle, Users, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -157,115 +157,49 @@ const ExamsPage = () => {
       }
     }
 
-    const getTimeRemaining = () => {
-      if (!exam.endDate) return t('exams.card.unknown_time')
-
-      try {
-        const endDate = new Date(exam.endDate)
-        const now = new Date()
-        const diffMs = endDate - now
-
-        if (diffMs <= 0) return t('exams.card.expired')
-
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-        const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-
-        if (diffDays > 0) {
-          return `${diffDays} ${t('exams.card.days')} ${diffHours} ${t('exams.card.hours')}`
-        } else if (diffHours > 0) {
-          return `${diffHours} ${t('exams.card.hours')}`
-        } else {
-          const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-          return `${diffMinutes} ${t('exams.card.minutes')}`
-        }
-      } catch (error) {
-        return t('exams.card.unknown_time')
-      }
-    }
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: index * 0.1 }}
       >
-        <Card className="h-full hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <CardTitle className="text-lg">{exam.title}</CardTitle>
-                  {isActive() ? (
-                    <Badge variant="success" className="flex items-center gap-1 bg-green-100 text-green-800 hover:bg-green-200">
-                      <CheckCircle className="h-3 w-3" />
-                      {t('exams.card.active')}
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive" className="flex items-center gap-1">
-                      <XCircle className="h-3 w-3" />
-                      {t('exams.card.expired')}
-                    </Badge>
-                  )}
-                </div>
-                <CardDescription className="text-sm line-clamp-2">
-                  {exam.description}
-                </CardDescription>
-              </div>
-              <Badge variant="secondary" className="ml-2">
-                {exam.subject}
+        <Card className="flex h-full flex-col border border-gray-200 transition-all duration-300 hover:shadow-lg dark:border-gray-700">
+          <CardHeader className="!flex flex-1 flex-col px-3 py-3 sm:px-6">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="secondary" className="max-w-full truncate text-[10px] sm:text-xs">
+                {exam.classLevel || t('common.unknown')}
               </Badge>
+              {isActive() ? (
+                <Badge variant="success" className="flex items-center gap-1 bg-green-100 px-1.5 text-[10px] text-green-800 hover:bg-green-200 sm:text-xs">
+                  <CheckCircle className="h-3 w-3" />
+                  {t('exams.card.active')}
+                </Badge>
+              ) : (
+                <Badge variant="destructive" className="flex items-center gap-1 px-1.5 text-[10px] sm:text-xs">
+                  <XCircle className="h-3 w-3" />
+                  {t('exams.card.expired')}
+                </Badge>
+              )}
+            </div>
+            <div className="mt-2">
+              <CardTitle className="break-words text-sm leading-snug sm:text-lg">
+                {exam.title}
+              </CardTitle>
             </div>
           </CardHeader>
 
-          <CardContent>
-            <div className="space-y-4">
-              {/* Exam Info */}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 text-blue-500 ml-2" />
-                  <div>
-                    <p className="text-gray-500">{t('exams.card.duration')}</p>
-                    <p className="font-semibold">{exam.duration} {t('exams.card.minutes')}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <BookOpen className="h-4 w-4 text-green-500 ml-2" />
-                  <div>
-                    <p className="text-gray-500">{t('exams.card.questions')}</p>
-                    <p className="font-semibold">{exam.questionsCount}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <BarChart3 className="h-4 w-4 text-yellow-500 ml-2" />
-                  <div>
-                    <p className="text-gray-500">{t('exams.card.score')}</p>
-                    <p className="font-semibold">{exam.totalScore}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 text-purple-500 ml-2" />
-                  <div>
-                    <p className="text-gray-500">{t('exams.card.remaining_time')}</p>
-                    <p className="font-semibold">{getTimeRemaining()}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex space-x-2 rtl:space-x-reverse">
-                <Link to={`/exams/${exam._id}`} className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    {t('exams.card.details')}
-                  </Button>
-                </Link>
-                <Link to={`/exams/${exam._id}`} className="flex-1">
-                  <Button className="w-full" disabled={!isActive()}>
-                    {t('exams.card.start')}
-                  </Button>
-                </Link>
-              </div>
+          <CardContent className="mt-auto px-3 pb-3 sm:px-6">
+            <div className="grid grid-cols-2 gap-2">
+              <Link to={`/exams/${exam._id}`} className="flex-1">
+                <Button variant="outline" className="h-9 w-full px-2 text-xs sm:text-sm">
+                  {t('exams.card.details')}
+                </Button>
+              </Link>
+              <Link to={`/exams/${exam._id}`} className="flex-1">
+                <Button className="h-9 w-full px-2 text-xs sm:text-sm" disabled={!isActive()}>
+                  {t('exams.card.start')}
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -390,7 +324,7 @@ const ExamsPage = () => {
 
         {/* Exams Grid */}
         {filteredExams.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 lg:gap-6">
             {filteredExams.map((exam, index) => (
               <ExamCard key={exam._id} exam={exam} index={index} />
             ))}

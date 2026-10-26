@@ -149,19 +149,11 @@ const ResetPasswordPage = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center text-gray-900 dark:text-white">
-                {t('auth.reset_password.form_title')}
-              </CardTitle>
-              <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-                {t('auth.reset_password.form_subtitle')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
-                    {t('auth.login.email_or_phone')}
+                    {t('auth.reset_password.email')}
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400 rtl:right-3 rtl:left-auto" />
@@ -172,7 +164,7 @@ const ResetPasswordPage = () => {
                       placeholder={t('auth.forgot_password.email_placeholder')}
                       value={formData.email}
                       onChange={handleChange}
-                      className="pl-10 rtl:pr-10 rtl:pl-4"
+                      className="w-full pl-10 rtl:pr-10 rtl:pl-4"
                       required
                       disabled={isLoading}
                     />
@@ -192,7 +184,7 @@ const ResetPasswordPage = () => {
                       placeholder={t('auth.reset_password.otp_placeholder')}
                       value={formData.otp}
                       onChange={handleChange}
-                      className="pl-10 rtl:pr-10 rtl:pl-4"
+                      className="w-full pl-10 rtl:pr-10 rtl:pl-4"
                       required
                       disabled={isLoading}
                     />
@@ -212,7 +204,7 @@ const ResetPasswordPage = () => {
                       placeholder={t('auth.reset_password.new_password_placeholder')}
                       value={formData.newPassword}
                       onChange={handleChange}
-                      className="pl-10 pr-10 rtl:pl-10 rtl:pr-4"
+                      className="w-full pl-10 pr-10 rtl:pl-10 rtl:pr-10"
                       required
                       disabled={isLoading}
                     />
@@ -246,7 +238,7 @@ const ResetPasswordPage = () => {
                       placeholder={t('auth.reset_password.confirm_password_placeholder')}
                       value={formData.cpassword}
                       onChange={handleChange}
-                      className="pl-10 pr-10 rtl:pl-10 rtl:pr-4"
+                      className="w-full pl-10 pr-10 rtl:pl-10 rtl:pr-10"
                       required
                       disabled={isLoading}
                     />

@@ -29,11 +29,13 @@ const PaymentPage = () => {
 
         // الحصول على تفاصيل الدرس
         const lessonData = await lessonsAPI.getLessonById(id)
-        setLesson(lessonData)
+        setLesson(lessonData?.data || lessonData)
 
-        // محاكاة عملية الدفع (في الواقع سيكون لديك API حقيقي)
-        simulatePaymentProcess()
-
+        // جلب رابط الدفع الحقيقي من السيرفر
+        const payResponse = await lessonsAPI.payForLesson(id)
+        if (payResponse?.paymentUrl) {
+          setPaymentUrl(payResponse.paymentUrl)
+        }
       } catch (error) {
         console.error('Error initializing payment:', error)
         toast({
@@ -48,62 +50,24 @@ const PaymentPage = () => {
     }
 
     initPayment()
-  }, [id, navigate, toast])
-
-  const simulatePaymentProcess = () => {
-    // في البيئة الحقيقية، ستقوم بالاتصال بـ API الدفع هنا
-    // هذا مجرد محاكاة للتوضيح
-    setTimeout(() => {
-      setPaymentUrl('https://accept.paymob.com/api/acceptance/iframes/823432?payment_token=Z2LTZLaXJsclpQdmVCZlRmWWF0eGNLaGxfaGZmR194VURQS2c=')
-    }, 1500)
-  }
-
-  const handlePayment = async () => {
-    try {
-      setIsProcessing(true)
-
-      // في الوضع التجريبي، نمنح الوصول فوراً
-      setPaymentStatus('success')
-      toast({
-        title: t('payment.status.success'),
-        description: t('payment.status.success_desc'),
-        variant: 'default'
-      })
-
-      // الانتقال إلى صفحة الدرس بعد ثانيتين
-      setTimeout(() => {
-        navigate(`/lessons/${id}`)
-      }, 2000)
-
-    } catch (error) {
-      console.error('Payment error:', error)
-      setPaymentStatus('failed')
-      toast({
-        title: t('payment.status.failed'),
-        description: t('payment.status.failed_desc'),
-        variant: 'destructive'
-      })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
+  }, [id, navigate, toast, t])
 
   const handleExternalPayment = () => {
+    if (!paymentUrl) {
+      toast({
+        title: t('common.error'),
+        description: t('lessons.messages.purchase_error'),
+        variant: 'destructive'
+      })
+      return
+    }
     // فتح صفحة الدفع الخارجية في نافذة جديدة
-    window.open(paymentUrl, '_blank')
-
-    // في الوضع التجريبي، نمنح الوصول فوراً
-    setPaymentStatus('success')
+    window.open(paymentUrl, '_blank', 'noopener,noreferrer')
     toast({
-      title: t('payment.status.success'),
-      description: t('payment.status.success_desc'),
+      title: t('payment.status.pending_title', 'قيد إتمام الدفع'),
+      description: t('payment.status.pending_desc', 'يرجى إكمال الدفع في النافذة المنبثقة ثم العودة للدرس'),
       variant: 'default'
     })
-
-    // الانتقال إلى صفحة الدرس بعد ثانيتين
-    setTimeout(() => {
-      navigate(`/lessons/${id}`)
-    }, 2000)
   }
 
   if (isLoading) {
@@ -256,8 +220,7 @@ const PaymentPage = () => {
                       </p>
                       <Button
                         className="w-full"
-                        onClick={handlePayment}
-                        disabled={isProcessing}
+                        onClick={handleExternalPayment}
                       >
                         {isProcessing ? (
                           <>

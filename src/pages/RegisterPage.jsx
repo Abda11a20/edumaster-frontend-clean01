@@ -262,6 +262,10 @@ const RegisterPage = () => {
                       disabled={isLoading}
                     />
                   </div>
+                  <div role="note" className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2 text-xs leading-relaxed text-blue-800 dark:border-blue-900 dark:bg-blue-900/20 dark:text-blue-200 sm:text-sm">
+                    <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <p>{t('auth.register.email_spam_notice')}</p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -289,7 +293,7 @@ const RegisterPage = () => {
                     {t('auth.register.class_level')}
                   </Label>
                   <Select onValueChange={handleSelectChange} disabled={isLoading}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder={t('auth.register.class_level_placeholder')} />
                     </SelectTrigger>
                     <SelectContent>

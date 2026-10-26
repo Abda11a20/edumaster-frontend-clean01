@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, FileText, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/hooks/use-toast'
@@ -28,6 +29,7 @@ const AdminExams = () => {
     endDate: '',
     isPublished: false
   })
+  const classLevels = ['Grade 1 Secondary', 'Grade 2 Secondary', 'Grade 3 Secondary']
   const { toast } = useToast()
   const { t, lang } = useTranslation()
 
@@ -37,6 +39,7 @@ const AdminExams = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [loadError, setLoadError] = useState(null)
 
   useEffect(() => {
     fetchExamsPage(1, false)
@@ -52,6 +55,7 @@ const AdminExams = () => {
 
   const fetchExamsPage = async (p = 1, append = false) => {
     try {
+      setLoadError(null)
       if (append) setIsLoadingMore(true)
       else setIsLoading(true)
 
@@ -75,9 +79,6 @@ const AdminExams = () => {
       } else if (response && response.data && Array.isArray(response.data.exams)) {
         examsArray = response.data.exams
         pagination = response.data.pagination ?? null
-      } else if (response && response.exams && Array.isArray(response.exams)) {
-        examsArray = response.exams
-        pagination = response.pagination ?? null
       } else {
         examsArray = response?.exams ?? response?.data ?? response?.items ?? []
         if (!Array.isArray(examsArray)) examsArray = []
@@ -116,13 +117,12 @@ const AdminExams = () => {
       }
     } catch (error) {
       console.error('Error fetching exams:', error)
+      setLoadError(t('admin.admins.error_load_desc'))
       toast({
         title: t('admin.exams.messages.error_load'),
         description: t('admin.admins.error_load_desc'),
         variant: 'destructive'
       })
-      setExams([])
-      setFilteredExams([])
     } finally {
       setIsLoading(false)
       setIsLoadingMore(false)
@@ -147,11 +147,44 @@ const AdminExams = () => {
         return
       }
 
+      if (formData.title.trim().length < 5) {
+        toast({ title: t('admin.exams.messages.error'), description: t('admin.exams.messages.title_min_length'), variant: 'destructive' })
+        return
+      }
+
+      const duration = Number(formData.duration)
+      if (!Number.isFinite(duration) || duration < 10) {
+        toast({ title: t('admin.exams.messages.error'), description: t('admin.exams.messages.duration_min'), variant: 'destructive' })
+        return
+      }
+
+      if (!classLevels.includes(formData.classLevel)) {
+        toast({ title: t('admin.exams.messages.error'), description: t('admin.exams.messages.invalid_class_level'), variant: 'destructive' })
+        return
+      }
+
+      if (!formData.startDate || !formData.endDate) {
+        toast({ title: t('admin.exams.messages.error'), description: t('admin.exams.messages.dates_required'), variant: 'destructive' })
+        return
+      }
+
+      const startDate = new Date(`${formData.startDate}T00:00:00.000Z`)
+      const endDate = new Date(`${formData.endDate}T00:00:00.000Z`)
+      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        toast({ title: t('admin.exams.messages.error'), description: t('admin.exams.messages.invalid_dates'), variant: 'destructive' })
+        return
+      }
+
+      if (endDate <= startDate) {
+        toast({ title: t('admin.exams.messages.error'), description: t('admin.exams.messages.end_after_start'), variant: 'destructive' })
+        return
+      }
+
       // تحضير البيانات للإرسال
       const examData = {
-        title: formData.title,
+        title: formData.title.trim(),
         description: formData.description,
-        duration: parseInt(formData.duration) || 0,
+        duration: parseInt(formData.duration, 10),
         classLevel: formData.classLevel,
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -296,7 +329,13 @@ const AdminExams = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredExams.length > 0 ? (
+                  {loadError ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4 text-destructive">
+                        {loadError} <Button variant="link" onClick={() => fetchExamsPage(page, false)}>{t('common.retry')}</Button>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredExams.length > 0 ? (
                     filteredExams.map((exam) => (
                       <TableRow key={exam._id}>
                         <TableCell className="font-medium">{exam.title}</TableCell>
@@ -352,13 +391,13 @@ const AdminExams = () => {
 
         {/* Dialog for Add/Edit Exam */}
         {isDialogOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
+            <Card className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto">
               <CardHeader>
                 <CardTitle>{editingExam ? t('admin.exams.edit_title') : t('admin.exams.add_new')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 [&_input]:w-full [&_[data-slot=select-trigger]]:w-full">
                   <div className="space-y-2">
                     <Label htmlFor="title">{t('admin.exams.form.title')}</Label>
                     <Input
@@ -382,6 +421,7 @@ const AdminExams = () => {
                     <Input
                       id="duration"
                       type="number"
+                      min={10}
                       value={formData.duration}
                       onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
                       required
@@ -389,12 +429,19 @@ const AdminExams = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="classLevel">{t('admin.exams.form.level')}</Label>
-                    <Input
-                      id="classLevel"
+                    <Select
                       value={formData.classLevel}
-                      onChange={(e) => setFormData({ ...formData, classLevel: e.target.value })}
-                      required
-                    />
+                      onValueChange={(value) => setFormData({ ...formData, classLevel: value })}
+                    >
+                      <SelectTrigger id="classLevel" aria-label={t('admin.exams.form.level')} className="w-full">
+                        <SelectValue placeholder={t('admin.exams.form.level')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {classLevels.map((level) => (
+                          <SelectItem key={level} value={level}>{level}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="startDate">{t('admin.exams.form.start_date')}</Label>
@@ -403,6 +450,7 @@ const AdminExams = () => {
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -412,6 +460,7 @@ const AdminExams = () => {
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      required
                     />
                   </div>
                   <div className="flex items-center space-x-2">
@@ -424,11 +473,11 @@ const AdminExams = () => {
                     />
                     <Label htmlFor="isPublished">{t('admin.exams.form.publish')}</Label>
                   </div>
-                  <div className="flex space-x-2 pt-4">
-                    <Button type="submit">
+                  <div className="grid grid-cols-2 gap-2 pt-4">
+                    <Button type="submit" className="w-full">
                       {editingExam ? t('admin.exams.form.update') : t('admin.exams.form.save')}
                     </Button>
-                    <Button variant="outline" onClick={() => {
+                    <Button type="button" variant="outline" className="w-full" onClick={() => {
                       setIsDialogOpen(false)
                       setEditingExam(null)
                     }}>

@@ -90,7 +90,6 @@ const ExamResultPage = () => {
       }
 
       let score = 0
-      let correctAnswers = 0
       let totalQuestions = 0
 
       if (typeof resultData?.score === 'number') {
@@ -107,12 +106,6 @@ const ExamResultPage = () => {
 
       if (examRes?.questions?.length > 0) {
         totalQuestions = examRes.questions.length
-
-        if (percentage === 100) {
-          correctAnswers = totalQuestions
-        } else {
-          correctAnswers = Math.round((percentage / 100) * totalQuestions)
-        }
       }
 
       let timeSpentMinutes = 0
@@ -130,7 +123,6 @@ const ExamResultPage = () => {
         percentage: percentage,
         timeSpentMinutes: timeSpentMinutes,
         completedAt: completedAt,
-        correctAnswers: Math.max(correctAnswers, 0),
         totalQuestions: Math.max(totalQuestions, examRes?.questions?.length || 0)
       }
 
@@ -182,15 +174,50 @@ const ExamResultPage = () => {
     navigate(`/exams/${id}`)
   }
 
+  const escapeHtml = (str) => {
+    if (!str) return ''
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+  }
+
   const handlePrintCertificate = () => {
     const certificateWindow = window.open('', '_blank')
     if (certificateWindow) {
+      const studentName = escapeHtml(user?.fullName || 'الطالب')
+      const examTitle = escapeHtml(examDetails?.title || 'الامتحان')
+      const certificateTitle = escapeHtml(t('exams.examResult.certificate.title'))
+      const forExcellence = escapeHtml(t('exams.examResult.certificate.forExcellence'))
+      const awardedTo = escapeHtml(t('exams.examResult.certificate.awardedTo'))
+      const forAchievement = escapeHtml(t('exams.examResult.certificate.forAchievement'))
+      const exceptionalPerformance = escapeHtml(t('exams.examResult.certificate.exceptionalPerformance'))
+      const statsPercentage = escapeHtml(t('exams.examResult.stats.percentage'))
+      const gradeLabel = escapeHtml(t('exams.examResult.certificate.grade'))
+      const finalScoreLabel = escapeHtml(t('exams.examResult.stats.finalScore'))
+      const officialSeal = escapeHtml(t('exams.examResult.certificate.officialSeal'))
+      const managerName = escapeHtml(t('exams.examResult.certificate.managerName'))
+      const platformManager = escapeHtml(t('exams.examResult.certificate.platformManager'))
+      const signatureLabel = escapeHtml(t('exams.examResult.certificate.signature'))
+      const supervisorName = escapeHtml(t('exams.examResult.certificate.supervisorName'))
+      const academicSupervisor = escapeHtml(t('exams.examResult.certificate.academicSupervisor'))
+      const certificateNumberLabel = escapeHtml(t('exams.examResult.certificate.certificateNumber'))
+      const issueDateLabel = escapeHtml(t('exams.examResult.certificate.issueDate'))
+      const gradeInfo = escapeHtml(getGradeInfo(result?.percentage || 0).label)
+      const certId = escapeHtml(id?.slice(0, 8).toUpperCase() || 'EDU')
+      const percentageVal = Number(result?.percentage || 0)
+      const scoreVal = Number(result?.score || 0)
+      const totalScoreVal = Number(result?.totalScore || 100)
+      const issueDate = escapeHtml(new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }))
+
       certificateWindow.document.write(`
         <!DOCTYPE html>
-        <html dir="rtl">
+        <html dir="${lang === 'ar' ? 'rtl' : 'ltr'}">
         <head>
           <meta charset="UTF-8">
-          <title>شهادة إنجاز - ${examDetails?.title}</title>
+          <title>${certificateTitle} - ${examTitle}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
             * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -261,22 +288,22 @@ const ExamResultPage = () => {
               display: flex;
               justify-content: space-around;
               margin: 40px 0;
-              flex-wrap: wrap;
+              padding: 20px;
+              background: rgba(255,255,255,0.6);
+              border-radius: 15px;
             }
             .stat-item {
               text-align: center;
-              padding: 20px;
-              min-width: 200px;
             }
             .stat-value {
-              font-size: 48px;
-              font-weight: 900;
-              color: #27ae60;
-              margin-bottom: 10px;
+              font-size: 32px;
+              font-weight: 800;
+              color: #2c3e50;
             }
             .stat-label {
-              font-size: 18px;
+              font-size: 16px;
               color: #7f8c8d;
+              margin-top: 5px;
             }
             .signatures {
               display: flex;
@@ -324,7 +351,7 @@ const ExamResultPage = () => {
             .seal-icon svg {
               width: 60px;
               height: 60px;
-              color: white;
+              stroke: white;
             }
             .certificate-number {
               text-align: center;
@@ -360,31 +387,31 @@ const ExamResultPage = () => {
             <div class="watermark">EduMaster</div>
             
             <div class="header">
-              <h1>{t('exams.examResult.certificate.title')}</h1>
+              <h1>${certificateTitle}</h1>
               <div class="header-line"></div>
-              <p style="font-size: 18px; color: #7f8c8d;">تمنح هذه الشهادة {t('exams.examResult.certificate.forExcellence')}</p>
+              <p style="font-size: 18px; color: #7f8c8d;">${forExcellence}</p>
             </div>
             
             <div class="content">
-              <p class="achievement-text">{t('exams.examResult.certificate.awardedTo')}</p>
-              <div class="student-name">${user?.fullName || 'الطالب'}</div>
-              <p class="achievement-text">{t('exams.examResult.certificate.forAchievement')}</p>
-              <div class="exam-title">${examDetails?.title || 'الامتحان'}</div>
-              <p class="achievement-text">{t('exams.examResult.certificate.exceptionalPerformance')}</p>
+              <p class="achievement-text">${awardedTo}</p>
+              <div class="student-name">${studentName}</div>
+              <p class="achievement-text">${forAchievement}</p>
+              <div class="exam-title">${examTitle}</div>
+              <p class="achievement-text">${exceptionalPerformance}</p>
             </div>
             
             <div class="stats">
               <div class="stat-item">
-                <div class="stat-value">${result?.percentage || 0}%</div>
-                <div class="stat-label">{t('exams.examResult.stats.percentage')}</div>
+                <div class="stat-value">${percentageVal}%</div>
+                <div class="stat-label">${statsPercentage}</div>
               </div>
               <div class="stat-item">
-                <div class="stat-value">${getGradeInfo(result?.percentage || 0).label}</div>
-                <div class="stat-label">{t('exams.examResult.certificate.grade')}</div>
+                <div class="stat-value">${gradeInfo}</div>
+                <div class="stat-label">${gradeLabel}</div>
               </div>
               <div class="stat-item">
-                <div class="stat-value">${result?.score || 0}/${result?.totalScore || 100}</div>
-                <div class="stat-label">{t('exams.examResult.stats.finalScore')}</div>
+                <div class="stat-value">${scoreVal}/${totalScoreVal}</div>
+                <div class="stat-label">${finalScoreLabel}</div>
               </div>
             </div>
             
@@ -397,28 +424,28 @@ const ExamResultPage = () => {
                   <path d="M17 4v16" />
                 </svg>
               </div>
-              <p style="color: #d4af37; font-weight: 700;">{t('exams.examResult.certificate.officialSeal')}</p>
+              <p style="color: #d4af37; font-weight: 700;">${officialSeal}</p>
             </div>
             
             <div class="signatures">
               <div class="signature">
-                <div class="signature-name">{t('exams.examResult.certificate.managerName')}</div>
-                <div class="signature-title">{t('exams.examResult.certificate.platformManager')}</div>
+                <div class="signature-name">${managerName}</div>
+                <div class="signature-title">${platformManager}</div>
                 <div class="signature-line"></div>
-                <p style="margin-top: 10px; color: #7f8c8d;">{t('exams.examResult.certificate.signature')}</p>
+                <p style="margin-top: 10px; color: #7f8c8d;">${signatureLabel}</p>
               </div>
               
               <div class="signature">
-                <div class="signature-name">{t('exams.examResult.certificate.supervisorName')}</div>
-                <div class="signature-title">{t('exams.examResult.certificate.academicSupervisor')}</div>
+                <div class="signature-name">${supervisorName}</div>
+                <div class="signature-title">${academicSupervisor}</div>
                 <div class="signature-line"></div>
-                <p style="margin-top: 10px; color: #7f8c8d;">{t('exams.examResult.certificate.signature')}</p>
+                <p style="margin-top: 10px; color: #7f8c8d;">${signatureLabel}</p>
               </div>
             </div>
             
             <div class="certificate-number">
-              <p>{t('exams.examResult.certificate.certificateNumber')}: ${id?.slice(0, 8).toUpperCase() || 'EDU'}-${Date.now().toString().slice(-6)}</p>
-              <p>{t('exams.examResult.certificate.issueDate')}: ${new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p>${certificateNumberLabel}: ${certId}-${Date.now().toString().slice(-6)}</p>
+              <p>${issueDateLabel}: ${issueDate}</p>
               <p style="margin-top: 10px; font-size: 12px;">هذه شهادة معتمدة رسمياً من منصة EduMaster التعليمية</p>
             </div>
           </div>
@@ -431,7 +458,7 @@ const ExamResultPage = () => {
           </script>
         </body>
         </html>
-      `)
+      `);
       certificateWindow.document.close()
     }
   }
@@ -460,10 +487,7 @@ const ExamResultPage = () => {
     }
   }
 
-  const correctCount = result?.correctAnswers || 0
   const totalQuestions = result?.totalQuestions || 1
-  const incorrectCount = Math.max(0, totalQuestions - correctCount)
-  const accuracyRate = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
 
   const percentage = result?.percentage || 0
   const isPassed = percentage >= 50
@@ -629,33 +653,10 @@ const ExamResultPage = () => {
             <CardDescription>{t('exams.examResult.analysis.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="text-center p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl flex flex-col items-center justify-center h-full">
-                <div className="text-3xl md:text-4xl font-bold text-green-600 mb-2">{correctCount}</div>
-                <p className="text-base font-medium text-green-700 mb-3">{t('exams.examResult.analysis.correctAnswers')}</p>
-                <div className="mt-auto w-full">
-                  <Progress value={accuracyRate} className="h-2 bg-green-100" />
-                  <p className="text-xs text-green-600 mt-1">{accuracyRate}%</p>
-                </div>
-              </div>
-
-              <div className="text-center p-6 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 rounded-xl flex flex-col items-center justify-center h-full">
-                <div className="text-3xl md:text-4xl font-bold text-red-600 mb-2">{incorrectCount}</div>
-                <p className="text-base font-medium text-red-700 mb-3">{t('exams.examResult.analysis.incorrectAnswers')}</p>
-                <div className="mt-auto w-full">
-                  <Progress value={100 - accuracyRate} className="h-2 bg-red-100" />
-                  <p className="text-xs text-red-600 mt-1">{100 - accuracyRate}%</p>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 gap-6 mb-6">
               <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl flex flex-col items-center justify-center h-full">
                 <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">{totalQuestions}</div>
                 <p className="text-base font-medium text-blue-700 mb-3">{t('exams.examResult.analysis.totalQuestions')}</p>
-                <div className="mt-auto">
-                  <p className="text-xs text-blue-600">
-                    {t('exams.examResult.analysis.successRate')}: {accuracyRate}%
-                  </p>
-                </div>
               </div>
             </div>
 

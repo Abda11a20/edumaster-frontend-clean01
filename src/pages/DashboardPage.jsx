@@ -66,7 +66,7 @@ const DashboardPage = () => {
   const [encouragementMessage, setEncouragementMessage] = useState('')
   const [nextGoal, setNextGoal] = useState(null)
   const [dailyTasks, setDailyTasks] = useState([])
-  const [performanceLevel, setPerformanceLevel] = useState('beginner')
+  const [, setPerformanceLevel] = useState('beginner')
   const [activeTab, setActiveTab] = useState('overview')
   const [achievements, setAchievements] = useState([])
   const [showCelebration, setShowCelebration] = useState(false)
@@ -429,29 +429,20 @@ const DashboardPage = () => {
     const results = {}
 
     const promises = examsList.map(async (ex) => {
-      try {
-        const res = await examsAPI.getStudentScore(ex._id)
+      const res = await examsAPI.getStudentScore(ex._id)
 
-        if (res === null) {
-          return { examId: ex._id, score: null }
-        } else {
-          const score = res?.score
-          return { examId: ex._id, score: typeof score === 'number' ? score : null }
-        }
-      } catch (e) {
+      if (res === null) {
         return { examId: ex._id, score: null }
       }
+      const score = res?.score
+      return { examId: ex._id, score: typeof score === 'number' ? score : null }
     })
 
-    try {
-      const resultsArray = await Promise.all(promises)
-      resultsArray.forEach(({ examId, score }) => {
-        results[examId] = score
-      })
-      return results
-    } catch (error) {
-      return {}
-    }
+    const resultsArray = await Promise.all(promises)
+    resultsArray.forEach(({ examId, score }) => {
+      results[examId] = score
+    })
+    return results
   }
 
   const fetchDashboardData = async () => {
@@ -810,9 +801,6 @@ const DashboardPage = () => {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 {t('dashboard.welcome', { name: user?.fullName || t('dashboard.student') })}
               </h1>
-              <Badge className={`${encouragementMessage?.levelColor || 'bg-blue-500'}`}>
-                {performanceLevel}
-              </Badge>
             </div>
             <p className="text-gray-600 dark:text-gray-300">
               {t('dashboard.footer.welcome_sub')}
@@ -844,62 +832,25 @@ const DashboardPage = () => {
           </div>
         </motion.div>
 
-        {/* الرسالة التشجيعية */}
-        {encouragementMessage && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className={`mb-6 p-4 rounded-xl border-2 shadow-lg ${stats.averageScore >= 85
-              ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 dark:from-yellow-900/20 dark:to-amber-900/20'
-              : stats.averageScore >= 70
-                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-900/20 dark:to-emerald-900/20'
-                : stats.averageScore >= 50
-                  ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 dark:from-blue-900/20 dark:to-cyan-900/20'
-                  : 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200 dark:from-red-900/20 dark:to-pink-900/20'
-              }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${stats.averageScore >= 85 ? 'bg-yellow-100 dark:bg-yellow-900' :
-                stats.averageScore >= 70 ? 'bg-green-100 dark:bg-green-900' :
-                  stats.averageScore >= 50 ? 'bg-blue-100 dark:bg-blue-900' : 'bg-red-100 dark:bg-red-900'}`}>
-                {encouragementMessage.icon && <encouragementMessage.icon className={`h-5 w-5 ${encouragementMessage.color || 'text-blue-500'}`} />}
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-lg mb-1">
-                  {stats.averageScore >= 85
-                    ? t('dashboard.encouragement.excellent')
-                    : stats.averageScore >= 70
-                      ? t('dashboard.encouragement.good')
-                      : stats.averageScore >= 50
-                        ? t('dashboard.encouragement.average')
-                        : t('dashboard.encouragement.beginner')}
-                </p>
-                <p className="text-sm">{encouragementMessage.message}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
         {/* Stats Cards */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8"
         >
           <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">{t('dashboard.stats.total_lessons')}</p>
-                  <p className="text-3xl font-bold">{stats.totalLessons}</p>
-                  <p className="text-blue-200 text-xs mt-1">
+                <div className="min-w-0">
+                  <p className="text-blue-100 text-xs sm:text-sm">{t('dashboard.stats.total_lessons')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold">{stats.totalLessons}</p>
+                  <p className="text-blue-200 text-[11px] sm:text-xs mt-1">
                     {stats.completedLessons} {t('dashboard.progress_section.completed')}
                   </p>
                 </div>
-                <div className="relative">
-                  <BookOpen className="h-8 w-8 text-blue-200" />
+                <div className="relative shrink-0">
+                  <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-blue-200" />
                   {stats.completedLessons > 0 && (
                     <div className="absolute -top-2 -right-2 w-5 h-5 bg-blue-300 rounded-full flex items-center justify-center">
                       <span className="text-xs font-bold">{stats.completedLessons}</span>
@@ -915,17 +866,17 @@ const DashboardPage = () => {
           </Card>
 
           <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm">{t('dashboard.stats.completed_lessons')}</p>
-                  <p className="text-3xl font-bold">{stats.completedLessons}</p>
-                  <p className="text-green-200 text-xs mt-1">
+                <div className="min-w-0">
+                  <p className="text-green-100 text-xs sm:text-sm">{t('dashboard.stats.completed_lessons')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold">{stats.completedLessons}</p>
+                  <p className="text-green-200 text-[11px] sm:text-xs mt-1">
                     {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}% {t('dashboard.stats.progress')}
                   </p>
                 </div>
-                <div className="relative">
-                  <CheckCircle className="h-8 w-8 text-green-200" />
+                <div className="relative shrink-0">
+                  <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-200" />
                   {showProgressAnimation && (
                     <motion.div
                       initial={{ scale: 0 }}
@@ -945,17 +896,17 @@ const DashboardPage = () => {
           </Card>
 
           <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">{t('dashboard.stats.completed_exams')}</p>
-                  <p className="text-3xl font-bold">{stats.completedExams}</p>
-                  <p className="text-purple-200 text-xs mt-1">
+                <div className="min-w-0">
+                  <p className="text-purple-100 text-xs sm:text-sm">{t('dashboard.stats.completed_exams')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold">{stats.completedExams}</p>
+                  <p className="text-purple-200 text-[11px] sm:text-xs mt-1">
                     {stats.totalExams > 0 ? Math.round((stats.completedExams / stats.totalExams) * 100) : 0}% {t('dashboard.stats.progress')}
                   </p>
                 </div>
-                <div className="relative">
-                  <FileText className="h-8 w-8 text-purple-200" />
+                <div className="relative shrink-0">
+                  <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-purple-200" />
                   {stats.completedExams > 0 && (
                     <motion.div
                       initial={{ rotate: 0 }}
@@ -975,34 +926,21 @@ const DashboardPage = () => {
           </Card>
 
           <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm">{t('dashboard.stats.average_score')}</p>
-                  <p className="text-3xl font-bold">{stats.averageScore}%</p>
-                  <p className="text-orange-200 text-xs mt-1">
+                <div className="min-w-0">
+                  <p className="text-orange-100 text-xs sm:text-sm">{t('dashboard.stats.average_score')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold">{stats.averageScore}%</p>
+                  <p className="text-orange-200 text-[11px] sm:text-xs mt-1">
                     {stats.completedExams > 0 ? t('dashboard.performance.completed') + ' ' + stats.completedExams : t('dashboard.performance.start_exam')}
                   </p>
                 </div>
-                <div className="relative">
-                  <TrendingUp className="h-8 w-8 text-orange-200" />
+                <div className="relative shrink-0">
+                  <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-orange-200" />
                   {stats.averageScore >= 70 ? (
                     <TrendingUpIcon className="absolute -top-2 -right-2 h-5 w-5 text-green-300" />
                   ) : (
                     <TrendingDownIcon className="absolute -top-2 -right-2 h-5 w-5 text-red-300" />
-                  )}
-                </div>
-              </div>
-              <div className="mt-3">
-                <div className="flex items-center gap-2">
-                  {stats.averageScore >= 85 ? (
-                    <Badge className="bg-yellow-500">{t('dashboard.encouragement.excellent')}</Badge>
-                  ) : stats.averageScore >= 70 ? (
-                    <Badge className="bg-green-500">{t('dashboard.encouragement.good')}</Badge>
-                  ) : stats.averageScore >= 50 ? (
-                    <Badge className="bg-blue-500">{t('dashboard.encouragement.average')}</Badge>
-                  ) : (
-                    <Badge className="bg-red-500">{t('dashboard.encouragement.beginner')}</Badge>
                   )}
                 </div>
               </div>
@@ -1075,20 +1013,20 @@ const DashboardPage = () => {
                       </div>
 
                       {/* Detailed Progress */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
                         <Card className="border border-blue-200 dark:border-blue-800">
-                          <CardContent className="p-4">
+                          <CardContent className="p-3 sm:p-4">
                             <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center">
-                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3">
+                              <div className="flex items-center min-w-0">
+                                <div className="w-10 h-10 shrink-0 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
                                   <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                 </div>
-                                <div>
-                                  <p className="font-medium">{t('dashboard.progress_section.lessons_title')}</p>
-                                  <p className="text-sm text-gray-500">{t('dashboard.progress_section.lessons_desc')}</p>
+                                <div className="min-w-0">
+                                  <p className="text-sm sm:text-base font-medium break-words">{t('dashboard.progress_section.lessons_title')}</p>
+                                  <p className="text-xs sm:text-sm text-gray-500 break-words">{t('dashboard.progress_section.lessons_desc')}</p>
                                 </div>
                               </div>
-                              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                              <Badge className="shrink-0 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                                 {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}%
                               </Badge>
                             </div>
@@ -1096,7 +1034,7 @@ const DashboardPage = () => {
                               value={stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0}
                               className="h-2"
                             />
-                            <div className="flex justify-between text-xs text-gray-500 mt-2">
+                            <div className="flex flex-wrap justify-between gap-x-2 gap-y-1 text-[11px] sm:text-xs text-gray-500 mt-2">
                               <span>{stats.completedLessons} {t('dashboard.progress_section.completed')}</span>
                               <span>{stats.totalLessons - stats.completedLessons} {t('dashboard.progress_section.remaining')}</span>
                             </div>
@@ -1112,18 +1050,18 @@ const DashboardPage = () => {
                         </Card>
 
                         <Card className="border border-green-200 dark:border-green-800">
-                          <CardContent className="p-4">
+                          <CardContent className="p-3 sm:p-4">
                             <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center">
-                                <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                              <div className="flex items-center min-w-0">
+                                <div className="w-10 h-10 shrink-0 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
                                   <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
                                 </div>
-                                <div>
-                                  <p className="font-medium">{t('dashboard.progress_section.exams_title')}</p>
-                                  <p className="text-sm text-gray-500">{t('dashboard.progress_section.exams_desc')}</p>
+                                <div className="min-w-0">
+                                  <p className="text-sm sm:text-base font-medium break-words">{t('dashboard.progress_section.exams_title')}</p>
+                                  <p className="text-xs sm:text-sm text-gray-500 break-words">{t('dashboard.progress_section.exams_desc')}</p>
                                 </div>
                               </div>
-                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                              <Badge className="shrink-0 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                                 {stats.totalExams > 0 ? Math.round((stats.completedExams / stats.totalExams) * 100) : 0}%
                               </Badge>
                             </div>
@@ -1131,7 +1069,7 @@ const DashboardPage = () => {
                               value={stats.totalExams > 0 ? (stats.completedExams / stats.totalExams) * 100 : 0}
                               className="h-2"
                             />
-                            <div className="flex justify-between text-xs text-gray-500 mt-2">
+                            <div className="flex flex-wrap justify-between gap-x-2 gap-y-1 text-[11px] sm:text-xs text-gray-500 mt-2">
                               <span>{stats.completedExams} {t('dashboard.progress_section.completed')}</span>
                               <span>{stats.totalExams - stats.completedExams} {t('dashboard.progress_section.remaining')}</span>
                             </div>
@@ -1199,7 +1137,7 @@ const DashboardPage = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                       {quickActions.map((action, index) => (
                         <motion.div
                           key={index}
@@ -1211,12 +1149,12 @@ const DashboardPage = () => {
                         >
                           <Link to={action.link}>
                             <Card className="h-full border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 hover:shadow-xl cursor-pointer">
-                              <CardContent className="p-5 text-center">
+                              <CardContent className="p-3 sm:p-5 text-center">
                                 <div className={`w-14 h-14 ${action.color} rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg`}>
                                   <action.icon className="h-7 w-7 text-white" />
                                 </div>
-                                <h3 className="font-semibold mb-1">{action.title}</h3>
-                                <p className="text-sm text-gray-500">{action.description}</p>
+                                <h3 className="text-sm sm:text-base font-semibold mb-1 break-words">{action.title}</h3>
+                                <p className="text-xs sm:text-sm text-gray-500 break-words">{action.description}</p>
                                 <ChevronRight className="h-4 w-4 mx-auto mt-2 text-gray-400" />
                               </CardContent>
                             </Card>
@@ -1229,24 +1167,24 @@ const DashboardPage = () => {
               </div>
 
               {/* Right Column - Sidebar */}
-              <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-3 lg:flex lg:flex-col lg:gap-6">
                 {/* Next Goal Card */}
-                <Card className="border-2 border-dashed border-blue-300 dark:border-blue-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Target className="h-5 w-5 ml-2 text-blue-600" />
+                <Card className="min-w-0 overflow-hidden border-2 border-dashed border-blue-300 dark:border-blue-700">
+                  <CardHeader className="p-3 sm:p-6">
+                    <CardTitle className="flex items-center text-sm sm:text-base">
+                      <Target className="h-4 w-4 shrink-0 ml-1 sm:ml-2 sm:h-5 sm:w-5 text-blue-600" />
                       {t('dashboard.next_goal.title')}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3 sm:p-6">
                     {nextGoal ? (
                       <div className="text-center">
-                        <div className={`w-16 h-16 ${nextGoal.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                          <nextGoal.icon className="h-8 w-8 text-white" />
+                        <div className={`w-10 h-10 sm:w-16 sm:h-16 ${nextGoal.color} rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3`}>
+                          <nextGoal.icon className="h-5 w-5 sm:h-8 sm:w-8 text-white" />
                         </div>
-                        <h3 className="font-bold text-lg mb-2">{nextGoal.title}</h3>
-                        <div className="mb-4">
-                          <div className="flex justify-between text-sm mb-1">
+                        <h3 className="font-bold text-sm sm:text-lg mb-2 break-words">{nextGoal.title}</h3>
+                        <div className="mb-2 sm:mb-4">
+                          <div className="flex justify-between gap-1 text-[10px] sm:text-sm mb-1">
                             <span>{t('dashboard.next_goal.progress')}</span>
                             <span>{nextGoal.current}/{nextGoal.target}</span>
                           </div>
@@ -1255,42 +1193,42 @@ const DashboardPage = () => {
                             className="h-2"
                           />
                         </div>
-                        <Badge className="bg-gradient-to-r from-blue-500 to-purple-500">
+                        <Badge className="max-w-full whitespace-normal px-1.5 text-[10px] sm:px-2 sm:text-xs bg-gradient-to-r from-blue-500 to-purple-500">
                           +{nextGoal.points} {t('dashboard.next_goal.bonus')}
                         </Badge>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-[10px] sm:text-xs text-gray-500 mt-2 break-words">
                           {t('dashboard.next_goal.desc')}
                         </p>
                       </div>
                     ) : (
-                      <div className="text-center py-8">
-                        <Target className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-500">{t('dashboard.next_goal.none')}</p>
+                      <div className="text-center py-4 sm:py-8">
+                        <Target className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3" />
+                        <p className="text-xs sm:text-sm text-gray-500 break-words">{t('dashboard.next_goal.none')}</p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
 
                 {/* Streak Card */}
-                <Card className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Flame className="h-5 w-5 ml-2 text-orange-600" />
+                <Card className="min-w-0 overflow-hidden bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
+                  <CardHeader className="p-3 sm:p-6">
+                    <CardTitle className="flex items-center text-sm sm:text-base">
+                      <Flame className="h-4 w-4 shrink-0 ml-1 sm:ml-2 sm:h-5 sm:w-5 text-orange-600" />
                       {t('dashboard.streak.title')}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3 sm:p-6">
                     <div className="text-center">
                       <div className="inline-block relative">
-                        <div className="w-20 h-20 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                          <Flame className="h-10 w-10 text-white" />
+                        <div className="w-12 h-12 sm:w-20 sm:h-20 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 shadow-lg">
+                          <Flame className="h-6 w-6 sm:h-10 sm:w-10 text-white" />
                         </div>
-                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold">{streakDays}</span>
+                        <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs sm:text-base font-bold">{streakDays}</span>
                         </div>
                       </div>
-                      <h3 className="text-2xl font-bold mb-1">{t('dashboard.streak.days', { days: streakDays })}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                      <h3 className="text-base sm:text-2xl font-bold mb-1 break-words">{t('dashboard.streak.days', { days: streakDays })}</h3>
+                      <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-300 mb-2 sm:mb-4 break-words">
                         {t('dashboard.streak.desc')}
                       </p>
                       <div className="grid grid-cols-7 gap-1">
@@ -1301,7 +1239,7 @@ const DashboardPage = () => {
                           />
                         ))}
                       </div>
-                      <p className="text-xs text-gray-500 mt-3">
+                      <p className="text-[10px] sm:text-xs text-gray-500 mt-3 break-words">
                         {streakDays >= 7
                           ? t('dashboard.streak.msg_7')
                           : streakDays >= 3
@@ -1313,22 +1251,22 @@ const DashboardPage = () => {
                 </Card>
 
                 {/* Performance Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <TrendingUp className="h-5 w-5 ml-2 text-green-600" />
+                <Card className="col-span-2 min-w-0 overflow-hidden lg:col-span-1">
+                  <CardHeader className="p-3 sm:p-6">
+                    <CardTitle className="flex items-center text-sm sm:text-base">
+                      <TrendingUp className="h-4 w-4 shrink-0 ml-1 sm:ml-2 sm:h-5 sm:w-5 text-green-600" />
                       {t('dashboard.performance.title')}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3 sm:p-6">
                     <div className="text-center">
                       <div className="relative inline-block mb-4">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 flex items-center justify-center">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 flex items-center justify-center">
                           <div className="text-center">
-                            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                            <p className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                               {stats.averageScore}%
                             </p>
-                            <p className="text-xs text-gray-500">{t('dashboard.performance.average')}</p>
+                            <p className="text-[10px] sm:text-xs text-gray-500">{t('dashboard.performance.average')}</p>
                           </div>
                         </div>
                         {stats.averageScore >= 70 && (
@@ -1339,18 +1277,18 @@ const DashboardPage = () => {
                       </div>
 
                       <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                            <p className="text-xs text-gray-500">{t('dashboard.performance.highest')}</p>
-                            <p className="font-bold text-lg">
+                        <div className="grid grid-cols-2 gap-1 sm:gap-3">
+                          <div className="min-w-0 bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            <p className="text-[9px] sm:text-xs text-gray-500 break-words">{t('dashboard.performance.highest')}</p>
+                            <p className="font-bold text-base sm:text-lg">
                               {stats.examScores.length > 0
                                 ? Math.max(...stats.examScores.map(e => e.percentage || 0), 0)
                                 : 0}%
                             </p>
                           </div>
-                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                            <p className="text-xs text-gray-500">{t('dashboard.performance.lowest')}</p>
-                            <p className="font-bold text-lg">
+                          <div className="min-w-0 bg-gray-50 dark:bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            <p className="text-[9px] sm:text-xs text-gray-500 break-words">{t('dashboard.performance.lowest')}</p>
+                            <p className="font-bold text-base sm:text-lg">
                               {stats.examScores.length > 0
                                 ? Math.min(...stats.examScores.map(e => e.percentage || 100), 100)
                                 : 0}%
@@ -1358,12 +1296,12 @@ const DashboardPage = () => {
                           </div>
                         </div>
 
-                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-3 rounded-lg">
-                          <div className="flex justify-between text-sm">
+                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-2 sm:p-3 rounded-lg">
+                          <div className="flex justify-between gap-1 text-[10px] sm:text-sm">
                             <span>{t('dashboard.performance.completed')}</span>
                             <span className="font-bold">{stats.completedExams}</span>
                           </div>
-                          <div className="flex justify-between text-sm mt-1">
+                          <div className="flex justify-between gap-1 text-[10px] sm:text-sm mt-1">
                             <span>{t('dashboard.performance.total')}</span>
                             <span className="font-bold">{stats.totalExams}</span>
                           </div>
@@ -1372,15 +1310,15 @@ const DashboardPage = () => {
 
                       {stats.completedExams === 0 ? (
                         <Button
-                          className="w-full mt-4"
+                          className="w-full h-auto min-h-9 whitespace-normal px-2 py-2 text-[10px] sm:text-sm mt-4"
                           onClick={() => navigate('/exams')}
                         >
                           {t('dashboard.performance.start_exam')}
                         </Button>
                       ) : stats.averageScore < 50 ? (
-                        <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                          <p className="text-sm font-medium">{t('dashboard.performance.tip')}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-300">
+                        <div className="mt-4 p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                          <p className="text-xs sm:text-sm font-medium break-words">{t('dashboard.performance.tip')}</p>
+                          <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300 break-words">
                             {t('dashboard.performance.tip_desc')}
                           </p>
                         </div>
@@ -1437,20 +1375,20 @@ const DashboardPage = () => {
                   </div>
 
                   {/* Detailed Progress */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <Card className="border border-blue-200 dark:border-blue-800">
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3">
+                          <div className="flex items-center min-w-0">
+                            <div className="w-10 h-10 shrink-0 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
                               <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <div>
-                              <p className="font-medium">{t('dashboard.progress_section.lessons_title')}</p>
-                              <p className="text-sm text-gray-500">{t('dashboard.progress_section.lessons_desc')}</p>
+                            <div className="min-w-0">
+                              <p className="text-sm sm:text-base font-medium break-words">{t('dashboard.progress_section.lessons_title')}</p>
+                              <p className="text-xs sm:text-sm text-gray-500 break-words">{t('dashboard.progress_section.lessons_desc')}</p>
                             </div>
                           </div>
-                          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                          <Badge className="shrink-0 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                             {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}%
                           </Badge>
                         </div>
@@ -1458,7 +1396,7 @@ const DashboardPage = () => {
                           value={stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0}
                           className="h-2"
                         />
-                        <div className="flex justify-between text-xs text-gray-500 mt-2">
+                        <div className="flex flex-wrap justify-between gap-x-2 gap-y-1 text-[11px] sm:text-xs text-gray-500 mt-2">
                           <span>{stats.completedLessons} {t('dashboard.progress_section.completed')}</span>
                           <span>{stats.totalLessons - stats.completedLessons} {t('dashboard.progress_section.remaining')}</span>
                         </div>
@@ -1466,18 +1404,18 @@ const DashboardPage = () => {
                     </Card>
 
                     <Card className="border border-green-200 dark:border-green-800">
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                          <div className="flex items-center min-w-0">
+                            <div className="w-10 h-10 shrink-0 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
                               <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
                             </div>
-                            <div>
-                              <p className="font-medium">{t('dashboard.progress_section.exams_title')}</p>
-                              <p className="text-sm text-gray-500">{t('dashboard.progress_section.exams_desc')}</p>
+                            <div className="min-w-0">
+                              <p className="text-sm sm:text-base font-medium break-words">{t('dashboard.progress_section.exams_title')}</p>
+                              <p className="text-xs sm:text-sm text-gray-500 break-words">{t('dashboard.progress_section.exams_desc')}</p>
                             </div>
                           </div>
-                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                          <Badge className="shrink-0 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
                             {stats.totalExams > 0 ? Math.round((stats.completedExams / stats.totalExams) * 100) : 0}%
                           </Badge>
                         </div>
@@ -1485,7 +1423,7 @@ const DashboardPage = () => {
                           value={stats.totalExams > 0 ? (stats.completedExams / stats.totalExams) * 100 : 0}
                           className="h-2"
                         />
-                        <div className="flex justify-between text-xs text-gray-500 mt-2">
+                        <div className="flex flex-wrap justify-between gap-x-2 gap-y-1 text-[11px] sm:text-xs text-gray-500 mt-2">
                           <span>{stats.completedExams} {t('dashboard.progress_section.completed')}</span>
                           <span>{stats.totalExams - stats.completedExams} {t('dashboard.progress_section.remaining')}</span>
                         </div>
@@ -1634,41 +1572,6 @@ const DashboardPage = () => {
           </TabsContent>
         </Tabs>
 
-        {/* تشجيع إضافي في الأسفل */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 p-6 bg-gradient-to-r from-gray-900 to-black dark:from-gray-800 dark:to-gray-900 rounded-2xl text-white"
-        >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">{t('dashboard.footer.title')}</h2>
-              <p className="text-gray-300">
-                {stats.completedLessons + stats.completedExams === 0
-                  ? t('dashboard.footer.desc_start')
-                  : t('dashboard.footer.desc_continue', { count: stats.totalLessons + stats.totalExams - (stats.completedLessons + stats.completedExams) })}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                className="bg-white text-gray-900 hover:bg-gray-100"
-                onClick={() => navigate('/lessons')}
-              >
-                <BookOpen className="h-4 w-4 ml-2" />
-                {t('dashboard.footer.start_learning')}
-              </Button>
-              <Button
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                onClick={() => navigate('/exams')}
-              >
-                <FileText className="h-4 w-4 ml-2" />
-                {t('dashboard.footer.test_yourself')}
-              </Button>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </div>
   )

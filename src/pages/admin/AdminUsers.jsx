@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, User, Mail, Calendar, Shield, Search, Filter, Phone, MapPin, Clock, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { Users, User, Mail, Calendar, Search, Phone, MapPin, Clock, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { adminAPI } from '../../services/api'
 import LoadingSpinner from '../../components/LoadingSpinner'
@@ -17,8 +16,8 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([])
   const [filteredUsers, setFilteredUsers] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [roleFilter, setRoleFilter] = useState('all')
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [expandedUserId, setExpandedUserId] = useState(null)
@@ -29,11 +28,13 @@ const AdminUsers = () => {
     const fetchUsers = async () => {
       try {
         setIsLoading(true)
+        setLoadError(null)
         const usersData = await adminAPI.getAllUsers()
         setUsers(usersData)
         setFilteredUsers(usersData)
       } catch (error) {
         console.error('Error fetching users:', error)
+        setLoadError(t('admin.users.filter.error_load_desc'))
         toast({
           title: t('admin.users.filter.error_load'),
           description: t('admin.users.filter.error_load_desc'),
@@ -58,12 +59,8 @@ const AdminUsers = () => {
       )
     }
 
-    if (roleFilter !== 'all') {
-      result = result.filter(user => user.role === roleFilter)
-    }
-
     setFilteredUsers(result)
-  }, [searchTerm, roleFilter, users])
+  }, [searchTerm, users])
 
   const getRoleBadgeVariant = (role) => {
     switch (role) {
@@ -156,7 +153,7 @@ const AdminUsers = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="mb-8"
         >
           <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
             <CardContent className="p-6">
@@ -166,34 +163,6 @@ const AdminUsers = () => {
                   <p className="text-3xl font-bold">{users.length}</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm">{t('admin.users.stats.admins')}</p>
-                  <p className="text-3xl font-bold">
-                    {users.filter(user => user.role === 'admin').length}
-                  </p>
-                </div>
-                <Shield className="h-8 w-8 text-green-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">{t('admin.users.stats.regular')}</p>
-                  <p className="text-3xl font-bold">
-                    {users.filter(user => user.role === 'user').length}
-                  </p>
-                </div>
-                <User className="h-8 w-8 text-purple-200" />
               </div>
             </CardContent>
           </Card>
@@ -207,41 +176,15 @@ const AdminUsers = () => {
           className="mb-6"
         >
           <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative flex-1">
-                  <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder={t('admin.users.filter.placeholder')}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-gray-400" />
-                  <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder={t('admin.users.filter.all')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('admin.users.filter.all')}</SelectItem>
-                      <SelectItem value="admin">{t('admin.users.filter.admin')}</SelectItem>
-                      <SelectItem value="user">{t('admin.users.filter.user')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm('')
-                    setRoleFilter('all')
-                  }}
-                >
-                  {t('admin.users.filter.reset')}
-                </Button>
+            <CardContent className="p-3">
+              <div className="relative">
+                <Search className="absolute right-3 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder={t('admin.users.filter.placeholder')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-9 w-full pr-9"
+                />
               </div>
             </CardContent>
           </Card>
@@ -261,7 +204,11 @@ const AdminUsers = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {filteredUsers.length > 0 ? (
+              {loadError ? (
+                <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
+                  {loadError}
+                </div>
+              ) : filteredUsers.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredUsers.map((user) => (
                     <Card
@@ -279,28 +226,9 @@ const AdminUsers = () => {
                           </Badge>
                         </div>
 
-                        <div className="space-y-2">
-                          <h3 className="font-semibold text-gray-900 dark:text-white">
-                            {user.fullName || t('admin.users.list.no_name')}
-                          </h3>
-
-                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                            <Mail className="h-4 w-4 ml-1" />
-                            <span className="truncate">{user.email}</span>
-                          </div>
-
-                          {user.phoneNumber && (
-                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                              <Phone className="h-4 w-4 ml-1" />
-                              <span>{user.phoneNumber}</span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                            <Calendar className="h-4 w-4 ml-1" />
-                            <span>{t('admin.users.list.joined')} {formatDate(user.createdAt)}</span>
-                          </div>
-                        </div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {user.fullName || t('admin.users.list.no_name')}
+                        </h3>
 
                         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                           <Button
@@ -383,7 +311,7 @@ const AdminUsers = () => {
                     {t('admin.users.list.empty_title')}
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400">
-                    {searchTerm || roleFilter !== 'all'
+                    {searchTerm
                       ? t('admin.users.list.empty_search')
                       : t('admin.users.list.empty_system')
                     }
@@ -396,7 +324,7 @@ const AdminUsers = () => {
 
         {/* نافذة التفاصيل */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-md sm:p-6">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
                 <span>{t('admin.users.details.title')}</span>

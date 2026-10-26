@@ -19,6 +19,7 @@ const AdminAdmins = () => {
   const [filteredAdmins, setFilteredAdmins] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     fullName: '',
@@ -44,6 +45,7 @@ const AdminAdmins = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true)
+      setLoadError(null)
       const [adminsResponse, usersResponse] = await Promise.all([
         adminAPI.getAllAdmins(),
         adminAPI.getAllUsers()
@@ -73,14 +75,12 @@ const AdminAdmins = () => {
       setFilteredAdmins(adminsArray)
       setUsers(usersArray)
     } catch (error) {
+      setLoadError(t('admin.admins.error_load_desc'))
       toast({
         title: t('admin.admins.error_load'),
         description: t('admin.admins.error_load_desc'),
         variant: 'destructive'
       })
-      setAdmins([])
-      setFilteredAdmins([])
-      setUsers([])
     } finally {
       setIsLoading(false)
     }
@@ -227,7 +227,13 @@ const AdminAdmins = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAdmins.length > 0 ? (
+                  {loadError ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4 text-destructive">
+                        {loadError} <Button variant="link" onClick={fetchData}>{t('common.retry')}</Button>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredAdmins.length > 0 ? (
                     filteredAdmins.map((admin) => (
                       <TableRow key={admin._id}>
                         <TableCell className="font-medium">{admin.fullName}</TableCell>
@@ -253,13 +259,13 @@ const AdminAdmins = () => {
 
         {/* Dialog for Add Admin */}
         {isDialogOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
+            <Card className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto">
               <CardHeader>
                 <CardTitle>{t('admin.admins.add_new')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 [&_input]:w-full">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">{t('auth.register.fullname')}</Label>
                     <Input
@@ -308,11 +314,11 @@ const AdminAdmins = () => {
                       required
                     />
                   </div>
-                  <div className="flex space-x-2 pt-4">
-                    <Button type="submit">
+                  <div className="grid grid-cols-2 gap-2 pt-4">
+                    <Button type="submit" className="w-full">
                       {t('common.add')}
                     </Button>
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    <Button type="button" variant="outline" className="w-full" onClick={() => setIsDialogOpen(false)}>
                       {t('common.cancel')}
                     </Button>
                   </div>

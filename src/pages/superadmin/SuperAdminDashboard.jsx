@@ -126,6 +126,10 @@ const SuperAdminDashboard = () => {
         adminAPI.getAllUsers()
       ]);
 
+      if (adminsRes.status === 'rejected' || usersRes.status === 'rejected') {
+        setError(t('admin.users.filter.error_load_desc'));
+      }
+
       // معالجة استجابة المشرفين
       const adminsData = adminsRes.status === 'fulfilled' ? adminsRes.value : [];
       const usersData = usersRes.status === 'fulfilled' ? usersRes.value : [];
@@ -1062,7 +1066,7 @@ const SuperAdminDashboard = () => {
 
         {/* حوار إنشاء مشرف جديد */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <UserPlus className="h-5 w-5" />
@@ -1082,6 +1086,7 @@ const SuperAdminDashboard = () => {
                   onChange={(e) => setNewAdmin({ ...newAdmin, fullName: e.target.value })}
                   placeholder={t('أحمد محمد')}
                   required
+                  className="w-full"
                 />
               </div>
 
@@ -1092,8 +1097,9 @@ const SuperAdminDashboard = () => {
                   type="email"
                   value={newAdmin.email}
                   onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                  placeholder={t('ahmed@example.com')}
+                  placeholder="ahmed@example.com"
                   required
+                  className="w-full"
                 />
               </div>
 
@@ -1103,7 +1109,8 @@ const SuperAdminDashboard = () => {
                   id="phoneNumber"
                   value={newAdmin.phoneNumber}
                   onChange={(e) => setNewAdmin({ ...newAdmin, phoneNumber: e.target.value })}
-                  placeholder={t('01012345678')}
+                  placeholder="01012345678"
+                  className="w-full"
                 />
               </div>
 
@@ -1117,6 +1124,7 @@ const SuperAdminDashboard = () => {
                     onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
                     placeholder="••••••••"
                     required
+                    className="w-full"
                   />
                 </div>
 
@@ -1129,6 +1137,7 @@ const SuperAdminDashboard = () => {
                     onChange={(e) => setNewAdmin({ ...newAdmin, cpassword: e.target.value })}
                     placeholder="••••••••"
                     required
+                    className="w-full"
                   />
                 </div>
               </div>

@@ -86,7 +86,7 @@ const LoginPage = () => {
             const userRole = (userData.role || '').toLowerCase()
 
             if (userRole === 'super_admin' || userRole === 'super-admin' || userRole === 'superadmin') {
-              destination = '/super-admin/dashboard'
+              destination = '/super-admin'
             } else if (userRole === 'admin' || userData.isAdmin) {
               destination = '/admin'
             }

@@ -148,19 +148,11 @@ const ForgotPasswordPage = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <Card className="border-0 shadow-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center text-gray-900 dark:text-white">
-                {t('auth.forgot_password.title')}
-              </CardTitle>
-              <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-                {t('auth.forgot_password.subtitle')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">
-                    {t('auth.login.email_or_phone')}
+                    {t('auth.forgot_password.email')}
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400 rtl:right-3 rtl:left-auto" />
@@ -171,7 +163,7 @@ const ForgotPasswordPage = () => {
                       placeholder={t('auth.forgot_password.email_placeholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 rtl:pr-10 rtl:pl-4"
+                      className="w-full pl-10 rtl:pr-10 rtl:pl-4"
                       required
                       disabled={isLoading}
                     />
