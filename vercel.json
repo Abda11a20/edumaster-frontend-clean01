@@ -27,12 +27,19 @@
     }
   ],
   "rewrites": [
+    { "source": "/auth",               "destination": "https://edu-master-delta.vercel.app/auth" },
     { "source": "/auth/:path*",        "destination": "https://edu-master-delta.vercel.app/auth/:path*" },
+    { "source": "/user",               "destination": "https://edu-master-delta.vercel.app/user" },
     { "source": "/user/:path*",        "destination": "https://edu-master-delta.vercel.app/user/:path*" },
+    { "source": "/lesson",             "destination": "https://edu-master-delta.vercel.app/lesson" },
     { "source": "/lesson/:path*",      "destination": "https://edu-master-delta.vercel.app/lesson/:path*" },
+    { "source": "/exam",               "destination": "https://edu-master-delta.vercel.app/exam" },
     { "source": "/exam/:path*",        "destination": "https://edu-master-delta.vercel.app/exam/:path*" },
+    { "source": "/question",           "destination": "https://edu-master-delta.vercel.app/question" },
     { "source": "/question/:path*",    "destination": "https://edu-master-delta.vercel.app/question/:path*" },
+    { "source": "/admin",              "destination": "https://edu-master-delta.vercel.app/admin" },
     { "source": "/admin/:path*",       "destination": "https://edu-master-delta.vercel.app/admin/:path*" },
+    { "source": "/studentExam",        "destination": "https://edu-master-delta.vercel.app/studentExam" },
     { "source": "/studentExam/:path*", "destination": "https://edu-master-delta.vercel.app/studentExam/:path*" },
     { "source": "/(.*)",               "destination": "/index.html" }
   ]
