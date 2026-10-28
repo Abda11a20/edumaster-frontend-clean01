@@ -403,18 +403,16 @@ const StudentResultsPage = () => {
               </div>
             ) : (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="submitted" className="flex items-center gap-2">
-                    <FileCheck className="h-4 w-4" />
-                    <span dir={textDirection}>{t('exams.results.tabs.submitted')}</span>
-                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                <TabsList className="grid h-auto w-full grid-cols-2 mb-6 p-1">
+                  <TabsTrigger value="submitted" className="min-w-0 gap-1 px-1 text-[10px] leading-tight sm:text-sm sm:gap-2 sm:px-2">
+                    <span dir={textDirection} className="min-w-0 text-center">{t('exams.results.tabs.submitted')}</span>
+                    <span className="shrink-0 bg-green-100 text-green-800 text-[10px] px-1 py-0.5 rounded-full sm:px-2 sm:py-1 sm:text-xs">
                       {filteredSubmitted.length}
                     </span>
                   </TabsTrigger>
-                  <TabsTrigger value="not-submitted" className="flex items-center gap-2">
-                    <FileX className="h-4 w-4" />
-                    <span dir={textDirection}>{t('exams.results.tabs.available')}</span>
-                    <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                  <TabsTrigger value="not-submitted" className="min-w-0 gap-1 px-1 text-[10px] leading-tight sm:text-sm sm:gap-2 sm:px-2">
+                    <span dir={textDirection} className="min-w-0 text-center">{t('exams.results.tabs.available')}</span>
+                    <span className="shrink-0 bg-orange-100 text-orange-800 text-[10px] px-1 py-0.5 rounded-full sm:px-2 sm:py-1 sm:text-xs">
                       {filteredNotSubmitted.length}
                     </span>
                   </TabsTrigger>

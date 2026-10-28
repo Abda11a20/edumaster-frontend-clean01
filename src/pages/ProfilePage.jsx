@@ -345,9 +345,9 @@ const ProfilePage = () => {
                           <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                             <Mail className="h-5 w-5 text-green-600 dark:text-green-400" />
                           </div>
-                          <div className="flex-1">
+                          <div className="min-w-0 flex-1">
                             <p dir={textDirection} className={`text-sm font-medium text-gray-500 dark:text-gray-400 ${textAlignment}`}>{t('profile.user_info.email')}</p>
-                            <p dir={textDirection} className={`font-semibold text-gray-900 dark:text-white mt-1 ${textAlignment}`}>
+                            <p dir={textDirection} className={`break-all font-semibold text-gray-900 dark:text-white mt-1 ${textAlignment}`}>
                               {userData?.email || t('profile.user_info.unknown')}
                             </p>
                           </div>

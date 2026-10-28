@@ -189,14 +189,9 @@ const ExamsPage = () => {
           </CardHeader>
 
           <CardContent className="mt-auto px-3 pb-3 sm:px-6">
-            <div className="grid grid-cols-2 gap-2">
-              <Link to={`/exams/${exam._id}`} className="flex-1">
-                <Button variant="outline" className="h-9 w-full px-2 text-xs sm:text-sm">
-                  {t('exams.card.details')}
-                </Button>
-              </Link>
-              <Link to={`/exams/${exam._id}`} className="flex-1">
-                <Button className="h-9 w-full px-2 text-xs sm:text-sm" disabled={!isActive()}>
+            <div>
+              <Link to={`/exams/${exam._id}/take`} className="block w-full">
+                <Button className="h-9 w-full whitespace-normal px-2 text-xs leading-tight sm:h-10 sm:text-sm" disabled={!isActive()}>
                   {t('exams.card.start')}
                 </Button>
               </Link>

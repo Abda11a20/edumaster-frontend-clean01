@@ -16,7 +16,6 @@ import {
   ExternalLink,
   Check,
   X,
-  ShoppingBag,
   Eye,
   ChevronDown,
   RefreshCw
@@ -417,10 +416,6 @@ const LessonsPage = () => {
                     <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-current" />
                     <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mr-0.5 sm:mr-1">4.8</span>
                   </div>
-                  <div className="flex items-center">
-                    <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                    <span className="whitespace-nowrap text-xs sm:text-sm text-gray-600 dark:text-gray-300">120 {t('common.students')}</span>
-                  </div>
                 </div>
 
                 <div className="flex shrink-0 items-center">
@@ -457,7 +452,6 @@ const LessonsPage = () => {
                       </>
                     ) : (
                       <>
-                        <ShoppingBag className="h-3 w-3 shrink-0 sm:h-4 sm:w-4 sm:ml-2" />
                         <span className="hidden truncate sm:inline">{t('lessons.card.buy')}</span>
                         <span className="truncate sm:hidden">{t('common.buy')}</span>
                       </>
@@ -572,7 +566,6 @@ const LessonsPage = () => {
                         <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                       ) : (
                         <>
-                          <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" />
                           <span className="hidden sm:inline">{t('common.buy')}</span>
                           <span className="sm:hidden">{t('common.buy')}</span>
                         </>

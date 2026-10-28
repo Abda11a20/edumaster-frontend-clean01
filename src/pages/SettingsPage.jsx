@@ -403,19 +403,19 @@ const SettingsPage = () => {
                                             className="w-full border-gray-200 dark:border-gray-700 focus:ring-emerald-500"
                                         />
 
-                                        <div className="flex gap-2">
+                                        <div className="grid grid-cols-2 gap-2 sm:flex">
                                             {/* Date Picker Input (HTML5) for Clarity */}
-                                            <div className="relative flex-1">
+                                            <div className="relative min-w-0 sm:flex-1">
                                                 <Input
                                                     type="date"
                                                     value={format(selectedDate, 'yyyy-MM-dd')}
                                                     onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                                                    className="w-full text-sm text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                                                    className="w-full min-w-0 text-sm text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
                                                 />
                                             </div>
 
                                             {/* Time Picker */}
-                                            <div className="w-1/3">
+                                            <div className="min-w-0 w-full sm:w-1/3">
                                                 <Input
                                                     type="time"
                                                     value={selectedTime}
@@ -427,7 +427,7 @@ const SettingsPage = () => {
                                             <Button
                                                 type="submit"
                                                 disabled={!newTodo.trim()}
-                                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                className="col-span-2 w-full shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white sm:w-auto"
                                             >
                                                 <Plus className="w-4 h-4" />
                                             </Button>

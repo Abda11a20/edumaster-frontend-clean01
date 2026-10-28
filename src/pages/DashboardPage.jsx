@@ -1013,7 +1013,7 @@ const DashboardPage = () => {
                       </div>
 
                       {/* Detailed Progress */}
-                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                         <Card className="border border-blue-200 dark:border-blue-800">
                           <CardContent className="p-3 sm:p-4">
                             <div className="flex items-center justify-between mb-3">
@@ -1375,7 +1375,7 @@ const DashboardPage = () => {
                   </div>
 
                   {/* Detailed Progress */}
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                     <Card className="border border-blue-200 dark:border-blue-800">
                       <CardContent className="p-3 sm:p-4">
                         <div className="flex items-center justify-between mb-3">
